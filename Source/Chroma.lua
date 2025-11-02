@@ -33,7 +33,6 @@ local teamCheck = false
 local defaultFOV = workspace.CurrentCamera.FieldOfView
 local antiAfkEnabled = false
 local chatInput = ""
-local aimbotSmoothing = 10
 local chatEnabled = false
 local chatConnection
 local CFspeed = 50
@@ -125,7 +124,7 @@ local function getClosestPlayer()
 end
 
 local aimbotConnection
-function toggleAimbot(enable)
+local function toggleAimbot(enable)
     if aimbotConnection then
         aimbotConnection:Disconnect()
         aimbotConnection = nil
@@ -133,7 +132,6 @@ function toggleAimbot(enable)
     if enable then
         aimbotConnection = game:GetService("RunService").RenderStepped:Connect(function()
             local UserInputService = game:GetService("UserInputService")
-            local RunService = game:GetService("RunService")
             local Camera = workspace.CurrentCamera
             local LocalPlayer = game.Players.LocalPlayer
             local target = getClosestPlayer()
@@ -143,12 +141,8 @@ function toggleAimbot(enable)
             fovCircle.Radius = 120
             if aimbotRightClick and not UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then return end
             if target and target.Character and target.Character:FindFirstChild("Head") then
-                local targetPos = target.Character.Head.Position
-                local camPos = Camera.CFrame.Position
-                local lookVector = (targetPos - camPos).Unit
-                local currentCFrame = Camera.CFrame
-                local smoothed = currentCFrame:Lerp(CFrame.new(camPos, camPos + lookVector), aimbotSmoothing / 100)
-                Camera.CFrame = smoothed
+                local cam = Camera
+                cam.CFrame = CFrame.new(cam.CFrame.Position, target.Character.Head.Position)
             end
         end)
     end
@@ -516,16 +510,6 @@ Cheats:CreateToggle({
         aimbotEnabled = state
         if state then aimbotRightClick = false end
         toggleAimbot(state or aimbotRightClick)
-    end
-})
-
-Cheats:CreateSlider({
-    Name = "Aim Smoothing",
-    Range = {1, 100},
-    Increment = 1,
-    CurrentValue = aimbotSmoothing,
-    Callback = function(val)
-        aimbotSmoothing = val
     end
 })
 
