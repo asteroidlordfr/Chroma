@@ -34,7 +34,21 @@ local antiAfkEnabled = false
 local chatInput = ""
 local chatEnabled = false
 local chatConnection
+local CFspeed = 50
+local CFloop
+local flyConn
+local flying = false
+local swimming = false
+local oldgrav = workspace.Gravity
+local swimbeat
+local gravReset
+local vflyEnabled = false
+local vflyKeyDown
+local vflyKeyUp
+local speed = 50
 local defaultGravity = workspace.Gravity or 196.2
+local cycleTimes = {6, 12, 18, 0}
+local currentIndex = 1
 
 local function loadAnswers(url)
     local success, response = pcall(function()
@@ -210,6 +224,174 @@ Movement:CreateToggle({
 })
 
 Movement:CreateToggle({
+    Name = "Swim",
+    CurrentValue = false,
+    Callback = function(state)
+        local player = game.Players.LocalPlayer
+        local char = player.Character or player.CharacterAdded:Wait()
+        local humanoid = char:FindFirstChildWhichIsA("Humanoid")
+        local uis = game:GetService("UserInputService")
+
+        if state then
+            if not swimming and humanoid then
+                oldgrav = workspace.Gravity
+                workspace.Gravity = 0
+                local function swimDied()
+                    workspace.Gravity = oldgrav
+                    swimming = false
+                end
+                gravReset = humanoid.Died:Connect(swimDied)
+                local enums = Enum.HumanoidStateType:GetEnumItems()
+                table.remove(enums, table.find(enums, Enum.HumanoidStateType.None))
+                for _, v in pairs(enums) do
+                    humanoid:SetStateEnabled(v, false)
+                end
+                humanoid:ChangeState(Enum.HumanoidStateType.Swimming)
+                swimbeat = game:GetService("RunService").Heartbeat:Connect(function()
+                    pcall(function()
+                        local root = char:FindFirstChild("HumanoidRootPart")
+                        if root then
+                            root.Velocity = ((humanoid.MoveDirection ~= Vector3.new() or uis:IsKeyDown(Enum.KeyCode.Space)) and root.Velocity or Vector3.new())
+                        end
+                    end)
+                end)
+                swimming = true
+            end
+        else
+            if humanoid then
+                workspace.Gravity = oldgrav
+                swimming = false
+                if gravReset then gravReset:Disconnect() end
+                if swimbeat then swimbeat:Disconnect() swimbeat = nil end
+                local enums = Enum.HumanoidStateType:GetEnumItems()
+                table.remove(enums, table.find(enums, Enum.HumanoidStateType.None))
+                for _, v in pairs(enums) do
+                    humanoid:SetStateEnabled(v, true)
+                end
+            end
+        end
+    end
+})
+
+Movement:CreateToggle({
+    Name = "Vehicle Fly",
+    CurrentValue = false,
+    Callback = function(state)
+        local players = game:GetService("Players")
+        local uis = game:GetService("UserInputService")
+        local player = players.LocalPlayer
+        local camera = workspace.CurrentCamera
+        local char = player.Character or player.CharacterAdded:Wait()
+        local humanoid = char:FindFirstChildOfClass("Humanoid")
+        local root = char:WaitForChild("HumanoidRootPart")
+
+        if state then
+            vflyEnabled = true
+            local control = {F = 0, B = 0, L = 0, R = 0, Q = 0, E = 0}
+            local lcontrol = {F = 0, B = 0, L = 0, R = 0, Q = 0, E = 0}
+            local speed = 0
+            local flySpeed = 1
+
+            local gyro = Instance.new("BodyGyro")
+            local vel = Instance.new("BodyVelocity")
+            gyro.P = 9e4
+            gyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+            gyro.CFrame = root.CFrame
+            gyro.Parent = root
+            vel.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+            vel.Parent = root
+
+            vflyKeyDown = uis.InputBegan:Connect(function(input)
+                if input.KeyCode == Enum.KeyCode.W then control.F = flySpeed end
+                if input.KeyCode == Enum.KeyCode.S then control.B = -flySpeed end
+                if input.KeyCode == Enum.KeyCode.A then control.L = -flySpeed end
+                if input.KeyCode == Enum.KeyCode.D then control.R = flySpeed end
+                if input.KeyCode == Enum.KeyCode.E then control.Q = flySpeed * 2 end
+                if input.KeyCode == Enum.KeyCode.Q then control.E = -flySpeed * 2 end
+                pcall(function() camera.CameraType = Enum.CameraType.Track end)
+            end)
+
+            vflyKeyUp = uis.InputEnded:Connect(function(input)
+                if input.KeyCode == Enum.KeyCode.W then control.F = 0 end
+                if input.KeyCode == Enum.KeyCode.S then control.B = 0 end
+                if input.KeyCode == Enum.KeyCode.A then control.L = 0 end
+                if input.KeyCode == Enum.KeyCode.D then control.R = 0 end
+                if input.KeyCode == Enum.KeyCode.E then control.Q = 0 end
+                if input.KeyCode == Enum.KeyCode.Q then control.E = 0 end
+            end)
+
+            task.spawn(function()
+                repeat task.wait()
+                    if (control.L + control.R) ~= 0 or (control.F + control.B) ~= 0 or (control.Q + control.E) ~= 0 then
+                        speed = 50
+                    elseif not ((control.L + control.R) ~= 0 or (control.F + control.B) ~= 0 or (control.Q + control.E) ~= 0) and speed ~= 0 then
+                        speed = 0
+                    end
+                    if (control.L + control.R) ~= 0 or (control.F + control.B) ~= 0 or (control.Q + control.E) ~= 0 then
+                        vel.Velocity = ((camera.CFrame.LookVector * (control.F + control.B)) + ((camera.CFrame * CFrame.new(control.L + control.R, (control.F + control.B + control.Q + control.E) * 0.2, 0).p) - camera.CFrame.p)) * speed
+                        lcontrol = {F = control.F, B = control.B, L = control.L, R = control.R}
+                    elseif speed ~= 0 then
+                        vel.Velocity = ((camera.CFrame.LookVector * (lcontrol.F + lcontrol.B)) + ((camera.CFrame * CFrame.new(lcontrol.L + lcontrol.R, (lcontrol.F + lcontrol.B + control.Q + control.E) * 0.2, 0).p) - camera.CFrame.p)) * speed
+                    else
+                        vel.Velocity = Vector3.zero
+                    end
+                    gyro.CFrame = camera.CFrame
+                until not vflyEnabled
+                control = {F = 0, B = 0, L = 0, R = 0, Q = 0, E = 0}
+                lcontrol = {F = 0, B = 0, L = 0, R = 0, Q = 0, E = 0}
+                speed = 0
+                gyro:Destroy()
+                vel:Destroy()
+                if humanoid then humanoid.PlatformStand = false end
+            end)
+        else
+            vflyEnabled = false
+            if vflyKeyDown then vflyKeyDown:Disconnect() end
+            if vflyKeyUp then vflyKeyUp:Disconnect() end
+            pcall(function() camera.CameraType = Enum.CameraType.Custom end)
+            if humanoid then humanoid.PlatformStand = false end
+        end
+    end
+})
+
+Movement:CreateToggle({
+    Name = "Fly",
+    CurrentValue = false,
+    Callback = function(state)
+        local plr = game.Players.LocalPlayer
+        local char = plr.Character or plr.CharacterAdded:Wait()
+        local hrp = char:WaitForChild("HumanoidRootPart")
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        local uis = game:GetService("UserInputService")
+        local cam = workspace.CurrentCamera
+
+        if state then
+            flying = true
+            hum.PlatformStand = true
+            flyConn = game:GetService("RunService").RenderStepped:Connect(function()
+                local moveDir = Vector3.zero
+                if uis:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + cam.CFrame.LookVector end
+                if uis:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - cam.CFrame.LookVector end
+                if uis:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - cam.CFrame.RightVector end
+                if uis:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + cam.CFrame.RightVector end
+                if uis:IsKeyDown(Enum.KeyCode.Space) then moveDir = moveDir + Vector3.new(0,1,0) end
+                if uis:IsKeyDown(Enum.KeyCode.LeftControl) then moveDir = moveDir - Vector3.new(0,1,0) end
+                if moveDir.Magnitude > 0 then
+                    hrp.Velocity = moveDir.Unit * speed
+                else
+                    hrp.Velocity = Vector3.zero
+                end
+            end)
+        else
+            flying = false
+            if flyConn then flyConn:Disconnect() end
+            hum.PlatformStand = false
+            hrp.Velocity = Vector3.zero
+        end
+    end
+})
+
+Movement:CreateToggle({
     Name = "Bunny Hop",
     CurrentValue = false,
     Callback = function(state)
@@ -248,6 +430,39 @@ Movement:CreateToggle({
                 _G.infJumpConn:Disconnect()
                 _G.infJumpConn = nil
             end
+        end
+    end
+})
+
+Movement:CreateSection("CFrame")
+
+Movement:CreateToggle({
+    Name = "Fly",
+    CurrentValue = false,
+    Callback = function(state)
+        local player = game.Players.LocalPlayer
+        local char = player.Character or player.CharacterAdded:Wait()
+        local humanoid = char:FindFirstChildOfClass("Humanoid")
+        local head = char:WaitForChild("Head")
+
+        if state then
+            humanoid.PlatformStand = true
+            head.Anchored = true
+            CFloop = game:GetService("RunService").Heartbeat:Connect(function(dt)
+                local moveDirection = humanoid.MoveDirection * (CFspeed * dt)
+                local camera = workspace.CurrentCamera
+                local cameraCFrame = camera.CFrame
+                local cameraOffset = head.CFrame:ToObjectSpace(cameraCFrame).Position
+                cameraCFrame = cameraCFrame * CFrame.new(-cameraOffset.X, -cameraOffset.Y, -cameraOffset.Z + 1)
+                local cameraPosition = cameraCFrame.Position
+                local headPosition = head.CFrame.Position
+                local objectSpaceVelocity = CFrame.new(cameraPosition, Vector3.new(headPosition.X, cameraPosition.Y, headPosition.Z)):VectorToObjectSpace(moveDirection)
+                head.CFrame = CFrame.new(headPosition) * (cameraCFrame - cameraPosition) * CFrame.new(objectSpaceVelocity)
+            end)
+        else
+            if CFloop then CFloop:Disconnect() end
+            humanoid.PlatformStand = false
+            head.Anchored = false
         end
     end
 })
@@ -419,6 +634,176 @@ Games:CreateButton({Name = "Answer", Info = "Sends all answers", Callback = func
 local Visual = Window:CreateTab("👀 Visual")
 
 Visual:CreateToggle({
+    Name = "X-Ray",
+    CurrentValue = false,
+    Callback = function(enabled)
+        local function setTransparency(value)
+            for _, v in ipairs(workspace:GetDescendants()) do
+                if v:IsA("BasePart") or v:IsA("MeshPart") then
+                    v.LocalTransparencyModifier = value
+                end
+            end
+        end
+        if enabled then
+            setTransparency(0.5)
+            _G.xrayActive = true
+        else
+            if _G.xrayActive then
+                setTransparency(0)
+                _G.xrayActive = false
+            end
+        end
+    end
+})
+
+Visual:CreateToggle({
+    Name = "FPS Boost",
+    CurrentValue = false,
+    Callback = function(enabled)
+        if enabled then
+            _G.originalSettings = {
+                GlobalShadows = game.Lighting.GlobalShadows,
+                Technology = game.Lighting.Technology
+            }
+            game.Lighting.GlobalShadows = false
+            game.Lighting.Technology = Enum.Technology.Compatibility
+            for _, v in ipairs(workspace:GetDescendants()) do
+                if v:IsA("BasePart") then
+                    v.Material = Enum.Material.SmoothPlastic
+                elseif v:IsA("ParticleEmitter") or v:IsA("Trail") then
+                    v.Enabled = false
+                elseif v:IsA("PostEffect") then
+                    v.Enabled = false
+                end
+            end
+        else
+            if _G.originalSettings then
+                game.Lighting.GlobalShadows = _G.originalSettings.GlobalShadows
+                game.Lighting.Technology = _G.originalSettings.Technology
+                _G.originalSettings = nil
+            end
+            for _, v in ipairs(workspace:GetDescendants()) do
+                if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("PostEffect") then
+                    v.Enabled = true
+                end
+            end
+        end
+    end
+})
+
+Visual:CreateToggle({
+    Name = "RTX",
+    CurrentValue = false,
+    Callback = function(enabled)
+        if enabled then
+            _G.rtxEffects = {}
+
+            local bloom = Instance.new("BloomEffect")
+            bloom.Intensity = 2
+            bloom.Size = 56
+            bloom.Threshold = 0.5
+            bloom.Parent = game.Lighting
+            table.insert(_G.rtxEffects, bloom)
+
+            local sun = Instance.new("SunRaysEffect")
+            sun.Intensity = 0.4
+            sun.Parent = game.Lighting
+            table.insert(_G.rtxEffects, sun)
+
+            local color = Instance.new("ColorCorrectionEffect")
+            color.Brightness = 0.1
+            color.Contrast = 0.2
+            color.Saturation = 0.3
+            color.TintColor = Color3.fromRGB(255, 230, 200)
+            color.Parent = game.Lighting
+            table.insert(_G.rtxEffects, color)
+
+            local depth = Instance.new("DepthOfFieldEffect")
+            depth.FocusDistance = 50
+            depth.InFocusRadius = 30
+            depth.FarIntensity = 0.7
+            depth.NearIntensity = 0.5
+            depth.Parent = game.Lighting
+            table.insert(_G.rtxEffects, depth)
+
+            local blur = Instance.new("BlurEffect")
+            blur.Size = 4
+            blur.Parent = game.Lighting
+            table.insert(_G.rtxEffects, blur)
+
+            local flare = Instance.new("LensFlare")
+            flare.Name = "RTXLensFlare"
+            flare.Position = game.Lighting:FindFirstChildOfClass("SunRaysEffect") and game.Lighting.Sun.Position or Vector3.new(0, 1000, 0)
+            flare.Parent = game.Lighting
+            table.insert(_G.rtxEffects, flare)
+
+            local ao = Instance.new("Atmosphere")
+            ao.Density = 0.4
+            ao.Offset = 0.25
+            ao.Glare = 0.3
+            ao.Haze = 0.3
+            ao.Color = Color3.fromRGB(255, 255, 255)
+            ao.Parent = game.Lighting
+            table.insert(_G.rtxEffects, ao)
+
+        else
+            if _G.rtxEffects then
+                for _, e in ipairs(_G.rtxEffects) do
+                    if e and e.Parent then
+                        e:Destroy()
+                    end
+                end
+                _G.rtxEffects = nil
+            end
+        end
+    end
+})
+
+Visual:CreateToggle({
+    Name = "Hitbox Visualizer",
+    CurrentValue = false,
+    Callback = function(enabled)
+        if enabled then
+            _G.hitboxVisualizer = game:GetService("RunService").RenderStepped:Connect(function()
+                for _, player in ipairs(game.Players:GetPlayers()) do
+                    if player ~= game.Players.LocalPlayer and player.Character then
+                        for _, part in ipairs(player.Character:GetDescendants()) do
+                            if part:IsA("BasePart") then
+                                if not part:FindFirstChild("HitboxAdornment") then
+                                    local box = Instance.new("BoxHandleAdornment")
+                                    box.Name = "HitboxAdornment"
+                                    box.Adornee = part
+                                    box.AlwaysOnTop = true
+                                    box.ZIndex = 5
+                                    box.Size = part.Size
+                                    box.Color3 = Color3.new(1, 0, 0)
+                                    box.Transparency = 0.7
+                                    box.Parent = part
+                                end
+                            end
+                        end
+                    end
+                end
+            end)
+        else
+            if _G.hitboxVisualizer then
+                _G.hitboxVisualizer:Disconnect()
+            end
+            for _, player in ipairs(game.Players:GetPlayers()) do
+                if player.Character then
+                    for _, part in ipairs(player.Character:GetDescendants()) do
+                        local adorn = part:FindFirstChild("HitboxAdornment")
+                        if adorn then
+                            adorn:Destroy()
+                        end
+                    end
+                end
+            end
+        end
+    end
+})
+
+Visual:CreateToggle({
     Name = "ESP",
     CurrentValue = false,
     Callback = function(state)
@@ -551,6 +936,54 @@ Visual:CreateToggle({
 })
 
 Visual:CreateToggle({
+    Name = "Chams",
+    CurrentValue = false,
+    Callback = function(enabled)
+        if enabled then
+            _G.chamsHighlights = {}
+            for _, player in ipairs(game.Players:GetPlayers()) do
+                if player ~= game.Players.LocalPlayer and player.Character then
+                    local highlight = Instance.new("Highlight")
+                    highlight.Name = "ChamsHighlight"
+                    highlight.FillColor = Color3.fromRGB(0, 255, 0)
+                    highlight.OutlineColor = Color3.fromRGB(0, 255, 0)
+                    highlight.FillTransparency = 0.3
+                    highlight.OutlineTransparency = 0
+                    highlight.Parent = player.Character
+                    table.insert(_G.chamsHighlights, highlight)
+                end
+            end
+            _G.chamsConnection = game.Players.PlayerAdded:Connect(function(player)
+                player.CharacterAdded:Connect(function(char)
+                    task.wait(1)
+                    local highlight = Instance.new("Highlight")
+                    highlight.Name = "ChamsHighlight"
+                    highlight.FillColor = Color3.fromRGB(0, 255, 0)
+                    highlight.OutlineColor = Color3.fromRGB(0, 255, 0)
+                    highlight.FillTransparency = 0.3
+                    highlight.OutlineTransparency = 0
+                    highlight.Parent = char
+                    table.insert(_G.chamsHighlights, highlight)
+                end)
+            end)
+        else
+            if _G.chamsConnection then
+                _G.chamsConnection:Disconnect()
+                _G.chamsConnection = nil
+            end
+            if _G.chamsHighlights then
+                for _, h in ipairs(_G.chamsHighlights) do
+                    if h and h.Parent then
+                        h:Destroy()
+                    end
+                end
+                _G.chamsHighlights = nil
+            end
+        end
+    end
+})
+
+Visual:CreateToggle({
     Name = "Bone ESP",
     CurrentValue = false,
     Callback = function(state)
@@ -665,11 +1098,36 @@ Visual:CreateToggle({
     end,
 })
 
-local Misc = Window:CreateTab("📝 Misc")
-Misc:CreateButton({
-    Name = "Placeholder",
+local Client = Window:CreateTab("💻 Client")
+
+Client:CreateButton({
+    Name = "Change Time of Day",
     Callback = function()
-        -- placeholder
+        game.Lighting.ClockTime = cycleTimes[currentIndex]
+        currentIndex = currentIndex + 1
+        if currentIndex > #cycleTimes then
+            currentIndex = 1
+        end
+    end
+})
+
+Client:CreateToggle({
+    Name = "Anti AFK Kick",
+    CurrentValue = false,
+    Callback = function(enabled)
+        local vu = game:GetService("VirtualUser")
+        if enabled then
+            _G.afkConnection = game.Players.LocalPlayer.Idled:Connect(function()
+                vu:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+                task.wait(1)
+                vu:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+            end)
+        else
+            if _G.afkConnection then
+                _G.afkConnection:Disconnect()
+                _G.afkConnection = nil
+            end
+        end
     end
 })
 
