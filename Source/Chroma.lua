@@ -210,81 +210,88 @@ Visual:CreateToggle({
     Name = "Bone ESP",
     CurrentValue = false,
     Callback = function(state)
-        local connections = {}
-        local linesTable = {}
-        local cam = workspace.CurrentCamera
-        local function createBones(plr)
-            if not plr.Character then return end
-            local bones
-            if plr.Character:FindFirstChild("UpperTorso") then
-                bones = {"Head","UpperTorso","LowerTorso","LeftUpperArm","LeftLowerArm","LeftHand","RightUpperArm","RightLowerArm","RightHand","LeftUpperLeg","LeftLowerLeg","LeftFoot","RightUpperLeg","RightLowerLeg","RightFoot"}
-            else
-                bones = {"Head","Torso","Left Arm","Right Arm","Left Leg","Right Leg"}
+        local Players = game:GetService("Players")
+        local RunService = game:GetService("RunService")
+        local LocalPlayer = Players.LocalPlayer
+        local boneESPEnabled = state
+        local boneESPConnections = {}
+        local boneLines = {}
+
+        local function clearESP()
+            for _, conn in ipairs(boneESPConnections) do
+                conn:Disconnect()
             end
-            local lines = {}
-            for i = 1, #bones-1 do
-                local part1 = plr.Character:FindFirstChild(bones[i])
-                local part2 = plr.Character:FindFirstChild(bones[i+1])
-                if part1 and part2 then
-                    local line = Drawing.new("Line")
-                    line.Color = Color3.fromRGB(255,0,0)
-                    line.Thickness = 2
-                    line.Transparency = 1
-                    line.Visible = true
-                    table.insert(lines, {line=line, p1=part1, p2=part2})
+            boneESPConnections = {}
+            for _, lines in pairs(boneLines) do
+                for _, line in ipairs(lines) do
+                    line:Remove()
                 end
             end
-            table.insert(linesTable, lines)
-            local conn
-            conn = RunService.RenderStepped:Connect(function()
-                if not state then
-                    for _, data in ipairs(lines) do
-                        data.line.Visible = false
-                        data.line:Remove()
-                    end
-                    conn:Disconnect()
-                    return
-                end
-                for _, data in ipairs(lines) do
-                    if data.p1 and data.p2 then
-                        local p1pos, onScreen1 = cam:WorldToViewportPoint(data.p1.Position)
-                        local p2pos, onScreen2 = cam:WorldToViewportPoint(data.p2.Position)
-                        data.line.Visible = onScreen1 and onScreen2
-                        data.line.From = Vector2.new(p1pos.X,p1pos.Y)
-                        data.line.To = Vector2.new(p2pos.X,p2pos.Y)
-                    end
-                end
-            end)
-            table.insert(connections, conn)
+            boneLines = {}
         end
 
+        local function createBones(plr)
+            if not plr.Character then return end
+            local bones = plr.Character:FindFirstChild("UpperTorso") and 
+                {"Head","UpperTorso","LowerTorso","LeftUpperArm","LeftLowerArm","LeftHand","RightUpperArm","RightLowerArm","RightHand","LeftUpperLeg","LeftLowerLeg","LeftFoot","RightUpperLeg","RightLowerLeg","RightFoot"} 
+                or {"Head","Torso","Left Arm","Right Arm","Left Leg","Right Leg"}
+            local cam = workspace.CurrentCamera
+            local lines = {}
+            for i = 1, #bones - 1 do
+                local p1 = plr.Character:FindFirstChild(bones[i])
+                local p2 = plr.Character:FindFirstChild(bones[i + 1])
+                if p1 and p2 then
+                    local line = Drawing.new("Line")
+                    line.Color = Color3.fromRGB(255, 0, 0)
+                    line.Thickness = 2
+                    line.Transparency = 1
+                    table.insert(lines, {line = line, p1 = p1, p2 = p2})
+                end
+            end
+            boneLines[plr] = lines
+            table.insert(boneESPConnections, RunService.RenderStepped:Connect(function()
+                if not boneESPEnabled or not plr.Character then return end
+                for _, d in ipairs(lines) do
+                    if d.p1 and d.p2 then
+                        local a, on1 = cam:WorldToViewportPoint(d.p1.Position)
+                        local b, on2 = cam:WorldToViewportPoint(d.p2.Position)
+                        d.line.Visible = on1 and on2
+                        d.line.From = Vector2.new(a.X, a.Y)
+                        d.line.To = Vector2.new(b.X, b.Y)
+                    else
+                        d.line.Visible = false
+                    end
+                end
+            end))
+        end
+
+        clearESP()
         if state then
             for _, plr in pairs(Players:GetPlayers()) do
                 if plr ~= LocalPlayer then
                     createBones(plr)
                 end
             end
-            connections[#connections+1] = Players.PlayerAdded:Connect(function(plr)
-                if plr ~= LocalPlayer then
-                    createBones(plr)
-                end
-            end)
+            table.insert(boneESPConnections, Players.PlayerAdded:Connect(function(plr)
+                plr.CharacterAdded:Connect(function()
+                    if boneESPEnabled then
+                        createBones(plr)
+                    end
+                end)
+            end))
         else
-            for _, conn in ipairs(connections) do
-                conn:Disconnect()
-            end
-            for _, lines in ipairs(linesTable) do
-                for _, data in ipairs(lines) do
-                    data.line.Visible = false
-                    data.line:Remove()
-                end
-            end
+            clearESP()
         end
     end
 })
 
 local Misc = Window:CreateTab("📝 Misc")
--- I'll add stuff later, i added Anti AFK but it was detected and you'd get kicked
+Misc:CreateButton({
+    Name = "Placeholder",
+    Callback = function()
+        -- placeholder
+    end
+})
 
 local OP = Window:CreateTab("🤫 OP")
 OP:CreateButton({Name = "Unsuspend VC", Info = "If VC banned, unsuspends your voice chat.", Callback = function() game:GetService("VoiceChatService"):joinVoice() end})
