@@ -29,6 +29,7 @@ local aimbotEnabled = false
 local aimbotRightClick = false
 local wallCheck = false
 local teamCheck = false
+local antiAfkEnabled = false
 
 local function loadAnswers(url)
     local success, response = pcall(function()
@@ -185,28 +186,31 @@ Games:CreateToggle({
 Games:CreateButton({Name = "Answer", Info = "Sends all answers", Callback = function() submitAnswers() end})
 
 local Misc = Window:CreateTab("📝 Misc")
-Misc:CreateButton({
+Misc:CreateToggle({
     Name = "Anti AFK",
-    Info = "Prevents being kicked for idling",
-    Callback = function()
-        local y = (game:GetService("Players")).LocalPlayer
-        local J = game:GetService("VirtualUser")
-        if getconnections then
-            for _, conn in ipairs(getconnections(y.Idled)) do
-                if conn.Disable then
-                    conn:Disable()
-                else
-                    conn:Disconnect()
+    CurrentValue = false,
+    Callback = function(state)
+        antiAfkEnabled = state
+        if state then
+            local y = (game:GetService("Players")).LocalPlayer
+            local J = game:GetService("VirtualUser")
+            if getconnections then
+                for _, conn in ipairs(getconnections(y.Idled)) do
+                    if conn.Disable then
+                        conn:Disable()
+                    else
+                        conn:Disconnect()
+                    end
                 end
+            else
+                task.spawn(function()
+                    while antiAfkEnabled do
+                        J:CaptureController()
+                        J:ClickButton2(Vector2.new())
+                        task.wait(1)
+                    end
+                end)
             end
-        else
-            task.spawn(function()
-                while true do
-                    J:CaptureController()
-                    J:ClickButton2(Vector2.new())
-                    task.wait(1)
-                end
-            end)
         end
     end
 })
