@@ -206,7 +206,7 @@ Games:CreateButton({Name = "Answer", Info = "Sends all answers", Callback = func
 
 local Visual = Window:CreateTab("👀 Visual")
 
-Cheats:CreateToggle({
+Visual:CreateToggle({
     Name = "Bone ESP",
     CurrentValue = false,
     Callback = function(state)
