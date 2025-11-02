@@ -31,8 +31,93 @@ local wallCheck = false
 local teamCheck = false
 local defaultFOV = workspace.CurrentCamera.FieldOfView
 local antiAfkEnabled = false
-local boneESPEnabled = false
-local currentRigs = {}
+
+if not getgenv().chroma_boneesp then
+    getgenv().chroma_boneesp = {
+        enabled = false,
+        playerLines = {},
+        playerConns = {},
+        playerCharConns = {},
+        addedConn = nil,
+        removedConn = nil
+    }
+end
+
+local function removePlayerESP(plr)
+    local data = getgenv().chroma_boneesp
+    local lines = data.playerLines[plr]
+    if lines then
+        for _, line in ipairs(lines) do
+            if line and line.Remove then
+                pcall(function() line:Remove() end)
+            end
+        end
+        data.playerLines[plr] = nil
+    end
+    if data.playerConns[plr] then
+        pcall(function() data.playerConns[plr]:Disconnect() end)
+        data.playerConns[plr] = nil
+    end
+    if data.playerCharConns[plr] then
+        pcall(function() data.playerCharConns[plr]:Disconnect() end)
+        data.playerCharConns[plr] = nil
+    end
+end
+
+local function buildBonesForPlayer(plr)
+    if not plr or not plr.Character then return end
+    removePlayerESP(plr)
+    local char = plr.Character
+    local bones = char:FindFirstChild("UpperTorso") and 
+        {"Head","UpperTorso","LowerTorso","LeftUpperArm","LeftLowerArm","LeftHand","RightUpperArm","RightLowerArm","RightHand","LeftUpperLeg","LeftLowerLeg","LeftFoot","RightUpperLeg","RightLowerLeg","RightFoot"} 
+        or {"Head","Torso","Left Arm","Right Arm","Left Leg","Right Leg"}
+    local lines = {}
+    for i = 1, #bones - 1 do
+        local p1 = char:FindFirstChild(bones[i])
+        local p2 = char:FindFirstChild(bones[i+1])
+        if p1 and p2 then
+            local l = Drawing.new("Line")
+            l.Color = Color3.fromRGB(255,0,0)
+            l.Thickness = 2
+            l.Transparency = 1
+            l.Visible = false
+            table.insert(lines, l)
+        end
+    end
+    if #lines == 0 then
+        for _, l in ipairs(lines) do pcall(function() l:Remove() end) end
+        return
+    end
+    getgenv().chroma_boneesp.playerLines[plr] = {lines = lines, boneNames = bones}
+    local cam = workspace.CurrentCamera
+    local conn = RunService.RenderStepped:Connect(function()
+        if not getgenv().chroma_boneesp.enabled then return end
+        if not plr.Character then
+            for _, l in ipairs(lines) do pcall(function() l.Visible = false end) end
+            return
+        end
+        local validIndex = 1
+        for i = 1, #bones - 1 do
+            local p1 = plr.Character:FindFirstChild(bones[i])
+            local p2 = plr.Character:FindFirstChild(bones[i+1])
+            local line = lines[validIndex]
+            if p1 and p2 and line then
+                local a = cam:WorldToViewportPoint(p1.Position)
+                local b = cam:WorldToViewportPoint(p2.Position)
+                line.From = Vector2.new(a.X, a.Y)
+                line.To = Vector2.new(b.X, b.Y)
+                line.Visible = true
+                validIndex = validIndex + 1
+            elseif line then
+                line.Visible = false
+            end
+        end
+    end)
+    getgenv().chroma_boneesp.playerConns[plr] = conn
+    getgenv().chroma_boneesp.playerCharConns[plr] = plr.Character:WaitForChild("HumanoidRootPart").AncestryChanged:Connect(function()
+        if not plr.Character then removePlayerESP(plr) end
+    end)
+end
 
 local function loadAnswers(url)
     local success, response = pcall(function()
@@ -206,81 +291,47 @@ Games:CreateButton({Name = "Answer", Info = "Sends all answers", Callback = func
 
 local Visual = Window:CreateTab("👀 Visual")
 
-Visual:CreateToggle({
+Cheats:CreateToggle({
     Name = "Bone ESP",
     CurrentValue = false,
     Callback = function(state)
-        local Players = game:GetService("Players")
-        local RunService = game:GetService("RunService")
-        local LocalPlayer = Players.LocalPlayer
-        local boneESPEnabled = state
-        local boneESPConnections = {}
-        local boneLines = {}
-
-        local function clearESP()
-            for _, conn in ipairs(boneESPConnections) do
-                conn:Disconnect()
-            end
-            boneESPConnections = {}
-            for _, lines in pairs(boneLines) do
-                for _, line in ipairs(lines) do
-                    line:Remove()
-                end
-            end
-            boneLines = {}
-        end
-
-        local function createBones(plr)
-            if not plr.Character then return end
-            local bones = plr.Character:FindFirstChild("UpperTorso") and 
-                {"Head","UpperTorso","LowerTorso","LeftUpperArm","LeftLowerArm","LeftHand","RightUpperArm","RightLowerArm","RightHand","LeftUpperLeg","LeftLowerLeg","LeftFoot","RightUpperLeg","RightLowerLeg","RightFoot"} 
-                or {"Head","Torso","Left Arm","Right Arm","Left Leg","Right Leg"}
-            local cam = workspace.CurrentCamera
-            local lines = {}
-            for i = 1, #bones - 1 do
-                local p1 = plr.Character:FindFirstChild(bones[i])
-                local p2 = plr.Character:FindFirstChild(bones[i + 1])
-                if p1 and p2 then
-                    local line = Drawing.new("Line")
-                    line.Color = Color3.fromRGB(255, 0, 0)
-                    line.Thickness = 2
-                    line.Transparency = 1
-                    table.insert(lines, {line = line, p1 = p1, p2 = p2})
-                end
-            end
-            boneLines[plr] = lines
-            table.insert(boneESPConnections, RunService.RenderStepped:Connect(function()
-                if not boneESPEnabled or not plr.Character then return end
-                for _, d in ipairs(lines) do
-                    if d.p1 and d.p2 then
-                        local a, on1 = cam:WorldToViewportPoint(d.p1.Position)
-                        local b, on2 = cam:WorldToViewportPoint(d.p2.Position)
-                        d.line.Visible = on1 and on2
-                        d.line.From = Vector2.new(a.X, a.Y)
-                        d.line.To = Vector2.new(b.X, b.Y)
-                    else
-                        d.line.Visible = false
-                    end
-                end
-            end))
-        end
-
-        clearESP()
+        local data = getgenv().chroma_boneesp
+        data.enabled = state
         if state then
-            for _, plr in pairs(Players:GetPlayers()) do
+            for _, plr in ipairs(Players:GetPlayers()) do
                 if plr ~= LocalPlayer then
-                    createBones(plr)
+                    spawn(function()
+                        if plr.Character then
+                            buildBonesForPlayer(plr)
+                        else
+                            data.playerCharConns[plr] = plr.CharacterAdded:Connect(function()
+                                if data.enabled then buildBonesForPlayer(plr) end
+                            end)
+                        end
+                    end)
                 end
             end
-            table.insert(boneESPConnections, Players.PlayerAdded:Connect(function(plr)
-                plr.CharacterAdded:Connect(function()
-                    if boneESPEnabled then
-                        createBones(plr)
-                    end
+            if not data.addedConn then
+                data.addedConn = Players.PlayerAdded:Connect(function(plr)
+                    if plr == LocalPlayer then return end
+                    data.playerCharConns[plr] = plr.CharacterAdded:Connect(function()
+                        if data.enabled then buildBonesForPlayer(plr) end
+                    end)
+                    if plr.Character and data.enabled then buildBonesForPlayer(plr) end
                 end)
-            end))
+            end
+            if not data.removedConn then
+                data.removedConn = Players.PlayerRemoving:Connect(function(plr)
+                    removePlayerESP(plr)
+                end)
+            end
         else
-            clearESP()
+            if data.addedConn then pcall(function() data.addedConn:Disconnect() end) data.addedConn = nil end
+            if data.removedConn then pcall(function() data.removedConn:Disconnect() end) data.removedConn = nil end
+            for plr, _ in pairs(data.playerLines) do removePlayerESP(plr) end
+            data.playerLines = {}
+            data.playerConns = {}
+            data.playerCharConns = {}
         end
     end
 })
