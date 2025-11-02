@@ -1,4 +1,4 @@
-local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/asteroidlordfr/Chroma/refs/heads/main/Source/Rayfield.lua'))()
+local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/asteroidlordfr/Chroma/main/Source/Rayfield.lua'))()
 
 -- the variable (and function) warehouse
 
