@@ -46,7 +46,7 @@ Credits:CreateButton({
 })
 
 local Games = Window:CreateTab("Games")
-Games:AddSection({
+Games:CreateSection({
     Name = "Type or Die",
 })
 
