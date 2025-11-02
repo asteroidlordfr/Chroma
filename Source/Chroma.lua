@@ -23,6 +23,45 @@ local defaultWalkSpeed = 16
 local defaultJumpPower = 50
 local AnswersSent = false
 local Answers = {"treadmill","samsung","leopard","multiple","rectangle","americanfootball","wednesday","weddingdress","knife"}
+local aimbotEnabled = false
+local aimbotRightClick = false
+local lockPart = "Head"
+local teamCheck = false
+
+local function getClosestPlayer()
+    local closestDist = math.huge
+    local target
+    local mouse = LocalPlayer:GetMouse()
+    for _, plr in pairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild(lockPart) then
+            local humanoid = plr.Character:FindFirstChild("Humanoid")
+            if humanoid and humanoid.Health > 0 then
+                if teamCheck and plr.Team == LocalPlayer.Team then continue end
+                local pos, onScreen = workspace.CurrentCamera:WorldToViewportPoint(plr.Character[lockPart].Position)
+                if onScreen then
+                    local dist = (Vector2.new(pos.X, pos.Y) - Vector2.new(mouse.X, mouse.Y)).Magnitude
+                    if dist < closestDist then
+                        closestDist = dist
+                        target = plr
+                    end
+                end
+            end
+        end
+    end
+    return target
+end
+
+local function aimbotStep()
+    if not aimbotEnabled and not aimbotRightClick then return end
+    if aimbotRightClick and not game:GetService("UserInputService"):IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then return end
+    local target = getClosestPlayer()
+    if target and target.Character and target.Character:FindFirstChild(lockPart) then
+        local cam = workspace.CurrentCamera
+        cam.CFrame = CFrame.new(cam.CFrame.Position, target.Character[lockPart].Position)
+    end
+end
+
+game:GetService("RunService").RenderStepped:Connect(aimbotStep)
 
 local Window = Library:CreateWindow({
    Name = "🟢 Chroma",
@@ -47,74 +86,39 @@ Movement:CreateButton({Name = "Reset Walkspeed", Callback = function() Humanoid.
 Movement:CreateButton({Name = "Reset Jump Power", Callback = function() Humanoid.JumpPower = defaultJumpPower end})
 
 local Cheats = Window:CreateTab("Cheats")
-local aimbotEnv
 
-local function ensureAimbotLoaded()
-    if getgenv().ExunysDeveloperAimbot then
-        return getgenv().ExunysDeveloperAimbot
-    end
-end
-
-local function applyDefaults(env)
-    if not env then return end
-    env.Settings.LockMode = 1
-    env.Settings.AliveCheck = true
-    env.Settings.TriggerKey = Enum.UserInputType.MouseButton2
-    env.Settings.Toggle = false
-    env.Settings.Enabled = false
-end
-
-aimbotEnv = ensureAimbotLoaded()
-applyDefaults(aimbotEnv)
-
-local rightClickToggle
-local alwaysToggle
-
-rightClickToggle = Cheats:CreateToggle({
+Cheats:CreateToggle({
     Name = "Aimbot [RIGHT CLICK]",
     CurrentValue = false,
     Callback = function(state)
-        if state and alwaysToggle and alwaysToggle:GetState then alwaysToggle:SetState(false) end
-        aimbotEnv = ensureAimbotLoaded()
-        if not aimbotEnv then return end
-        applyDefaults(aimbotEnv)
-        aimbotEnv.Settings.Toggle = false
-        aimbotEnv.Settings.TriggerKey = Enum.UserInputType.MouseButton2
-        aimbotEnv.Settings.Enabled = state
-        if state then aimbotEnv.Load() else aimbotEnv:Exit() end
-    end,
+        aimbotRightClick = state
+        if state then aimbotEnabled = false end
+    end
 })
 
-alwaysToggle = Cheats:CreateToggle({
+Cheats:CreateToggle({
     Name = "Aimbot",
     CurrentValue = false,
     Callback = function(state)
-        if state and rightClickToggle and rightClickToggle:GetState then rightClickToggle:SetState(false) end
-        aimbotEnv = ensureAimbotLoaded()
-        if not aimbotEnv then return end
-        applyDefaults(aimbotEnv)
-        aimbotEnv.Settings.Toggle = true
-        aimbotEnv.Settings.Enabled = state
-        if state then aimbotEnv.Load() else aimbotEnv:Exit() end
-    end,
+        aimbotEnabled = state
+        if state then aimbotRightClick = false end
+    end
 })
 
 Cheats:CreateDropdown({
     Name = "Lock Part",
     Options = {"Head","HumanoidRootPart","Torso","UpperTorso","LowerTorso"},
-    CurrentOption = (aimbotEnv and aimbotEnv.Settings.LockPart) or "Head",
+    CurrentOption = lockPart,
     Callback = function(option)
-        aimbotEnv = ensureAimbotLoaded()
-        if aimbotEnv then aimbotEnv.Settings.LockPart = option end
+        lockPart = option
     end
 })
 
 Cheats:CreateToggle({
     Name = "Team Check",
-    CurrentValue = (aimbotEnv and aimbotEnv.Settings.TeamCheck) or false,
+    CurrentValue = teamCheck,
     Callback = function(state)
-        aimbotEnv = ensureAimbotLoaded()
-        if aimbotEnv then aimbotEnv.Settings.TeamCheck = state end
+        teamCheck = state
     end
 })
 
