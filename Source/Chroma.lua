@@ -1,3 +1,14 @@
+--[
+-- Chroma
+--
+-- A open-source Roblox Universal tool to tweak your gameplay to the max.
+-- This code is licensed under the GNU General Public License (V3)
+--
+-- Have fun!
+-- (Yes yes, some of this is GPT but only i'd say only 15/100 is GPT as I don't know much Lua.)
+--]
+
+
 local Library = loadstring(game:HttpGet('https://raw.githubusercontent.com/asteroidlordfr/Chroma/main/Source/Library.lua'))()
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ReplicaSignal
@@ -5,9 +16,11 @@ if ReplicatedStorage:FindFirstChild("ReplicaRemoteEvents") and ReplicatedStorage
     ReplicaSignal = ReplicatedStorage.ReplicaRemoteEvents.Replica_ReplicaSignal
 end
 
+-- welcome to the variable warehouse
+
 local sendingAnswers = false
 local delayTime = 1
-local answers = {}
+local answers = {"treadmill","samsung","leopard","multiple","rectangle","americanfootball","wednesday","weddingdress","knife","Master bedroom","Cable stripping machine","Philip Sherman","The Great Wall of China","Michael Jordan","Girl With A Pearl Earring","Invincibility","Rectangular prism","Steering wheel","Daily dose of internet","Taking out the trash","scientific calculator","Tamago kake gohan","Amazon Prime Video","inflatable party decorations","Police Car","precious gemstone","sportswear","Air Conditioning","Flight Attendancy","Fire Extinguishers","red light green light","Physical Education","Sour Patch kids","hide and seek","Chocolate Chip Cookie Dough Ice Cream","Anna Sophia","Magdalena","Trinity","Patrick","explore the outdoors","Baby Princess Rosalina","Metallic Gasoline Blue Green","Playing with controlling toys","Malfunctioning Playstation Controller","Duke of Weselton","Waste","Buttercup","Granddaughter","Multipurpose Permanent Marker","Professional Development","Microwave Oven","Washing Machine","compression stockings","smoothie","Interactive whiteboard","Medium Density Fiberboard","Tent pole repair sleeve","International Space Station","Health Insurance","Burrowing Owl","Professional Racketball","Stand up Paddleboarding","Volcanic Eruption","Fairy Godmothers","Statistics and Probability","advanced interactive multidimensional modeling system","Identification Card","Limestone Egyptian Waterclock","Joystick controller","Baby Princess Rosalina","Chocolate Ice Cream Sandwich","Stand Up Paddleboarding","Mozzarella Cheese","Stand Up Paddleboarding","United States of America","Super Mario Brothers","Great White Shark","Pomegranate","Flat screen television","Wheel barrow","Centimeter","Dumbells","Christopher Robin","Sweet Potato","Cherry Blossom","Hippopotomonstrosesquippedaliophobia","Vitamin B12","gaming chair","Saxophone","Wisdom Teeth","Harley Quinn","Frozen Water Bottle","Hermit Crab","Galapagos tortoise","Mountain Everest","Macadamia Nuts","flower","rock","americancheese","steak","pig","angry","taylorswift","kreekcraft","refrigerator handle","Electric Bass Guitar","Rubber Duckie","German","colacola","apple","lemonade","toiletpaper","headphone","captainamerica","facebook","strawberry","mouth"}
 
 local function sendAllAnswers()
     if not ReplicaSignal then return end
@@ -16,6 +29,8 @@ local function sendAllAnswers()
         ReplicaSignal:FireServer(unpack(args))
     end
 end
+
+-- no more warehouse
 
 local Window = Library:CreateWindow({
    Name = "Chroma",
@@ -63,9 +78,18 @@ Games:CreateToggle({
 })
 
 Games:CreateButton({
-    Name = "Answer",
-    Info = "Sends a answer",
+    Name = "Answers",
+    Info = "Sends all answers",
     Callback = function()
         sendAllAnswers()
-    end,
+    end
+})
+
+Games:CreateDropdown({
+    Name = "Delay",
+    Options = {"0", "1","2","3","4","5","6","7","8","9","10"},
+    CurrentOption = "1",
+    Callback = function(option)
+        delayTime = tonumber(option)
+    end
 })
