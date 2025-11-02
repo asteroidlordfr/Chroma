@@ -49,13 +49,6 @@ Movement:CreateSlider({
     end
 })
 
-Movement:CreateButton({
-    Name = "Reset WalkSpeed",
-    Callback = function()
-        Humanoid.WalkSpeed = defaultWalkSpeed
-    end
-})
-
 Movement:CreateSlider({
     Name = "Jump Power",
     Range = {0,500},
@@ -67,7 +60,14 @@ Movement:CreateSlider({
 })
 
 Movement:CreateButton({
-    Name = "Reset JumpPower",
+    Name = "Reset Walkspeed",
+    Callback = function()
+        Humanoid.WalkSpeed = defaultWalkSpeed
+    end
+})
+
+Movement:CreateButton({
+    Name = "Reset Jump Power",
     Callback = function()
         Humanoid.JumpPower = defaultJumpPower
     end
