@@ -27,14 +27,14 @@ local function submitAnswers()
 end
 
 local Window = Library:CreateWindow({
-   Name = "Chroma",
-   LoadingTitle = "Open-sourced Roblox universal cheat.",
+   Name = "🟢 Chroma",
+   LoadingTitle = "An open-sourced Roblox universal cheat.",
    LoadingSubtitle = "Licensed under GPLv3",
    Theme = "Ocean",
    ConfigurationSaving = {
       Enabled = true,
       FolderName = nil,
-      FileName = "Chroma"
+      FileName = "🟢 Chroma"
    },
    KeySystem = false,
 })
