@@ -1,3 +1,13 @@
+--[
+-- Chroma
+--
+-- A open-source Roblox Universal tool to tweak your gameplay to the max.
+-- This code is licensed under the GNU General Public License (V3)
+--
+-- Have fun!
+-- (Yes yes, some yes is GPT but only i'd say only 15/100 is GPT as I don't know much Lua.)
+--]
+
 local Library = loadstring(game:HttpGet('https://raw.githubusercontent.com/asteroidlordfr/Chroma/main/Source/Library.lua'))()
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -25,11 +35,16 @@ local function getClosestPlayer()
     local closestDist = math.huge
     local target
     local mouse = LocalPlayer:GetMouse()
+    local teams = {}
+    for _, p in pairs(Players:GetPlayers()) do
+        if p.Team then teams[p.Team] = true end
+    end
+    local ffa = (table.concat(teams) == "") or (table.getn(teams) == 1)
     for _, plr in pairs(Players:GetPlayers()) do
         if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("Head") then
             local humanoid = plr.Character:FindFirstChild("Humanoid")
             if humanoid and humanoid.Health > 0 then
-                if teamCheck and plr.Team == LocalPlayer.Team then continue end
+                if teamCheck and not ffa and plr.Team == LocalPlayer.Team then continue end
                 if wallCheck then
                     local origin = workspace.CurrentCamera.CFrame.Position
                     local direction = (plr.Character.Head.Position - origin)
