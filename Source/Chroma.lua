@@ -34,35 +34,6 @@ local antiAfkEnabled = false
 local boneESPEnabled = false
 local currentRigs = {}
 
-local function createBones(plr)
-    if not plr.Character then return end
-    local bones = {"Head","UpperTorso","LowerTorso","LeftUpperArm","LeftLowerArm","LeftHand","RightUpperArm","RightLowerArm","RightHand","LeftUpperLeg","LeftLowerLeg","LeftFoot","RightUpperLeg","RightLowerLeg","RightFoot"}
-    local lines = {}
-    local cam = workspace.CurrentCamera
-    for i = 1, #bones-1 do
-        local part1 = plr.Character:FindFirstChild(bones[i])
-        local part2 = plr.Character:FindFirstChild(bones[i+1])
-        if part1 and part2 then
-            local line = Drawing.new("Line")
-            line.Color = Color3.fromRGB(255,0,0)
-            line.Thickness = 2
-            line.Transparency = 1
-            table.insert(lines, {line=line, p1=part1, p2=part2})
-        end
-    end
-    table.insert(currentRigs, RunService.RenderStepped:Connect(function()
-        for _, data in ipairs(lines) do
-            if data.p1 and data.p2 then
-                local p1pos, onScreen1 = cam:WorldToViewportPoint(data.p1.Position)
-                local p2pos, onScreen2 = cam:WorldToViewportPoint(data.p2.Position)
-                data.line.Visible = onScreen1 and onScreen2
-                data.line.From = Vector2.new(p1pos.X,p1pos.Y)
-                data.line.To = Vector2.new(p2pos.X,p2pos.Y)
-            end
-        end
-    end))
-end
-
 local function loadAnswers(url)
     local success, response = pcall(function()
         return game:HttpGet(url)
@@ -235,17 +206,77 @@ Games:CreateButton({Name = "Answer", Info = "Sends all answers", Callback = func
 
 local Visual = Window:CreateTab("👀 Visual")
 
-Visual:CreateToggle({
+Cheats:CreateToggle({
     Name = "Bone ESP",
     CurrentValue = false,
     Callback = function(state)
-        boneESPEnabled = state
-        for _, conn in ipairs(currentRigs) do conn:Disconnect() end
-        currentRigs = {}
-        if boneESPEnabled then
+        local connections = {}
+        local linesTable = {}
+        local cam = workspace.CurrentCamera
+        local function createBones(plr)
+            if not plr.Character then return end
+            local bones
+            if plr.Character:FindFirstChild("UpperTorso") then
+                bones = {"Head","UpperTorso","LowerTorso","LeftUpperArm","LeftLowerArm","LeftHand","RightUpperArm","RightLowerArm","RightHand","LeftUpperLeg","LeftLowerLeg","LeftFoot","RightUpperLeg","RightLowerLeg","RightFoot"}
+            else
+                bones = {"Head","Torso","Left Arm","Right Arm","Left Leg","Right Leg"}
+            end
+            local lines = {}
+            for i = 1, #bones-1 do
+                local part1 = plr.Character:FindFirstChild(bones[i])
+                local part2 = plr.Character:FindFirstChild(bones[i+1])
+                if part1 and part2 then
+                    local line = Drawing.new("Line")
+                    line.Color = Color3.fromRGB(255,0,0)
+                    line.Thickness = 2
+                    line.Transparency = 1
+                    line.Visible = true
+                    table.insert(lines, {line=line, p1=part1, p2=part2})
+                end
+            end
+            table.insert(linesTable, lines)
+            local conn
+            conn = RunService.RenderStepped:Connect(function()
+                if not state then
+                    for _, data in ipairs(lines) do
+                        data.line.Visible = false
+                        data.line:Remove()
+                    end
+                    conn:Disconnect()
+                    return
+                end
+                for _, data in ipairs(lines) do
+                    if data.p1 and data.p2 then
+                        local p1pos, onScreen1 = cam:WorldToViewportPoint(data.p1.Position)
+                        local p2pos, onScreen2 = cam:WorldToViewportPoint(data.p2.Position)
+                        data.line.Visible = onScreen1 and onScreen2
+                        data.line.From = Vector2.new(p1pos.X,p1pos.Y)
+                        data.line.To = Vector2.new(p2pos.X,p2pos.Y)
+                    end
+                end
+            end)
+            table.insert(connections, conn)
+        end
+
+        if state then
             for _, plr in pairs(Players:GetPlayers()) do
                 if plr ~= LocalPlayer then
                     createBones(plr)
+                end
+            end
+            connections[#connections+1] = Players.PlayerAdded:Connect(function(plr)
+                if plr ~= LocalPlayer then
+                    createBones(plr)
+                end
+            end)
+        else
+            for _, conn in ipairs(connections) do
+                conn:Disconnect()
+            end
+            for _, lines in ipairs(linesTable) do
+                for _, data in ipairs(lines) do
+                    data.line.Visible = false
+                    data.line:Remove()
                 end
             end
         end
