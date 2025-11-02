@@ -150,7 +150,7 @@ Movement:CreateButton({
 
 Movement:CreateSection("Player")
 
-PlayerTab:CreateToggle({
+Movement:CreateToggle({
     Name = "Platforms (F)",
     CurrentValue = false,
     Callback = function(enabled)
@@ -187,7 +187,7 @@ PlayerTab:CreateToggle({
 })
 
 Movement:CreateToggle({
-    Name = "noclip",
+    Name = "Noclip",
     CurrentValue = false,
     Callback = function(enabled)
         if enabled then
