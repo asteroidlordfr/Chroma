@@ -31,93 +31,10 @@ local wallCheck = false
 local teamCheck = false
 local defaultFOV = workspace.CurrentCamera.FieldOfView
 local antiAfkEnabled = false
-
-if not getgenv().chroma_boneesp then
-    getgenv().chroma_boneesp = {
-        enabled = false,
-        playerLines = {},
-        playerConns = {},
-        playerCharConns = {},
-        addedConn = nil,
-        removedConn = nil
-    }
-end
-
-local function removePlayerESP(plr)
-    local data = getgenv().chroma_boneesp
-    local lines = data.playerLines[plr]
-    if lines then
-        for _, line in ipairs(lines) do
-            if line and line.Remove then
-                pcall(function() line:Remove() end)
-            end
-        end
-        data.playerLines[plr] = nil
-    end
-    if data.playerConns[plr] then
-        pcall(function() data.playerConns[plr]:Disconnect() end)
-        data.playerConns[plr] = nil
-    end
-    if data.playerCharConns[plr] then
-        pcall(function() data.playerCharConns[plr]:Disconnect() end)
-        data.playerCharConns[plr] = nil
-    end
-end
-
-local function buildBonesForPlayer(plr)
-    if not plr or not plr.Character then return end
-    removePlayerESP(plr)
-    local char = plr.Character
-    local bones = char:FindFirstChild("UpperTorso") and 
-        {"Head","UpperTorso","LowerTorso","LeftUpperArm","LeftLowerArm","LeftHand","RightUpperArm","RightLowerArm","RightHand","LeftUpperLeg","LeftLowerLeg","LeftFoot","RightUpperLeg","RightLowerLeg","RightFoot"} 
-        or {"Head","Torso","Left Arm","Right Arm","Left Leg","Right Leg"}
-    local lines = {}
-    for i = 1, #bones - 1 do
-        local p1 = char:FindFirstChild(bones[i])
-        local p2 = char:FindFirstChild(bones[i+1])
-        if p1 and p2 then
-            local l = Drawing.new("Line")
-            l.Color = Color3.fromRGB(255,0,0)
-            l.Thickness = 2
-            l.Transparency = 1
-            l.Visible = false
-            table.insert(lines, l)
-        end
-    end
-    if #lines == 0 then
-        for _, l in ipairs(lines) do pcall(function() l:Remove() end) end
-        return
-    end
-    getgenv().chroma_boneesp.playerLines[plr] = {lines = lines, boneNames = bones}
-    local cam = workspace.CurrentCamera
-    local conn = RunService.RenderStepped:Connect(function()
-        if not getgenv().chroma_boneesp.enabled then return end
-        if not plr.Character then
-            for _, l in ipairs(lines) do pcall(function() l.Visible = false end) end
-            return
-        end
-        local validIndex = 1
-        for i = 1, #bones - 1 do
-            local p1 = plr.Character:FindFirstChild(bones[i])
-            local p2 = plr.Character:FindFirstChild(bones[i+1])
-            local line = lines[validIndex]
-            if p1 and p2 and line then
-                local a = cam:WorldToViewportPoint(p1.Position)
-                local b = cam:WorldToViewportPoint(p2.Position)
-                line.From = Vector2.new(a.X, a.Y)
-                line.To = Vector2.new(b.X, b.Y)
-                line.Visible = true
-                validIndex = validIndex + 1
-            elseif line then
-                line.Visible = false
-            end
-        end
-    end)
-    getgenv().chroma_boneesp.playerConns[plr] = conn
-    getgenv().chroma_boneesp.playerCharConns[plr] = plr.Character:WaitForChild("HumanoidRootPart").AncestryChanged:Connect(function()
-        if not plr.Character then removePlayerESP(plr) end
-    end)
-end
+local chatInput = ""
+local chatEnabled = false
+local chatConnection
+local defaultGravity = workspace.Gravity or 196.2
 
 local function loadAnswers(url)
     local success, response = pcall(function()
@@ -210,13 +127,135 @@ local function submitAnswers()
 end
 
 local Movement = Window:CreateTab("🎮 Movement")
-Movement:CreateSlider({Name = "WalkSpeed", Range = {0,500}, Increment = 5, CurrentValue = Humanoid.WalkSpeed, Callback = function(value) Humanoid.WalkSpeed = value end})
+Movement:CreateSection("Sliders")
+Movement:CreateSlider({Name = "Walkspeed", Range = {0,500}, Increment = 5, CurrentValue = Humanoid.WalkSpeed, Callback = function(value) Humanoid.WalkSpeed = value end})
 Movement:CreateSlider({Name = "Jump Power", Range = {0,500}, Increment = 5, CurrentValue = Humanoid.JumpPower, Callback = function(value) Humanoid.JumpPower = value end})
+Movement:CreateSlider({
+    Name = "Gravity",
+    Min = 0,
+    Max = 500,
+    Increment = 1,
+    Suffix = "gravity",
+    CurrentValue = defaultGravity,
+    Callback = function(value)
+        workspace.Gravity = value
+    end,
+})
 Movement:CreateButton({Name = "Reset Walkspeed", Callback = function() Humanoid.WalkSpeed = defaultWalkSpeed end})
 Movement:CreateButton({Name = "Reset Jump Power", Callback = function() Humanoid.JumpPower = defaultJumpPower end})
+Movement:CreateButton({
+    Name = "Reset Gravity",
+    Callback = function()
+        workspace.Gravity = defaultGravity
+    end,
+})
+
+Movement:CreateSection("Player")
+
+PlayerTab:CreateToggle({
+    Name = "Platforms (F)",
+    CurrentValue = false,
+    Callback = function(enabled)
+        local connection
+
+        if enabled then
+            connection = game:GetService("UserInputService").InputBegan:Connect(function(input, gpe)
+                if gpe then return end
+                if input.KeyCode == Enum.KeyCode.F then
+                    local char = game.Players.LocalPlayer.Character
+                    if char and char:FindFirstChild("HumanoidRootPart") then
+                        local part = Instance.new("Part")
+                        part.Anchored = true
+                        part.Size = Vector3.new(6, 1, 6)
+                        part.Position = char.HumanoidRootPart.Position - Vector3.new(0, 3, 0)
+                        part.Color = Color3.new(0, 0, 0)
+                        part.Material = Enum.Material.SmoothPlastic
+                        part.Parent = workspace
+
+                        task.delay(3, function()
+                            if part then
+                                part:Destroy()
+                            end
+                        end)
+                    end
+                end
+            end)
+        else
+            if connection then
+                connection:Disconnect()
+            end
+        end
+    end
+})
+
+Movement:CreateToggle({
+    Name = "noclip",
+    CurrentValue = false,
+    Callback = function(enabled)
+        if enabled then
+            _G.noclip = game:GetService("RunService").Stepped:Connect(function()
+                local char = game.Players.LocalPlayer.Character
+                if char then
+                    for _, part in pairs(char:GetDescendants()) do
+                        if part:IsA("BasePart") and part.CanCollide then
+                            part.CanCollide = false
+                        end
+                    end
+                end
+            end)
+        else
+            if _G.noclip then
+                _G.noclip:Disconnect()
+            end
+        end
+    end
+})
+
+Movement:CreateToggle({
+    Name = "Bunny Hop",
+    CurrentValue = false,
+    Callback = function(state)
+        if state then
+            _G.bhop = true
+            task.spawn(function()
+                while _G.bhop do
+                    local h = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+                    if h and h.FloorMaterial ~= Enum.Material.Air then
+                        h:ChangeState(Enum.HumanoidStateType.Jumping)
+                    end
+                    task.wait(0.1)
+                end
+            end)
+        else
+            _G.bhop = false
+        end
+    end
+})
+
+Movement:CreateToggle({
+    Name = "Infinite Jump",
+    CurrentValue = false,
+    Callback = function(enabled)
+        if enabled then
+            _G.infJumpConn = game:GetService("UserInputService").JumpRequest:Connect(function()
+                local char = game.Players.LocalPlayer.Character
+                if not char then return end
+                local root = char:FindFirstChild("HumanoidRootPart")
+                if root then
+                    root.Velocity = Vector3.new(root.Velocity.X, 50, root.Velocity.Z)
+                end
+            end)
+        else
+            if _G.infJumpConn then
+                _G.infJumpConn:Disconnect()
+                _G.infJumpConn = nil
+            end
+        end
+    end
+})
 
 local Cheats = Window:CreateTab("🎯 Cheats")
-Cheats:CreateLabel("Aimbot")
+Cheats:CreateSection("Aimbot")
 Cheats:CreateToggle({
     Name = "Aimbot [RIGHT CLICK]",
     CurrentValue = false,
@@ -253,7 +292,7 @@ Cheats:CreateToggle({
     end
 })
 
-Cheats:CreateLabel("FOV")
+Cheats:CreateSection("FOV")
 
 Cheats:CreateSlider({
     Name = "FOV Amount",
@@ -271,8 +310,40 @@ Cheats:CreateButton({
     end
 })
 
+local Chat = Window:CreateTab("💬 Chat")
+
+Chat:CreateInput({
+    Name = "text input",
+    PlaceholderText = "Hello fella",
+    Callback = function(text)
+        chatInput = text
+    end,
+})
+
+Chat:CreateButton({
+    Name = "send message",
+    Callback = function()
+        chatEnabled = true
+        if chatConnection then
+            chatConnection:Disconnect()
+            chatConnection = nil
+        end
+        chatConnection = game:GetService("RunService").Heartbeat:Connect(function()
+            if chatInput ~= "" then
+                if not isLegacyChat then
+                    TextChatService.TextChannels.RBXGeneral:SendAsync(chatInput)
+                else
+                    ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer(chatInput, "All")
+                end
+            end
+            chatConnection:Disconnect()
+            chatConnection = nil
+        end)
+    end,
+})
+
 local Games = Window:CreateTab("🎲 Games")
-Games:CreateLabel("Longest Answer Wins")
+Games:CreateSection("Longest Answer Wins")
 Games:CreateToggle({
     Name = "Auto Answer",
     CurrentValue = false,
@@ -287,54 +358,69 @@ Games:CreateToggle({
     end
 })
 
+Games:CreateSection("Steal a Brainrot")
+Games:CreateToggle({
+    Name = "Anti Knockback",
+    CurrentValue = false,
+    Callback = function(enabled)
+        if enabled then
+            _G.antiKnockbackConn = game:GetService("RunService").Heartbeat:Connect(function()
+                local char = game.Players.LocalPlayer.Character
+                if not char then return end
+                local root = char:FindFirstChild("HumanoidRootPart")
+                local hum = char:FindFirstChildWhichIsA("Humanoid")
+                if root and hum and hum.MoveDirection.Magnitude > 0 then
+                    local moveDir = hum.MoveDirection.Unit
+                    local speed = 40
+                    local currentVel = root.AssemblyLinearVelocity
+                    root.AssemblyLinearVelocity = Vector3.new(moveDir.X * speed, currentVel.Y, moveDir.Z * speed)
+                elseif root then
+                    local currentVel = root.AssemblyLinearVelocity
+                    root.AssemblyLinearVelocity = Vector3.new(0, currentVel.Y, 0)
+                end
+            end)
+        else
+            if _G.antiKnockbackConn then
+                _G.antiKnockbackConn:Disconnect()
+                _G.antiKnockbackConn = nil
+            end
+        end
+    end
+})
+
+Games:CreateSlider({
+    Name = "Undetected Speed",
+    Range = {0, 100},
+    Increment = 1,
+    Suffix = " studs",
+    CurrentValue = 0,
+    Callback = function(speed)
+        if _G.antiKnockbackConn then
+            _G.antiKnockbackConn:Disconnect()
+            _G.antiKnockbackConn = nil
+        end
+        if speed > 0 then
+            _G.antiKnockbackConn = game:GetService("RunService").Heartbeat:Connect(function()
+                local char = game.Players.LocalPlayer.Character
+                if not char then return end
+                local root = char:FindFirstChild("HumanoidRootPart")
+                local hum = char:FindFirstChildWhichIsA("Humanoid")
+                if root and hum and hum.MoveDirection.Magnitude > 0 then
+                    local moveDir = hum.MoveDirection.Unit
+                    root.Velocity = Vector3.new(moveDir.X * speed, root.Velocity.Y, moveDir.Z * speed)
+                elseif root then
+                    root.Velocity = Vector3.new(0, root.Velocity.Y, 0)
+                end
+            end)
+        end
+    end
+})
+
 Games:CreateButton({Name = "Answer", Info = "Sends all answers", Callback = function() submitAnswers() end})
 
 local Visual = Window:CreateTab("👀 Visual")
 
-Cheats:CreateToggle({
-    Name = "Bone ESP",
-    CurrentValue = false,
-    Callback = function(state)
-        local data = getgenv().chroma_boneesp
-        data.enabled = state
-        if state then
-            for _, plr in ipairs(Players:GetPlayers()) do
-                if plr ~= LocalPlayer then
-                    spawn(function()
-                        if plr.Character then
-                            buildBonesForPlayer(plr)
-                        else
-                            data.playerCharConns[plr] = plr.CharacterAdded:Connect(function()
-                                if data.enabled then buildBonesForPlayer(plr) end
-                            end)
-                        end
-                    end)
-                end
-            end
-            if not data.addedConn then
-                data.addedConn = Players.PlayerAdded:Connect(function(plr)
-                    if plr == LocalPlayer then return end
-                    data.playerCharConns[plr] = plr.CharacterAdded:Connect(function()
-                        if data.enabled then buildBonesForPlayer(plr) end
-                    end)
-                    if plr.Character and data.enabled then buildBonesForPlayer(plr) end
-                end)
-            end
-            if not data.removedConn then
-                data.removedConn = Players.PlayerRemoving:Connect(function(plr)
-                    removePlayerESP(plr)
-                end)
-            end
-        else
-            if data.addedConn then pcall(function() data.addedConn:Disconnect() end) data.addedConn = nil end
-            if data.removedConn then pcall(function() data.removedConn:Disconnect() end) data.removedConn = nil end
-            for plr, _ in pairs(data.playerLines) do removePlayerESP(plr) end
-            data.playerLines = {}
-            data.playerConns = {}
-            data.playerCharConns = {}
-        end
-    end
-})
+
 
 local Misc = Window:CreateTab("📝 Misc")
 Misc:CreateButton({
@@ -345,6 +431,66 @@ Misc:CreateButton({
 })
 
 local OP = Window:CreateTab("🤫 OP")
+OP:CreateSection("Player")
+
+OP:CreateToggle({
+    Name = "Anti Knockback",
+    CurrentValue = false,
+    Callback = function(enabled)
+        if enabled then
+            _G.antiKnockbackConn = game:GetService("RunService").Heartbeat:Connect(function()
+                local char = game.Players.LocalPlayer.Character
+                if not char then return end
+                local root = char:FindFirstChild("HumanoidRootPart")
+                local hum = char:FindFirstChildWhichIsA("Humanoid")
+                if root and hum and hum.MoveDirection.Magnitude > 0 then
+                    local moveDir = hum.MoveDirection.Unit
+                    local speed = 40
+                    local currentVel = root.AssemblyLinearVelocity
+                    root.AssemblyLinearVelocity = Vector3.new(moveDir.X * speed, currentVel.Y, moveDir.Z * speed)
+                elseif root then
+                    local currentVel = root.AssemblyLinearVelocity
+                    root.AssemblyLinearVelocity = Vector3.new(0, currentVel.Y, 0)
+                end
+            end)
+        else
+            if _G.antiKnockbackConn then
+                _G.antiKnockbackConn:Disconnect()
+                _G.antiKnockbackConn = nil
+            end
+        end
+    end
+})
+
+OP:CreateSlider({
+    Name = "Undetected Speed",
+    Range = {0, 100},
+    Increment = 1,
+    Suffix = " studs",
+    CurrentValue = 0,
+    Callback = function(speed)
+        if _G.antiKnockbackConn then
+            _G.antiKnockbackConn:Disconnect()
+            _G.antiKnockbackConn = nil
+        end
+        if speed > 0 then
+            _G.antiKnockbackConn = game:GetService("RunService").Heartbeat:Connect(function()
+                local char = game.Players.LocalPlayer.Character
+                if not char then return end
+                local root = char:FindFirstChild("HumanoidRootPart")
+                local hum = char:FindFirstChildWhichIsA("Humanoid")
+                if root and hum and hum.MoveDirection.Magnitude > 0 then
+                    local moveDir = hum.MoveDirection.Unit
+                    root.Velocity = Vector3.new(moveDir.X * speed, root.Velocity.Y, moveDir.Z * speed)
+                elseif root then
+                    root.Velocity = Vector3.new(0, root.Velocity.Y, 0)
+                end
+            end)
+        end
+    end
+})
+
+OP:CreateSection("Misc")
 OP:CreateButton({Name = "Unsuspend VC", Info = "If VC banned, unsuspends your voice chat.", Callback = function() game:GetService("VoiceChatService"):joinVoice() end})
 
 local Scripts = Window:CreateTab("📎 Scripts")
