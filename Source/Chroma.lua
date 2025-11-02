@@ -120,13 +120,13 @@ local function submitAnswers()
     end
 end
 
-local Movement = Window:CreateTab("Movement")
+local Movement = Window:CreateTab("🎮 Movement")
 Movement:CreateSlider({Name = "WalkSpeed", Range = {0,500}, Increment = 5, CurrentValue = Humanoid.WalkSpeed, Callback = function(value) Humanoid.WalkSpeed = value end})
 Movement:CreateSlider({Name = "Jump Power", Range = {0,500}, Increment = 5, CurrentValue = Humanoid.JumpPower, Callback = function(value) Humanoid.JumpPower = value end})
 Movement:CreateButton({Name = "Reset Walkspeed", Callback = function() Humanoid.WalkSpeed = defaultWalkSpeed end})
 Movement:CreateButton({Name = "Reset Jump Power", Callback = function() Humanoid.JumpPower = defaultJumpPower end})
 
-local Cheats = Window:CreateTab("Cheats")
+local Cheats = Window:CreateTab("🎯 Cheats")
 Cheats:CreateToggle({
     Name = "Aimbot [RIGHT CLICK]",
     CurrentValue = false,
@@ -163,10 +163,10 @@ Cheats:CreateToggle({
     end
 })
 
-local Voice = Window:CreateTab("VC")
+local Voice = Window:CreateTab("🤫 OP")
 Voice:CreateButton({Name = "Unsuspend VC", Info = "If VC banned, unsuspends your voice chat.", Callback = function() game:GetService("VoiceChatService"):joinVoice() end})
 
-local Games = Window:CreateTab("Games")
+local Games = Window:CreateTab("🎲 Games")
 Games:CreateLabel("Longest Answer Wins")
 Games:CreateToggle({
     Name = "Auto Answer",
@@ -183,3 +183,35 @@ Games:CreateToggle({
 })
 
 Games:CreateButton({Name = "Answer", Info = "Sends all answers", Callback = function() submitAnswers() end})
+
+local Misc = Window:CreateTab("📝 Misc")
+Misc:CreateButton({
+    Name = "Anti AFK",
+    Info = "Prevents being kicked for idling",
+    Callback = function()
+        local y = (game:GetService("Players")).LocalPlayer
+        local J = game:GetService("VirtualUser")
+        if getconnections then
+            for _, conn in ipairs(getconnections(y.Idled)) do
+                if conn.Disable then
+                    conn:Disable()
+                else
+                    conn:Disconnect()
+                end
+            end
+        else
+            task.spawn(function()
+                while true do
+                    J:CaptureController()
+                    J:ClickButton2(Vector2.new())
+                    task.wait(1)
+                end
+            end)
+        end
+    end
+})
+
+local Scripts = Window:CreateTab("📎 Scripts")
+
+Scripts:CreateButton({Name = "Update Chroma", Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/asteroidlordfr/Chroma/main/Source/Chroma.lua"))() end})
+Scripts:CreateButton({Name = "Infinite Yield", Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))() end})
