@@ -71,33 +71,35 @@ Answers = loadAnswers("https://raw.githubusercontent.com/asteroidlordfr/Chroma/m
 local function getClosestPlayer()
     local closestDist = math.huge
     local target
-    local mouse = LocalPlayer:GetMouse()
+    local localPlayer = game.Players.LocalPlayer
+    local players = game.Players
     local teamCount = 0
     local playerTeams = {}
-    for _, p in pairs(Players:GetPlayers()) do
+    for _, p in pairs(players:GetPlayers()) do
         if p.Team then 
             playerTeams[p.Team] = true
         end
     end
     for _ in pairs(playerTeams) do teamCount = teamCount + 1 end
     local ffa = (teamCount <= 1)
-    for _, plr in pairs(Players:GetPlayers()) do
-        if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("Head") then
+    for _, plr in pairs(players:GetPlayers()) do
+        if plr ~= localPlayer and plr.Character and plr.Character:FindFirstChild("Head") then
             local humanoid = plr.Character:FindFirstChild("Humanoid")
             if humanoid and humanoid.Health > 0 then
-                if teamCheck and not ffa and plr.Team == LocalPlayer.Team then continue end
+                if teamCheck and not ffa and plr.Team == localPlayer.Team then continue end
                 if wallCheck then
                     local origin = workspace.CurrentCamera.CFrame.Position
                     local direction = (plr.Character.Head.Position - origin)
                     local raycastParams = RaycastParams.new()
-                    raycastParams.FilterDescendantsInstances = {LocalPlayer.Character}
+                    raycastParams.FilterDescendantsInstances = {localPlayer.Character}
                     raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
                     local raycast = workspace:Raycast(origin, direction, raycastParams)
                     if raycast and not raycast.Instance:IsDescendantOf(plr.Character) then continue end
                 end
-                local pos, onScreen = workspace.CurrentCamera:WorldToViewportPoint(plr.Character.Head.Position)
-                if onScreen then
-                    local dist = (Vector2.new(pos.X, pos.Y) - Vector2.new(mouse.X, mouse.Y)).Magnitude
+                local root = plr.Character:FindFirstChild("HumanoidRootPart") or plr.Character:FindFirstChild("Head")
+                local localRoot = localPlayer.Character and (localPlayer.Character:FindFirstChild("HumanoidRootPart") or localPlayer.Character:FindFirstChild("Head"))
+                if root and localRoot then
+                    local dist = (localRoot.Position - root.Position).Magnitude
                     if dist < closestDist then
                         closestDist = dist
                         target = plr
