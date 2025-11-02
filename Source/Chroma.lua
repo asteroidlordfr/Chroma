@@ -31,6 +31,37 @@ local wallCheck = false
 local teamCheck = false
 local defaultFOV = workspace.CurrentCamera.FieldOfView
 local antiAfkEnabled = false
+local boneESPEnabled = false
+local currentRigs = {}
+
+local function createBones(plr)
+    if not plr.Character then return end
+    local bones = {"Head","UpperTorso","LowerTorso","LeftUpperArm","LeftLowerArm","LeftHand","RightUpperArm","RightLowerArm","RightHand","LeftUpperLeg","LeftLowerLeg","LeftFoot","RightUpperLeg","RightLowerLeg","RightFoot"}
+    local lines = {}
+    local cam = workspace.CurrentCamera
+    for i = 1, #bones-1 do
+        local part1 = plr.Character:FindFirstChild(bones[i])
+        local part2 = plr.Character:FindFirstChild(bones[i+1])
+        if part1 and part2 then
+            local line = Drawing.new("Line")
+            line.Color = Color3.fromRGB(255,0,0)
+            line.Thickness = 2
+            line.Transparency = 1
+            table.insert(lines, {line=line, p1=part1, p2=part2})
+        end
+    end
+    table.insert(currentRigs, RunService.RenderStepped:Connect(function()
+        for _, data in ipairs(lines) do
+            if data.p1 and data.p2 then
+                local p1pos, onScreen1 = cam:WorldToViewportPoint(data.p1.Position)
+                local p2pos, onScreen2 = cam:WorldToViewportPoint(data.p2.Position)
+                data.line.Visible = onScreen1 and onScreen2
+                data.line.From = Vector2.new(p1pos.X,p1pos.Y)
+                data.line.To = Vector2.new(p2pos.X,p2pos.Y)
+            end
+        end
+    end))
+end
 
 local function loadAnswers(url)
     local success, response = pcall(function()
@@ -184,9 +215,6 @@ Cheats:CreateButton({
     end
 })
 
-local Voice = Window:CreateTab("🤫 OP")
-Voice:CreateButton({Name = "Unsuspend VC", Info = "If VC banned, unsuspends your voice chat.", Callback = function() game:GetService("VoiceChatService"):joinVoice() end})
-
 local Games = Window:CreateTab("🎲 Games")
 Games:CreateLabel("Longest Answer Wins")
 Games:CreateToggle({
@@ -205,35 +233,30 @@ Games:CreateToggle({
 
 Games:CreateButton({Name = "Answer", Info = "Sends all answers", Callback = function() submitAnswers() end})
 
-local Misc = Window:CreateTab("📝 Misc")
-Misc:CreateToggle({
-    Name = "Anti AFK",
+local Visual = Window:CreateTab("👀 Visual")
+
+Visual:CreateToggle({
+    Name = "Bone ESP",
     CurrentValue = false,
     Callback = function(state)
-        antiAfkEnabled = state
-        if state then
-            local y = (game:GetService("Players")).LocalPlayer
-            local J = game:GetService("VirtualUser")
-            if getconnections then
-                for _, conn in ipairs(getconnections(y.Idled)) do
-                    if conn.Disable then
-                        conn:Disable()
-                    else
-                        conn:Disconnect()
-                    end
+        boneESPEnabled = state
+        for _, conn in ipairs(currentRigs) do conn:Disconnect() end
+        currentRigs = {}
+        if boneESPEnabled then
+            for _, plr in pairs(Players:GetPlayers()) do
+                if plr ~= LocalPlayer then
+                    createBones(plr)
                 end
-            else
-                task.spawn(function()
-                    while antiAfkEnabled do
-                        J:CaptureController()
-                        J:ClickButton2(Vector2.new())
-                        task.wait(1)
-                    end
-                end)
             end
         end
     end
 })
+
+local Misc = Window:CreateTab("📝 Misc")
+-- I'll add stuff later, i added Anti AFK but it was detected and you'd get kicked
+
+local OP = Window:CreateTab("🤫 OP")
+OP:CreateButton({Name = "Unsuspend VC", Info = "If VC banned, unsuspends your voice chat.", Callback = function() game:GetService("VoiceChatService"):joinVoice() end})
 
 local Scripts = Window:CreateTab("📎 Scripts")
 
