@@ -1,4 +1,4 @@
-local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/asteroidlordfr/Chroma/main/Source/Rayfield.lua'))()
+local Library = loadstring(game:HttpGet('https://raw.githubusercontent.com/asteroidlordfr/Chroma/main/Source/Rayfield.lua'))()
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ReplicaSignal
 if ReplicatedStorage:FindFirstChild("ReplicaRemoteEvents") and ReplicatedStorage.ReplicaRemoteEvents:FindFirstChild("Replica_ReplicaSignal") then
@@ -17,7 +17,7 @@ local function sendAllAnswers()
     end
 end
 
-local Window = Rayfield:CreateWindow({
+local Window = Library:CreateWindow({
    Name = "Chroma",
    LoadingTitle = "Open-sourced Roblox universal cheat.",
    LoadingSubtitle = "Licensed under GPLv3",
@@ -46,9 +46,7 @@ Credits:CreateButton({
 })
 
 local Games = Window:CreateTab("Games")
-Games:CreateSection({
-    Name = "Type or Die",
-})
+Games:CreateLabel("Type or Die")
 
 Games:CreateToggle({
     Name = "Auto Answer",
