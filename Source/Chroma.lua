@@ -418,7 +418,120 @@ Games:CreateButton({Name = "Answer", Info = "Sends all answers", Callback = func
 
 local Visual = Window:CreateTab("👀 Visual")
 
+Visual:CreateToggle({
+    Name = "Bone ESP",
+    CurrentValue = false,
+    Callback = function(state)
+        boneEspEnabled = state
+        local RunService = game:GetService("RunService")
+        local players = game:GetService("Players")
 
+        if boneEspEnabled then
+            boneEspLines = {}
+
+            local function createLine(part0, part1)
+                local line = Drawing.new("Line")
+                line.Transparency = 1
+                line.Color = Color3.new(1, 0, 0)
+                line.Thickness = 2
+                line.From = Vector2.new(0,0)
+                line.To = Vector2.new(0,0)
+                return line, part0, part1
+            end
+
+            local function get2DPos(position, camera)
+                local pos, onScreen = camera:WorldToViewportPoint(position)
+                if onScreen then
+                    return Vector2.new(pos.X, pos.Y), true
+                else
+                    return Vector2.new(), false
+                end
+            end
+
+            local camera = workspace.CurrentCamera
+
+            local function update()
+                for player, data in pairs(boneEspLines) do
+                    if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then
+                        for _, line in pairs(data.lines) do
+                            line:Remove()
+                        end
+                        boneEspLines[player] = nil
+                    end
+                end
+
+                for _, player in pairs(players:GetPlayers()) do
+                    if player ~= players.LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                        local char = player.Character
+                        local joints = {
+                            {"Head", "UpperTorso"},
+                            {"UpperTorso", "LowerTorso"},
+                            {"LowerTorso", "LeftUpperLeg"},
+                            {"LeftUpperLeg", "LeftLowerLeg"},
+                            {"LeftLowerLeg", "LeftFoot"},
+                            {"LowerTorso", "RightUpperLeg"},
+                            {"RightUpperLeg", "RightLowerLeg"},
+                            {"RightLowerLeg", "RightFoot"},
+                            {"UpperTorso", "LeftUpperArm"},
+                            {"LeftUpperArm", "LeftLowerArm"},
+                            {"LeftLowerArm", "LeftHand"},
+                            {"UpperTorso", "RightUpperArm"},
+                            {"RightUpperArm", "RightLowerArm"},
+                            {"RightLowerArm", "RightHand"},
+                        }
+
+                        if not boneEspLines[player] then
+                            boneEspLines[player] = {lines = {}}
+                            for _, joint in pairs(joints) do
+                                local line, part0, part1 = createLine(joint[1], joint[2])
+                                table.insert(boneEspLines[player].lines, line)
+                            end
+                        end
+
+                        for i, joint in pairs(joints) do
+                            local part0 = char:FindFirstChild(joint[1])
+                            local part1 = char:FindFirstChild(joint[2])
+                            local line = boneEspLines[player].lines[i]
+                            if part0 and part1 then
+                                local pos0, onScreen0 = get2DPos(part0.Position, camera)
+                                local pos1, onScreen1 = get2DPos(part1.Position, camera)
+                                if onScreen0 and onScreen1 then
+                                    line.From = pos0
+                                    line.To = pos1
+                                    line.Visible = true
+                                else
+                                    line.Visible = false
+                                end
+                            else
+                                line.Visible = false
+                            end
+                        end
+                    elseif boneEspLines[player] then
+                        for _, line in pairs(boneEspLines[player].lines) do
+                            line:Remove()
+                        end
+                        boneEspLines[player] = nil
+                    end
+                end
+            end
+
+            boneEspConnection = RunService.RenderStepped:Connect(update)
+        else
+            if boneEspConnection then
+                boneEspConnection:Disconnect()
+                boneEspConnection = nil
+            end
+            if boneEspLines then
+                for _, data in pairs(boneEspLines) do
+                    for _, line in pairs(data.lines) do
+                        line:Remove()
+                    end
+                end
+                boneEspLines = nil
+            end
+        end
+    end,
+})
 
 local Misc = Window:CreateTab("📝 Misc")
 Misc:CreateButton({
