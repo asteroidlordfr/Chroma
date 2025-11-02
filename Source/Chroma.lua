@@ -1,19 +1,8 @@
---[
--- Chroma
---
--- A open-source Roblox Universal tool to tweak your gameplay to the max.
--- This code is licensed under the GNU General Public License (V3)
---
--- Have fun!
--- (Yes yes, some yes is GPT but only i'd say only 15/100 is GPT as I don't know much Lua.)
---]
-
 local Library = loadstring(game:HttpGet('https://raw.githubusercontent.com/asteroidlordfr/Chroma/main/Source/Library.lua'))()
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-local HRP = Character:WaitForChild("HumanoidRootPart")
-local bv
+local Humanoid = Character:WaitForChild("Humanoid")
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ReplicaSignal
@@ -21,6 +10,8 @@ if ReplicatedStorage:FindFirstChild("ReplicaRemoteEvents") and ReplicatedStorage
     ReplicaSignal = ReplicatedStorage.ReplicaRemoteEvents.Replica_ReplicaSignal
 end
 
+local defaultWalkSpeed = 16
+local defaultJumpPower = 50
 local AnswersSent = false
 local Answers = {"treadmill","samsung","leopard","multiple","rectangle","americanfootball","wednesday","weddingdress","knife","Master bedroom","Cable stripping machine","Philip Sherman","The Great Wall of China","Michael Jordan","Girl With A Pearl Earring","Invincibility","Rectangular prism","Steering wheel","Daily dose of internet","Taking out the trash","scientific calculator","Tamago kake gohan","Amazon Prime Video","inflatable party decorations","Police Car","precious gemstone","sportswear","Air Conditioning","Flight Attendancy","Fire Extinguishers","red light green light","Physical Education","Sour Patch kids","hide and seek","Chocolate Chip Cookie Dough Ice Cream","Anna Sophia","Magdalena","Trinity","Patrick","explore the outdoors","Baby Princess Rosalina","Metallic Gasoline Blue Green","Playing with controlling toys","Malfunctioning Playstation Controller","Duke of Weselton","Waste","Buttercup","Granddaughter","Multipurpose Permanent Marker","Professional Development","Microwave Oven","Washing Machine","compression stockings","smoothie","Interactive whiteboard","Medium Density Fiberboard","Tent pole repair sleeve","International Space Station","Health Insurance","Burrowing Owl","Professional Racketball","Stand up Paddleboarding","Volcanic Eruption","Fairy Godmothers","Statistics and Probability","advanced interactive multidimensional modeling system","Identification Card","Limestone Egyptian Waterclock","Joystick controller","Baby Princess Rosalina","Chocolate Ice Cream Sandwich","Stand Up Paddleboarding","Mozzarella Cheese","Stand Up Paddleboarding","United States of America","Super Mario Brothers","Great White Shark","Pomegranate","Flat screen television","Wheel barrow","Centimeter","Dumbells","Christopher Robin","Sweet Potato","Cherry Blossom","Hippopotomonstrosesquippedaliophobia","Vitamin B12","gaming chair","Saxophone","Wisdom Teeth","Harley Quinn","Frozen Water Bottle","Hermit Crab","Galapagos tortoise","Mountain Everest","Macadamia Nuts","flower","rock","americancheese","steak","pig","angry","taylorswift","kreekcraft","refrigerator handle","Electric Bass Guitar","Rubber Duckie","German","colacola","apple","lemonade","toiletpaper","headphone","captainamerica","facebook","strawberry","mouth","television","united states of america","Construction","Condensed Milk","Cumulonimbus"}
 
@@ -31,19 +22,6 @@ local function submitAnswers()
         ReplicaSignal:FireServer(unpack(args))
     end
 end
-
-local function Speed(force)
-    if not bv then
-        bv = Instance.new("BodyVelocity")
-        bv.MaxForce = Vector3.new(1e5,0,1e5)
-        bv.Velocity = Vector3.new(0,0,0)
-        bv.P = 1e4
-        bv.Parent = HRP
-    end
-    bv.Velocity = HRP.CFrame.LookVector * force
-end
-
--- Yay no more functions or variables
 
 local Window = Library:CreateWindow({
    Name = "🟢 Chroma",
@@ -58,27 +36,40 @@ local Window = Library:CreateWindow({
    KeySystem = false,
 })
 
--- Modules below
-
 local Movement = Window:CreateTab("Movement")
-Movement:CreateLabel("Speed")
+Movement:CreateLabel("Player")
 
 Movement:CreateSlider({
-    Name = "Speed",
+    Name = "WalkSpeed",
     Range = {0,500},
     Increment = 5,
-    CurrentValue = 0,
+    CurrentValue = Humanoid.WalkSpeed,
     Callback = function(value)
-        Speed(value)
+        Humanoid.WalkSpeed = value
     end
 })
 
 Movement:CreateButton({
-    Name = "Reset Speed",
+    Name = "Reset WalkSpeed",
     Callback = function()
-        if bv then
-            bv.Velocity = Vector3.new(0,0,0)
-        end
+        Humanoid.WalkSpeed = defaultWalkSpeed
+    end
+})
+
+Movement:CreateSlider({
+    Name = "Jump Power",
+    Range = {0,500},
+    Increment = 5,
+    CurrentValue = Humanoid.JumpPower,
+    Callback = function(value)
+        Humanoid.JumpPower = value
+    end
+})
+
+Movement:CreateButton({
+    Name = "Reset JumpPower",
+    Callback = function()
+        Humanoid.JumpPower = defaultJumpPower
     end
 })
 
