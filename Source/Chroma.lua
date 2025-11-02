@@ -5,7 +5,7 @@
 -- This code is licensed under the GNU General Public License (V3)
 --
 -- Have fun!
--- (Yes yes, some yes is GPT but only i'd say only 15/100 is GPT as I don't know much Lua.)
+-- (Yes yes, some of this code is GPT but only i'd say only 15/100 is GPT as I don't know much Lua.)
 --]
 
 local Library = loadstring(game:HttpGet('https://raw.githubusercontent.com/asteroidlordfr/Chroma/main/Source/Library.lua'))()
@@ -29,6 +29,7 @@ local aimbotEnabled = false
 local aimbotRightClick = false
 local wallCheck = false
 local teamCheck = false
+local defaultFOV = workspace.CurrentCamera.FieldOfView
 local antiAfkEnabled = false
 
 local function loadAnswers(url)
@@ -128,6 +129,7 @@ Movement:CreateButton({Name = "Reset Walkspeed", Callback = function() Humanoid.
 Movement:CreateButton({Name = "Reset Jump Power", Callback = function() Humanoid.JumpPower = defaultJumpPower end})
 
 local Cheats = Window:CreateTab("🎯 Cheats")
+Cheats:CreateLabel("Aimbot")
 Cheats:CreateToggle({
     Name = "Aimbot [RIGHT CLICK]",
     CurrentValue = false,
@@ -161,6 +163,24 @@ Cheats:CreateToggle({
     CurrentValue = teamCheck,
     Callback = function(state)
         teamCheck = state
+    end
+})
+
+Cheats:CreateLabel("FOV")
+
+Cheats:CreateSlider({
+    Name = "FOV Amount",
+    Range = {1, 120},
+    Increment = 1,
+    CurrentValue = defaultFOV,
+    Callback = function(value)
+        workspace.CurrentCamera.FieldOfView = value
+    end
+})
+Cheats:CreateButton({
+    Name = "Reset FOV",
+    Callback = function()
+        workspace.CurrentCamera.FieldOfView = defaultFOV
     end
 })
 
