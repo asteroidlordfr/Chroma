@@ -35,11 +35,15 @@ local function getClosestPlayer()
     local closestDist = math.huge
     local target
     local mouse = LocalPlayer:GetMouse()
-    local teams = {}
+    local teamCount = 0
+    local playerTeams = {}
     for _, p in pairs(Players:GetPlayers()) do
-        if p.Team then teams[p.Team] = true end
+        if p.Team then 
+            playerTeams[p.Team] = true
+        end
     end
-    local ffa = (table.concat(teams) == "") or (table.getn(teams) == 1)
+    for _ in pairs(playerTeams) do teamCount = teamCount + 1 end
+    local ffa = (teamCount <= 1)
     for _, plr in pairs(Players:GetPlayers()) do
         if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("Head") then
             local humanoid = plr.Character:FindFirstChild("Humanoid")
@@ -48,8 +52,11 @@ local function getClosestPlayer()
                 if wallCheck then
                     local origin = workspace.CurrentCamera.CFrame.Position
                     local direction = (plr.Character.Head.Position - origin)
-                    local raycast = workspace:Raycast(origin, direction, {LocalPlayer.Character})
-                    if raycast and raycast.Instance:IsDescendantOf(plr.Character) == false then continue end
+                    local raycastParams = RaycastParams.new()
+                    raycastParams.FilterDescendantsInstances = {LocalPlayer.Character}
+                    raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+                    local raycast = workspace:Raycast(origin, direction, raycastParams)
+                    if raycast and not raycast.Instance:IsDescendantOf(plr.Character) then continue end
                 end
                 local pos, onScreen = workspace.CurrentCamera:WorldToViewportPoint(plr.Character.Head.Position)
                 if onScreen then
@@ -141,9 +148,6 @@ Cheats:CreateToggle({
 
 local Voice = Window:CreateTab("VC")
 Voice:CreateButton({Name = "Unsuspend VC", Info = "If VC banned, unsuspends your voice chat.", Callback = function() game:GetService("VoiceChatService"):joinVoice() end})
-
-local Credits = Window:CreateTab("Credits")
-Credits:CreateButton({Name = "AsteroidLord", Info = "Owner and Developer of Chroma", Callback = function() end})
 
 local Games = Window:CreateTab("Games")
 Games:CreateLabel("Longest Answer Wins")
