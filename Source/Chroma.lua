@@ -46,7 +46,7 @@ Credits:CreateButton({
 })
 
 local Games = Window:CreateTab("Games")
-Games:CreateLabel("Type or Die")
+Games:CreateLabel("Longest Answer Wins")
 
 Games:CreateToggle({
     Name = "Auto Answer",
