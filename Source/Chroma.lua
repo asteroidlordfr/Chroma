@@ -16,6 +16,7 @@ local Humanoid = Character:WaitForChild("Humanoid")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local workspace = workspace
+local Camera = workspace.CurrentCamera
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ReplicaSignal
 if ReplicatedStorage:FindFirstChild("ReplicaRemoteEvents") and ReplicatedStorage.ReplicaRemoteEvents:FindFirstChild("Replica_ReplicaSignal") then
@@ -32,6 +33,7 @@ local teamCheck = false
 local defaultFOV = workspace.CurrentCamera.FieldOfView
 local antiAfkEnabled = false
 local chatInput = ""
+local aimbotSmoothing = 10
 local chatEnabled = false
 local chatConnection
 local CFspeed = 50
@@ -49,6 +51,17 @@ local speed = 50
 local defaultGravity = workspace.Gravity or 196.2
 local cycleTimes = {6, 12, 18, 0}
 local currentIndex = 1
+local aimbotConnection
+local fovCircle = Drawing.new("Circle")
+local fov = 120
+local smoothing = 10
+local showFovCircle = true
+
+fovCircle.Visible = false
+fovCircle.Color = Color3.fromRGB(255,255,255)
+fovCircle.Thickness = 1
+fovCircle.NumSides = 64
+fovCircle.Filled = false
 
 local function loadAnswers(url)
     local success, response = pcall(function()
@@ -112,15 +125,30 @@ local function getClosestPlayer()
 end
 
 local aimbotConnection
-local function toggleAimbot(enable)
-    if aimbotConnection then aimbotConnection:Disconnect() aimbotConnection = nil end
+function toggleAimbot(enable)
+    if aimbotConnection then
+        aimbotConnection:Disconnect()
+        aimbotConnection = nil
+    end
     if enable then
-        aimbotConnection = RunService.RenderStepped:Connect(function()
-            if aimbotRightClick and not UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then return end
+        aimbotConnection = game:GetService("RunService").RenderStepped:Connect(function()
+            local UserInputService = game:GetService("UserInputService")
+            local RunService = game:GetService("RunService")
+            local Camera = workspace.CurrentCamera
+            local LocalPlayer = game.Players.LocalPlayer
             local target = getClosestPlayer()
+            local mousePos = UserInputService:GetMouseLocation()
+            fovCircle.Visible = fovCircleVisible and enable
+            fovCircle.Position = mousePos
+            fovCircle.Radius = 120
+            if aimbotRightClick and not UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then return end
             if target and target.Character and target.Character:FindFirstChild("Head") then
-                local cam = workspace.CurrentCamera
-                cam.CFrame = CFrame.new(cam.CFrame.Position, target.Character.Head.Position)
+                local targetPos = target.Character.Head.Position
+                local camPos = Camera.CFrame.Position
+                local lookVector = (targetPos - camPos).Unit
+                local currentCFrame = Camera.CFrame
+                local smoothed = currentCFrame:Lerp(CFrame.new(camPos, camPos + lookVector), aimbotSmoothing / 100)
+                Camera.CFrame = smoothed
             end
         end)
     end
@@ -490,6 +518,27 @@ Cheats:CreateToggle({
         toggleAimbot(state or aimbotRightClick)
     end
 })
+
+Cheats:CreateSlider({
+    Name = "Aim Smoothing",
+    Range = {1, 100},
+    Increment = 1,
+    CurrentValue = aimbotSmoothing,
+    Callback = function(val)
+        aimbotSmoothing = val
+    end
+})
+
+Cheats:CreateToggle({
+    Name = "Show FOV Circle",
+    CurrentValue = true,
+    Callback = function(state)
+        showFovCircle = state
+        fovCircle.Visible = state and (aimbotEnabled or aimbotRightClick)
+    end
+})
+
+Cheats:CreateSection("Aimbot - Checks")
 
 Cheats:CreateToggle({
     Name = "Wall Check",
