@@ -62,14 +62,9 @@ local Window = Library:CreateWindow({
 -- Modules below
 
 local Movement = Window:CreateTab("Movement")
+Movement:CreateLabel("Speed")
 
-local speedDropdown = Movement:CreateDropdown({
-    Name = "Speed",
-    Options = {"Speed"},
-    Callback = function(option) end
-})
-
-speedDropdown:CreateSlider({
+Movement:CreateSlider({
     Name = "Speed",
     Range = {0,500},
     Increment = 5,
@@ -79,7 +74,7 @@ speedDropdown:CreateSlider({
     end
 })
 
-speedDropdown:CreateButton({
+Movement:CreateButton({
     Name = "Reset Speed",
     Callback = function()
         if bv then
@@ -87,8 +82,6 @@ speedDropdown:CreateButton({
         end
     end
 })
-
--- I have no clue if you can puta slider in a dropdown but we are about to find out
 
 local Voice = Window:CreateTab("VC")
 Voice:CreateButton({
