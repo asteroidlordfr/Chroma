@@ -660,100 +660,36 @@ Visual:CreateToggle({
     Name = "FPS Boost",
     CurrentValue = false,
     Callback = function(enabled)
+        local lighting = game.Lighting
         if enabled then
-            _G.originalSettings = {
-                GlobalShadows = game.Lighting.GlobalShadows,
-                Technology = game.Lighting.Technology
+            _G.fpsBoostBackup = {
+                GlobalShadows = lighting.GlobalShadows,
+                Technology = lighting.Technology,
+                PartSettings = {},
+                Effects = {}
             }
-            game.Lighting.GlobalShadows = false
-            game.Lighting.Technology = Enum.Technology.Compatibility
+            lighting.GlobalShadows = false
+            lighting.Technology = Enum.Technology.Compatibility
             for _, v in ipairs(workspace:GetDescendants()) do
                 if v:IsA("BasePart") then
+                    _G.fpsBoostBackup.PartSettings[v] = v.Material
                     v.Material = Enum.Material.SmoothPlastic
-                elseif v:IsA("ParticleEmitter") or v:IsA("Trail") then
-                    v.Enabled = false
-                elseif v:IsA("PostEffect") then
+                elseif v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("PostEffect") then
+                    _G.fpsBoostBackup.Effects[v] = v.Enabled
                     v.Enabled = false
                 end
             end
         else
-            if _G.originalSettings then
-                game.Lighting.GlobalShadows = _G.originalSettings.GlobalShadows
-                game.Lighting.Technology = _G.originalSettings.Technology
-                _G.originalSettings = nil
-            end
-            for _, v in ipairs(workspace:GetDescendants()) do
-                if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("PostEffect") then
-                    v.Enabled = true
+            if _G.fpsBoostBackup then
+                lighting.GlobalShadows = _G.fpsBoostBackup.GlobalShadows
+                lighting.Technology = _G.fpsBoostBackup.Technology
+                for v, mat in pairs(_G.fpsBoostBackup.PartSettings) do
+                    if v and v.Parent then v.Material = mat end
                 end
-            end
-        end
-    end
-})
-
-Visual:CreateToggle({
-    Name = "RTX",
-    CurrentValue = false,
-    Callback = function(enabled)
-        if enabled then
-            _G.rtxEffects = {}
-
-            local bloom = Instance.new("BloomEffect")
-            bloom.Intensity = 2
-            bloom.Size = 56
-            bloom.Threshold = 0.5
-            bloom.Parent = game.Lighting
-            table.insert(_G.rtxEffects, bloom)
-
-            local sun = Instance.new("SunRaysEffect")
-            sun.Intensity = 0.4
-            sun.Parent = game.Lighting
-            table.insert(_G.rtxEffects, sun)
-
-            local color = Instance.new("ColorCorrectionEffect")
-            color.Brightness = 0.1
-            color.Contrast = 0.2
-            color.Saturation = 0.3
-            color.TintColor = Color3.fromRGB(255, 230, 200)
-            color.Parent = game.Lighting
-            table.insert(_G.rtxEffects, color)
-
-            local depth = Instance.new("DepthOfFieldEffect")
-            depth.FocusDistance = 50
-            depth.InFocusRadius = 30
-            depth.FarIntensity = 0.7
-            depth.NearIntensity = 0.5
-            depth.Parent = game.Lighting
-            table.insert(_G.rtxEffects, depth)
-
-            local blur = Instance.new("BlurEffect")
-            blur.Size = 4
-            blur.Parent = game.Lighting
-            table.insert(_G.rtxEffects, blur)
-
-            local flare = Instance.new("LensFlare")
-            flare.Name = "RTXLensFlare"
-            flare.Position = game.Lighting:FindFirstChildOfClass("SunRaysEffect") and game.Lighting.Sun.Position or Vector3.new(0, 1000, 0)
-            flare.Parent = game.Lighting
-            table.insert(_G.rtxEffects, flare)
-
-            local ao = Instance.new("Atmosphere")
-            ao.Density = 0.4
-            ao.Offset = 0.25
-            ao.Glare = 0.3
-            ao.Haze = 0.3
-            ao.Color = Color3.fromRGB(255, 255, 255)
-            ao.Parent = game.Lighting
-            table.insert(_G.rtxEffects, ao)
-
-        else
-            if _G.rtxEffects then
-                for _, e in ipairs(_G.rtxEffects) do
-                    if e and e.Parent then
-                        e:Destroy()
-                    end
+                for v, state in pairs(_G.fpsBoostBackup.Effects) do
+                    if v and v.Parent then v.Enabled = state end
                 end
-                _G.rtxEffects = nil
+                _G.fpsBoostBackup = nil
             end
         end
     end
