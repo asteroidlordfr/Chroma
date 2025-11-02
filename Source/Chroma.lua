@@ -88,7 +88,6 @@ for _, themeName in ipairs(themeOptions) do
         Name = themeName,
         Callback = function()
             Theme = themeName
-            Window:SetTheme(themeName)
         end
     })
 end
