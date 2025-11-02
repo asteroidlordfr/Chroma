@@ -9,6 +9,13 @@
 --]
 
 local Library = loadstring(game:HttpGet('https://raw.githubusercontent.com/asteroidlordfr/Chroma/main/Source/Library.lua'))()
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local HRP = Character:WaitForChild("HumanoidRootPart")
+local Movement = Window:CreateTab("Movement")
+local bv
+
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ReplicaSignal
 if ReplicatedStorage:FindFirstChild("ReplicaRemoteEvents") and ReplicatedStorage.ReplicaRemoteEvents:FindFirstChild("Replica_ReplicaSignal") then
@@ -26,6 +33,19 @@ local function submitAnswers()
     end
 end
 
+local function Speed(force)
+    if not bv then
+        bv = Instance.new("BodyVelocity")
+        bv.MaxForce = Vector3.new(1e5,0,1e5)
+        bv.Velocity = Vector3.new(0,0,0)
+        bv.P = 1e4
+        bv.Parent = HRP
+    end
+    bv.Velocity = HRP.CFrame.LookVector * force
+end
+
+-- Yay no more functions or variables
+
 local Window = Library:CreateWindow({
    Name = "🟢 Chroma",
    LoadingTitle = "An open-sourced Roblox universal cheat.",
@@ -34,10 +54,41 @@ local Window = Library:CreateWindow({
    ConfigurationSaving = {
       Enabled = true,
       FolderName = nil,
-      FileName = "🟢 Chroma"
+      FileName = "Chroma"
    },
    KeySystem = false,
 })
+
+-- Modules below
+
+local Movement = Window:CreateTab("Movement")
+
+local speedDropdown = Movement:CreateDropdown({
+    Name = "Speed",
+    Options = {"Speed"},
+    Callback = function(option) end
+})
+
+speedDropdown:CreateSlider({
+    Name = "Speed",
+    Range = {0,500},
+    Increment = 5,
+    CurrentValue = 0,
+    Callback = function(value)
+        Speed(value)
+    end
+})
+
+speedDropdown:CreateButton({
+    Name = "Reset Speed",
+    Callback = function()
+        if bv then
+            bv.Velocity = Vector3.new(0,0,0)
+        end
+    end
+})
+
+-- I have no clue if you can puta slider in a dropdown but we are about to find out
 
 local Voice = Window:CreateTab("VC")
 Voice:CreateButton({
