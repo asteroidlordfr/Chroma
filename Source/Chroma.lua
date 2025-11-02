@@ -419,6 +419,138 @@ Games:CreateButton({Name = "Answer", Info = "Sends all answers", Callback = func
 local Visual = Window:CreateTab("👀 Visual")
 
 Visual:CreateToggle({
+    Name = "ESP",
+    CurrentValue = false,
+    Callback = function(state)
+        espEnabled = state
+        if espEnabled then
+            espBoxes = {}
+            espTexts = {}
+
+            local function createBox(part)
+                local box = Instance.new("BoxHandleAdornment")
+                box.Adornee = part
+                box.AlwaysOnTop = true
+                box.ZIndex = 10
+                box.Size = Vector3.new(part.Size.X, 5, part.Size.Z) 
+                box.Color3 = Color3.new(1, 0, 0)
+                box.Transparency = 0.5
+                box.Parent = part
+                return box
+            end
+
+            local function createNameTag(player, part)
+                local billboard = Instance.new("BillboardGui")
+                billboard.Adornee = part
+                billboard.AlwaysOnTop = true
+                billboard.Size = UDim2.new(0, 100, 0, 40)
+                billboard.StudsOffset = Vector3.new(0, 3.5, 0)
+                billboard.Parent = part
+
+                local textLabel = Instance.new("TextLabel")
+                textLabel.BackgroundTransparency = 1
+                textLabel.Text = player.Name
+                textLabel.TextColor3 = Color3.new(1, 0, 0)
+                textLabel.TextStrokeTransparency = 0.5
+                textLabel.Size = UDim2.new(1, 0, 1, 0)
+                textLabel.Font = Enum.Font.SourceSansBold
+                textLabel.TextScaled = true
+                textLabel.Parent = billboard
+
+                return billboard
+            end
+
+            local function updateBoxes()
+                for player, box in pairs(espBoxes) do
+                    local char = player.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if hrp then
+                        box.Adornee = hrp
+                        box.Size = Vector3.new(hrp.Size.X, 5, hrp.Size.Z)
+                        box.Parent = hrp
+                    else
+                        box:Destroy()
+                        espBoxes[player] = nil
+                    end
+                end
+
+                for player, tag in pairs(espTexts) do
+                    local char = player.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if hrp then
+                        tag.Adornee = hrp
+                        tag.Parent = hrp
+                    else
+                        tag:Destroy()
+                        espTexts[player] = nil
+                    end
+                end
+            end
+
+            for _, player in pairs(game:GetService("Players"):GetPlayers()) do
+                if player ~= game.Players.LocalPlayer then
+                    local char = player.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if hrp and not espBoxes[player] then
+                        espBoxes[player] = createBox(hrp)
+                        espTexts[player] = createNameTag(player, hrp)
+                    end
+                end
+            end
+
+            local runConnection
+            runConnection = game:GetService("RunService").Heartbeat:Connect(function()
+                if not espEnabled then
+                    runConnection:Disconnect()
+                    for _, box in pairs(espBoxes) do
+                        box:Destroy()
+                    end
+                    for _, tag in pairs(espTexts) do
+                        tag:Destroy()
+                    end
+                    espBoxes = {}
+                    espTexts = {}
+                    return
+                end
+                updateBoxes()
+            end)
+
+            game:GetService("Players").PlayerAdded:Connect(function(player)
+                if espEnabled and player ~= game.Players.LocalPlayer then
+                    player.CharacterAdded:Connect(function(char)
+                        local hrp = char:WaitForChild("HumanoidRootPart", 5)
+                        if hrp and espEnabled then
+                            espBoxes[player] = createBox(hrp)
+                            espTexts[player] = createNameTag(player, hrp)
+                        end
+                    end)
+                end
+            end)
+
+            game:GetService("Players").PlayerRemoving:Connect(function(player)
+                if espBoxes[player] then
+                    espBoxes[player]:Destroy()
+                    espBoxes[player] = nil
+                end
+                if espTexts[player] then
+                    espTexts[player]:Destroy()
+                    espTexts[player] = nil
+                end
+            end)
+        else
+            for _, box in pairs(espBoxes) do
+                box:Destroy()
+            end
+            for _, tag in pairs(espTexts) do
+                tag:Destroy()
+            end
+            espBoxes = {}
+            espTexts = {}
+        end
+    end,
+})
+
+Visual:CreateToggle({
     Name = "Bone ESP",
     CurrentValue = false,
     Callback = function(state)
