@@ -132,10 +132,8 @@ Movement:CreateSlider({Name = "Walkspeed", Range = {0,500}, Increment = 5, Curre
 Movement:CreateSlider({Name = "Jump Power", Range = {0,500}, Increment = 5, CurrentValue = Humanoid.JumpPower, Callback = function(value) Humanoid.JumpPower = value end})
 Movement:CreateSlider({
     Name = "Gravity",
-    Min = 0,
-    Max = 500,
+    Range = {0,500},
     Increment = 1,
-    Suffix = "gravity",
     CurrentValue = defaultGravity,
     Callback = function(value)
         workspace.Gravity = value
