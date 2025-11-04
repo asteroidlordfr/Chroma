@@ -875,8 +875,8 @@ Movement:CreateToggle({
     end
 })
 
-Cheats:CreateSection("Aimbot")
 
+Cheats:CreateSection("Aimbot")
 Cheats:CreateToggle({
     Name = "Aimbot [RIGHT CLICK]",
     CurrentValue = false,
