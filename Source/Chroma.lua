@@ -121,7 +121,7 @@ Answers = loadAnswers("https://raw.githubusercontent.com/asteroidlordfr/Chroma/m
 -- Back to the function warehouse
 
 local function getClosestPlayer()
-    local closestDist = math.huge
+    local closestDist = math.hugelocal cam = Camera
     local target
     local localPlayer = game.Players.LocalPlayer
     local players = game.Players
@@ -180,10 +180,21 @@ local function toggleAimbot(enable)
             fovCircle.Position = mousePos
             fovCircle.Radius = 120
             if aimbotRightClick and not UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then return end
-            if target and target.Character and target.Character:FindFirstChild("Head") then
-                local cam = Camera
-                cam.CFrame = CFrame.new(cam.CFrame.Position, target.Character.Head.Position)
-            end
+			if target and target.Character then
+			    local cam = Camera
+			    local aimPart = target.Character:FindFirstChild("Head") 
+			    if not aimPart then
+			        for _, part in ipairs(target.Character:GetChildren()) do
+			            if part:IsA("BasePart") then
+			                aimPart = part
+			                break
+			            end
+			        end
+			    end
+			    if aimPart then
+			        cam.CFrame = CFrame.new(cam.CFrame.Position, aimPart.Position)
+			    end
+			end
         end)
     end
 end
@@ -629,16 +640,68 @@ Cheats:CreateToggle({
             _G.triggerbotConnection = nil
         end
 
+        if _G.hitboxConnections then
+            for _, conn in ipairs(_G.hitboxConnections) do
+                conn:Disconnect()
+            end
+            _G.hitboxConnections = nil
+        end
+
+        if _G.hitboxes then
+            for _, box in ipairs(_G.hitboxes) do
+                if box and box.Parent then box:Destroy() end
+            end
+            _G.hitboxes = nil
+        end
+
         if state then
+            local LocalPlayer = game.Players.LocalPlayer
+            local Players = game.Players
+            local RunService = game:GetService("RunService")
+            local VirtualUser = game:GetService("VirtualUser")
+
+            _G.hitboxes = {}
+            _G.hitboxConnections = {}
+
+            local function addHitbox(player)
+                if not player.Character then return end
+                if player.Character:FindFirstChild("HitboxBox") then return end
+                local box = Instance.new("SelectionBox")
+                box.Name = "HitboxBox"
+                box.Adornee = player.Character
+                box.LineThickness = 0.1
+                box.SurfaceTransparency = 0.9
+                box.Parent = player.Character
+                table.insert(_G.hitboxes, box)
+            end
+
+            local function removeHitbox(player)
+                if player.Character and player.Character:FindFirstChild("HitboxBox") then
+                    player.Character.HitboxBox:Destroy()
+                end
+            end
+
+            for _, p in pairs(Players:GetPlayers()) do
+                if p ~= LocalPlayer then addHitbox(p) end
+            end
+
+            table.insert(_G.hitboxConnections, Players.PlayerAdded:Connect(function(p)
+                addHitbox(p)
+            end))
+
+            table.insert(_G.hitboxConnections, Players.PlayerRemoving:Connect(function(p)
+                removeHitbox(p)
+            end))
+
             local lastClick = 0
             _G.triggerbotConnection = RunService.RenderStepped:Connect(function()
                 local now = tick()
                 if now - lastClick < 0.15 then return end
-                lastClick = now
 
                 local mouse = LocalPlayer:GetMouse()
                 local targetPart = mouse.Target
                 if not targetPart then return end
+
                 local targetPlayer = Players:GetPlayerFromCharacter(targetPart:FindFirstAncestorOfClass("Model"))
                 if not targetPlayer or targetPlayer == LocalPlayer then return end
                 local humanoid = targetPlayer.Character and targetPlayer.Character:FindFirstChildOfClass("Humanoid")
@@ -653,6 +716,7 @@ Cheats:CreateToggle({
                 local ffa = (teamCount <= 1)
                 if not ffa and targetPlayer.Team == LocalPlayer.Team then return end
 
+                lastClick = now
                 if type(mouse1click) == "function" then
                     pcall(mouse1click)
                 else
@@ -707,9 +771,11 @@ Cheats:CreateToggle({
                 local head = target.Character:FindFirstChild("Head")
                 if not head then return end
                 if distance > maxPullDist then return end
-                local dir = (head.Position - Camera.CFrame.Position).Unit
-                local newLook = Camera.CFrame.LookVector:Lerp(dir, strength)
-                Camera.CFrame = CFrame.new(Camera.CFrame.Position, Camera.CFrame.Position + newLook)
+				local dir = (head.Position - Camera.CFrame.Position).Unit
+				local pullFactor = strength * (distance / maxPullDist)
+				pullFactor = math.clamp(pullFactor, 0, strength)
+				local newLook = Camera.CFrame.LookVector:Lerp(dir, pullFactor)
+				Camera.CFrame = CFrame.new(Camera.CFrame.Position, Camera.CFrame.Position + newLook)
             end)
         end
     end
