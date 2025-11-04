@@ -32,8 +32,13 @@ end
 
 local PlaceBlock = (ReplicatedStorage:FindFirstChild("Remotes") and ReplicatedStorage.Remotes:FindFirstChild("PlaceBlock")) -- this is for Voxels
 local voxels = {}
-local spawnedBlocks = {}
 local circleRadius = 20
+
+local spawnedBlocks = {
+	PerfectCircle = {},
+	PlankSpammer = {},
+	PlankTower = {}
+}
 
 -- Below is Plants vs Brainrots references (Kill me)
 
@@ -99,6 +104,17 @@ local function pos()
 		root = char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso") -- r6
 	end
 	return root
+end
+
+local function glitter()
+	local char = game.Players.LocalPlayer.Character
+	if char:FindFirstChild("HumanoidRootPart") then
+		return char.HumanoidRootPart
+	elseif char:FindFirstChild("Torso") then
+		return char.Torso
+	elseif char:FindFirstChild("UpperTorso") then
+		return char.UpperTorso
+	end
 end
 
 local function loadAnswers(url)
@@ -1177,10 +1193,13 @@ Games:CreateToggle({
 })
 end
 
+Games:CreateLabel("Voxels")
+
 Games:CreateSlider({
 	Name = "Circle Radius",
 	Range = {5, 100},
-	CurrentValue = 20,
+	Increment = 0,
+	CurrentValue = circleRadius,
 	Callback = function(value)
 		circleRadius = value
 	end
@@ -1191,15 +1210,24 @@ Games:CreateToggle({
 	CurrentValue = false,
 	Callback = function(enabled)
 		voxels.PerfectCircle = enabled
+		if not enabled then
+			for _, blockPos in ipairs(spawnedBlocks.PerfectCircle) do
+				PlaceBlock:FireServer(workspace["1Grass"], Enum.NormalId.Top, blockPos, "Air")
+			end
+			spawnedBlocks.PerfectCircle = {}
+			return
+		end
 		spawn(function()
 			local step = 3
 			while voxels.PerfectCircle do
-				local rootPos = pos().Position
+				local rootPos = glitter().Position
 				for x = -circleRadius, circleRadius, step do
 					for z = -circleRadius, circleRadius, step do
 						local offset = Vector3.new(x, 0, z)
 						if offset.Magnitude <= circleRadius and offset.Magnitude >= circleRadius - step then
-							PlaceBlock:FireServer(workspace["1Grass"], Enum.NormalId.Top, rootPos + offset, "Oak Planks")
+							local blockPos = rootPos + offset
+							PlaceBlock:FireServer(workspace["1Grass"], Enum.NormalId.Top, blockPos, "Oak Planks")
+							table.insert(spawnedBlocks.PerfectCircle, blockPos)
 						end
 					end
 				end
@@ -1214,9 +1242,18 @@ Games:CreateToggle({
 	CurrentValue = false,
 	Callback = function(enabled)
 		voxels.PlankSpammer = enabled
+		if not enabled then
+			for _, blockPos in ipairs(spawnedBlocks.PlankSpammer) do
+				PlaceBlock:FireServer(workspace["1Grass"], Enum.NormalId.Top, blockPos, "Air")
+			end
+			spawnedBlocks.PlankSpammer = {}
+			return
+		end
 		spawn(function()
 			while voxels.PlankSpammer do
-				PlaceBlock:FireServer(workspace["1Grass"], Enum.NormalId.Top, pos().Position, "Oak Planks")
+				local blockPos = glitter().Position
+				PlaceBlock:FireServer(workspace["1Grass"], Enum.NormalId.Top, blockPos, "Oak Planks")
+				table.insert(spawnedBlocks.PlankSpammer, blockPos)
 				task.wait(0.02)
 			end
 		end)
@@ -1228,46 +1265,21 @@ Games:CreateToggle({
 	CurrentValue = false,
 	Callback = function(enabled)
 		voxels.PlankTower = enabled
-		spawn(function()
-			local yOffset = 0
-			while voxels.PlankTower do
-				PlaceBlock:FireServer(workspace["1Grass"], Enum.NormalId.Top, pos().Position + Vector3.new(0, yOffset, 0), "Oak Planks")
-				yOffset = yOffset + 4
-				task.wait(0.05)
-			end
-		end)
-	end
-})
-
-Games:CreateToggle({
-	Name = "Hollow Box",
-	CurrentValue = false,
-	Callback = function(enabled)
-		voxels.HollowBox = enabled
 		if not enabled then
-			for _, blockPos in ipairs(spawnedBlocks) do
+			for _, blockPos in ipairs(spawnedBlocks.PlankTower) do
 				PlaceBlock:FireServer(workspace["1Grass"], Enum.NormalId.Top, blockPos, "Air")
 			end
-			spawnedBlocks = {}
+			spawnedBlocks.PlankTower = {}
 			return
 		end
 		spawn(function()
-			local size = 20
-			local step = 4
-			while voxels.HollowBox do
-				local rootPos = pos().Position
-				for x = -size, size, step do
-					for y = 0, size * 2, step do
-						for z = -size, size, step do
-							if x == -size or x == size or y == 0 or y == size*2 or z == -size or z == size then
-								local blockPos = rootPos + Vector3.new(x, y, z)
-								PlaceBlock:FireServer(workspace["1Grass"], Enum.NormalId.Top, blockPos, "Oak Planks")
-								table.insert(spawnedBlocks, blockPos)
-							end
-						end
-					end
-				end
-				task.wait(0.1)
+			local yOffset = 0
+			while voxels.PlankTower do
+				local blockPos = glitter().Position + Vector3.new(0, yOffset, 0)
+				PlaceBlock:FireServer(workspace["1Grass"], Enum.NormalId.Top, blockPos, "Oak Planks")
+				table.insert(spawnedBlocks.PlankTower, blockPos)
+				yOffset = yOffset + 4
+				task.wait(0.05)
 			end
 		end)
 	end
