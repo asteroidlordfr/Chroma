@@ -392,59 +392,52 @@ local function getGloveRemote()
 end
 
 local function getClosestPlayer()
-    local closestDist = math.huge
-    local target
     local localPlayer = game.Players.LocalPlayer
-    if not localPlayer then return nil end
-    local players = game.Players
-    local playerTeams = {}
+    if not localPlayer or not localPlayer.Character then return nil end
+    local cam = workspace.CurrentCamera
+    if not cam then return nil end
 
-    for _, p in pairs(players:GetPlayers()) do
-        if p.Team then
-            playerTeams[p.Team] = true
-        end
-    end
+    local localRoot = localPlayer.Character:FindFirstChild("HumanoidRootPart") or localPlayer.Character:FindFirstChild("Head")
+    if not localRoot then return nil end
 
-    local teamCount = 0
-    for _ in pairs(playerTeams) do
-        teamCount = teamCount + 1
-    end
+    local ignoreTeams = {Lobby = true, Spectate = true, Spectator = true, Spec = true}
+    local closestPlayer
+    local closestDist = math.huge
 
-    local ffa = (teamCount <= 1)
-
-    for _, plr in pairs(players:GetPlayers()) do
+    for _, plr in pairs(game.Players:GetPlayers()) do
         if plr ~= localPlayer and plr.Character and plr.Character:FindFirstChild("Head") then
             local humanoid = plr.Character:FindFirstChild("Humanoid")
-            if humanoid and type(humanoid.Health) == "number" and humanoid.Health > 0 then
-                if teamCheck and not ffa and plr.Team == localPlayer.Team then
-                    continue
+            if humanoid and humanoid.Health > 0 then
+                local teamName = plr.Team and plr.Team.Name or ""
+                if teamCheck then
+                    if plr.Team == localPlayer.Team then
+                        continue
+                    end
+                    if ignoreTeams[teamName] then
+                        continue
+                    end
                 end
+                local head = plr.Character.Head
                 if wallCheck then
-                    local origin = workspace.CurrentCamera and workspace.CurrentCamera.CFrame and workspace.CurrentCamera.CFrame.Position or nil
-                    if origin then
-                        local direction = (plr.Character.Head.Position - origin)
-                        local raycastParams = RaycastParams.new()
-                        raycastParams.FilterDescendantsInstances = {localPlayer.Character}
-                        raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
-                        local raycast = workspace:Raycast(origin, direction, raycastParams)
-                        if raycast and raycast.Instance and not raycast.Instance:IsDescendantOf(plr.Character) then
-                            continue
-                        end
+                    local origin = cam.CFrame.Position
+                    local direction = head.Position - origin
+                    local params = RaycastParams.new()
+                    params.FilterDescendantsInstances = {localPlayer.Character}
+                    params.FilterType = Enum.RaycastFilterType.Blacklist
+                    local result = workspace:Raycast(origin, direction, params)
+                    if result and not result.Instance:IsDescendantOf(plr.Character) then
+                        continue
                     end
                 end
-                local root = plr.Character:FindFirstChild("HumanoidRootPart") or plr.Character:FindFirstChild("Head")
-                local localRoot = localPlayer.Character and (localPlayer.Character:FindFirstChild("HumanoidRootPart") or localPlayer.Character:FindFirstChild("Head"))
-                if root and localRoot and root:IsA("BasePart") and localRoot:IsA("BasePart") then
-                    local dist = (localRoot.Position - root.Position).Magnitude
-                    if type(dist) == "number" and type(closestDist) == "number" and dist < closestDist then
-                        closestDist = dist
-                        target = plr
-                    end
+                local dist = (localRoot.Position - head.Position).Magnitude
+                if dist < closestDist then
+                    closestDist = dist
+                    closestPlayer = plr
                 end
             end
         end
     end
-    return target
+    return closestPlayer
 end
 
 local function getRandomTarget()
