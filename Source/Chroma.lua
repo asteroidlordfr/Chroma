@@ -1591,26 +1591,26 @@ Games:CreateToggle({
 		if slapConn then slapConn:Disconnect() slapConn = nil end
 
 		if enabled then
-			slapConn = RunService.Heartbeat:Connect(function()
-				local char = LocalPlayer.Character
-				if not char or not char:FindFirstChild("HumanoidRootPart") or char:FindFirstChildWhichIsA("Humanoid").Health <= 0 then
-					Games:Toggle("Autofarm Slaps", false)
-					return
-				end
+			slapConn = task.spawn(function()
+				while enabled do
+					local char = LocalPlayer.Character
+					if not char or not char:FindFirstChild("HumanoidRootPart") or char:FindFirstChildWhichIsA("Humanoid").Health <= 0 then
+						Games:Toggle("Autofarm Slaps", false)
+						break
+					end
 
-				local target = getRandomTarget()
-				if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-					char.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame * CFrame.new(math.random(-1,1), 0, math.random(-1,1))
-					local dist = (char.HumanoidRootPart.Position - target.Character.HumanoidRootPart.Position).Magnitude
-					if dist <= Reach then
-						local remote = getGloveRemote()
-						pcall(function()
-							remote:FireServer(target.Character.HumanoidRootPart, true)
-						end)
+					local target = getRandomTarget()
+					if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+						char.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame * CFrame.new(math.random(-1,1), 0, math.random(-1,1))
+						local dist = (char.HumanoidRootPart.Position - target.Character.HumanoidRootPart.Position).Magnitude
+						if dist <= Reach then
+							local remote = getGloveRemote()
+							pcall(function()
+								remote:FireServer(target.Character.HumanoidRootPart, true)
+							end)
+						end
 					end
 					task.wait(slapDelay)
-				else
-					task.wait(0.5)
 				end
 			end)
 		end
