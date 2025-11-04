@@ -24,7 +24,6 @@ local UserInputService = game:GetService("UserInputService")
 local workspace = workspace
 local Camera = workspace.CurrentCamera
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Networking = ReplicatedStorage
 local ReplicaSignal
 if ReplicatedStorage:FindFirstChild("ReplicaRemoteEvents") and ReplicatedStorage.ReplicaRemoteEvents:FindFirstChild("Replica_ReplicaSignal") then
     ReplicaSignal = ReplicatedStorage.ReplicaRemoteEvents.Replica_ReplicaSignal
@@ -75,8 +74,6 @@ fovCircle.Thickness = 1
 fovCircle.NumSides = 64
 fovCircle.Filled = false
 
-Answers = loadAnswers("https://raw.githubusercontent.com/asteroidlordfr/Chroma/main/Resources/LAW/Answers.txt")
-
 -- Below is the function warehouse
 
 local function pos()
@@ -103,6 +100,12 @@ local function loadAnswers(url)
     end
     return {}
 end
+
+-- Some answers thing
+
+Answers = loadAnswers("https://raw.githubusercontent.com/asteroidlordfr/Chroma/main/Resources/LAW/Answers.txt")
+
+-- Back to the function warehouse
 
 local function getClosestPlayer()
     local closestDist = math.huge
