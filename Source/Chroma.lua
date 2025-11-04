@@ -141,6 +141,14 @@ Answers = loadAnswers("https://raw.githubusercontent.com/asteroidlordfr/Chroma/m
 
 -- Back to the function warehouse
 
+local function getGloveRemote()
+	local gloveName = LocalPlayer.leaderstats.Glove.Value
+	local gloves = LocalPlayer:WaitForChild("PlayerGui"):WaitForChild("Main"):WaitForChild("Gloves")
+	if gloves:FindFirstChild(gloveName) then
+		return gloves[gloveName]
+	end
+end
+
 local function getClosestPlayer()
     local closestDist = math.hugelocal cam = Camera
     local target
@@ -1330,34 +1338,8 @@ Games:CreateToggle({
 	Name = "Autofarm Slaps",
 	CurrentValue = false,
 	Callback = function(enabled)
-		if speedConn then
-			speedConn:Disconnect()
-			speedConn = nil
-		end
-		if slapConn then
-			slapConn:Disconnect()
-			slapConn = nil
-		end
-
-		local function getNearestPlayer()
-			local char = LocalPlayer.Character
-			if not char or not char:FindFirstChild("HumanoidRootPart") then return nil end
-			local root = char.HumanoidRootPart
-			local nearest, dist = nil, math.huge
-			for _, p in ipairs(Players:GetPlayers()) do
-				if p ~= LocalPlayer then
-					local c = p.Character
-					if c and c:FindFirstChild("Humanoid") and c.Humanoid.Health > 0 and c:FindFirstChild("entered") and c:FindFirstChild("HumanoidRootPart") then
-						local d = (c.HumanoidRootPart.Position - root.Position).Magnitude
-						if d < dist then
-							dist = d
-							nearest = c
-						end
-					end
-				end
-			end
-			return nearest
-		end
+		if speedConn then speedConn:Disconnect() speedConn = nil end
+		if slapConn then slapConn:Disconnect() slapConn = nil end
 
 		if enabled then
 			speedConn = RunService.Heartbeat:Connect(function()
@@ -1375,11 +1357,12 @@ Games:CreateToggle({
 			slapConn = RunService.Heartbeat:Connect(function()
 				local char = LocalPlayer.Character
 				if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-				local target = getNearestPlayer()
-				if target and target:FindFirstChild("HumanoidRootPart") then
-					char.HumanoidRootPart.CFrame = target.HumanoidRootPart.CFrame
-					if gloveHits and gloveHits[LocalPlayer.leaderstats.Glove.Value] then
-						gloveHits[LocalPlayer.leaderstats.Glove.Value]:FireServer(target.HumanoidRootPart, true)
+				local targetPlayer = getClosestPlayer()
+				if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+					char.HumanoidRootPart.CFrame = targetPlayer.Character.HumanoidRootPart.CFrame
+					local remote = getGloveRemote()
+					if remote then
+						remote:FireServer(targetPlayer.Character.HumanoidRootPart, true)
 					end
 				end
 			end)
