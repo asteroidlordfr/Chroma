@@ -10,7 +10,7 @@
 --
 --]
 
-repeat task.wait() until game:IsLoaded() -- Thank you TRICK-HUBB/TrickHub for this, very cool but easy
+repeat task.wait() until game:IsLoaded() -- Simple but thank you to TRICK-HUBB/TrickHub for this
 task.wait(0.3)
 
 local Library = loadstring(game:HttpGet('https://raw.githubusercontent.com/asteroidlordfr/Chroma/main/Source/Library.lua'))()
@@ -24,12 +24,23 @@ local UserInputService = game:GetService("UserInputService")
 local workspace = workspace
 local Camera = workspace.CurrentCamera
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Networking = ReplicatedStorage
 local ReplicaSignal
 if ReplicatedStorage:FindFirstChild("ReplicaRemoteEvents") and ReplicatedStorage.ReplicaRemoteEvents:FindFirstChild("Replica_ReplicaSignal") then
     ReplicaSignal = ReplicatedStorage.ReplicaRemoteEvents.Replica_ReplicaSignal
 end
 
 local PlaceBlock = (ReplicatedStorage:FindFirstChild("Remotes") and ReplicatedStorage.Remotes:FindFirstChild("PlaceBlock")) -- this is for Voxels
+
+-- Below is Plants vs Brainrots references (Kill me)
+
+local player = game:GetService("Players").LocalPlayer
+local humanoid = player.Character or player.CharacterAdded:Wait():WaitForChild("Humanoid")
+local seedsFrame = player.PlayerGui.Main.Seeds.Frame.ScrollingFrame
+local gearsFrame = player.PlayerGui.Main.Gears.Frame.ScrollingFrame
+local Networking = game:GetService("ReplicatedStorage")
+local dataRemoteEvent = (Networking:FindFirstChild("BridgeNet2") and Networking.BridgeNet2:FindFirstChild("dataRemoteEvent"))
+local useItemRemote = (Networking:FindFirstChild("Remotes") and Networking.Remotes:FindFirstChild("UseItem"))
 
 -- Below is the variable warehouse
 
@@ -851,49 +862,6 @@ Chat:CreateButton({
     end
 })
 
-Client:CreateSection("Other")
-
-Client:CreateToggle({
-	Name = "Player Collision",
-	CurrentValue = false,
-	Callback = function(state)
-		local enabled = state
-		local function setCollision(c, collide)
-			for _, part in pairs(c:GetChildren()) do
-				if part:IsA("BasePart") then
-					part.CanCollide = collide
-				end
-			end
-		end
-
-		local conn
-		if enabled then
-			for _, pl in pairs(Players:GetPlayers()) do
-				if pl ~= LocalPlayer and pl.Character then
-					setCollision(pl.Character, false)
-				end
-			end
-			conn = Players.PlayerAdded:Connect(function(pl)
-				pl.CharacterAdded:Connect(function(c)
-					if enabled then
-						setCollision(c, false)
-					end
-				end)
-			end)
-		else
-			for _, pl in pairs(Players:GetPlayers()) do
-				if pl.Character then
-					setCollision(pl.Character, true)
-				end
-			end
-			if conn then
-				conn:Disconnect()
-				conn = nil
-			end
-		end
-	end
-})
-
 local Games = Window:CreateTab("🎲 Games")
 Games:CreateSection("Longest Answer Wins")
 
@@ -969,6 +937,104 @@ Games:CreateSlider({
             end)
         end
     end
+})
+
+Games:CreateSection("Plants vs Brainrots")
+
+Games:CreateToggle({
+	Name = "Auto Buy [BEST SEEDS]",
+	CurrentValue = false,
+	Callback = function(val)
+		local running = val
+		spawn(function()
+			while running do
+				for _, itemFrame in ipairs(seedsFrame:GetChildren()) do
+					if itemFrame:IsA("Frame") and itemFrame:FindFirstChild("Stock") and string.match(itemFrame.Name,"Premium") then
+						local amount = tonumber(itemFrame.Stock.Text:match("x(%d+)")) or 0
+						for i = 1, amount do
+							dataRemoteEvent:FireServer({itemFrame.Name, "\b"})
+						end
+					end
+				end
+				task.wait(1)
+			end
+		end)
+	end
+})
+
+Games:CreateToggle({
+	Name = "Auto Buy [BAD SEEDS]",
+	CurrentValue = false,
+	Callback = function(val)
+		local running = val
+		spawn(function()
+			while running do
+				for _, itemFrame in ipairs(seedsFrame:GetChildren()) do
+					if itemFrame:IsA("Frame") and itemFrame:FindFirstChild("Stock") and not string.match(itemFrame.Name,"Premium") then
+						local amount = tonumber(itemFrame.Stock.Text:match("x(%d+)")) or 0
+						for i = 1, amount do
+							dataRemoteEvent:FireServer({itemFrame.Name, "\b"})
+						end
+					end
+				end
+				task.wait(1)
+			end
+		end)
+	end
+})
+
+Games:CreateToggle({
+	Name = "Auto Buy [GEARS]",
+	CurrentValue = false,
+	Callback = function(val)
+		local running = val
+		spawn(function()
+			while running do
+				for _, itemFrame in ipairs(gearsFrame:GetChildren()) do
+					if itemFrame:IsA("Frame") and itemFrame:FindFirstChild("Stock") then
+						local amount = tonumber(itemFrame.Stock.Text:match("x(%d+)")) or 0
+						for i = 1, amount do
+							dataRemoteEvent:FireServer({itemFrame.Name, "\026"})
+						end
+					end
+				end
+				task.wait(1)
+			end
+		end)
+	end
+})
+
+Games:CreateToggle({
+	Name = "Auto Frost Grenade All",
+	CurrentValue = false,
+	Callback = function(val)
+		local running = val
+		spawn(function()
+			while running do
+				for _, brainrot in ipairs(Workspace.ScriptedMap.Brainrots:GetChildren()) do
+					local progress = brainrot:GetAttribute("Progress") or 0
+					if progress > 0.6 then
+						local tool
+						for _, container in ipairs({player.Character, player.Backpack}) do
+							for _, item in ipairs(container:GetChildren()) do
+								if item:IsA("Tool") and string.match(item.Name, "^%[x%d+%] Frost Grenade$") then
+									tool = item
+								end
+							end
+						end
+						if tool then
+							humanoid:EquipTool(tool)
+							local bp = brainrot.PrimaryPart or brainrot:FindFirstChildWhichIsA("BasePart")
+							if bp then
+								useItemRemote:FireServer({{Toggle=true, Tool=tool, Time=0.5, Pos=bp.Position}})
+							end
+						end
+					end
+				end
+				task.wait(2)
+			end
+		end)
+	end
 })
 
 Games:CreateSection("Voxels")
@@ -1658,6 +1724,49 @@ Client:CreateToggle({
             end
         end
     end
+})
+
+Client:CreateSection("Other")
+
+Client:CreateToggle({
+	Name = "Player Collision",
+	CurrentValue = false,
+	Callback = function(state)
+		local enabled = state
+		local function setCollision(c, collide)
+			for _, part in pairs(c:GetChildren()) do
+				if part:IsA("BasePart") then
+					part.CanCollide = collide
+				end
+			end
+		end
+
+		local conn
+		if enabled then
+			for _, pl in pairs(Players:GetPlayers()) do
+				if pl ~= LocalPlayer and pl.Character then
+					setCollision(pl.Character, false)
+				end
+			end
+			conn = Players.PlayerAdded:Connect(function(pl)
+				pl.CharacterAdded:Connect(function(c)
+					if enabled then
+						setCollision(c, false)
+					end
+				end)
+			end)
+		else
+			for _, pl in pairs(Players:GetPlayers()) do
+				if pl.Character then
+					setCollision(pl.Character, true)
+				end
+			end
+			if conn then
+				conn:Disconnect()
+				conn = nil
+			end
+		end
+	end
 })
 
 local OP = Window:CreateTab("🤫 OP")
