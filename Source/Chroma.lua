@@ -828,7 +828,7 @@ Chat:CreateButton({
 
 Chat:CreateSection("Chat")
 
-Client:CreateButton({
+Chat:CreateButton({
     Name = "Show Chat",
     Callback = function()
         local chat = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui"):FindFirstChild("Chat")
@@ -838,7 +838,7 @@ Client:CreateButton({
     end
 })
 
-Client:CreateButton({
+Chat:CreateButton({
     Name = "Hide Chat",
     Callback = function()
         local chat = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui"):FindFirstChild("Chat")
