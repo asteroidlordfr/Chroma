@@ -1298,6 +1298,76 @@ Games:CreateToggle({
 
 Games:CreateSection("Slap Battles")
 
+Games:CreateToggle({
+	Name = "Slap Farm",
+	CurrentValue = false,
+	Callback = function(enabled)
+		local slapConn, speedConn
+
+		if enabled then
+			local function getNearestPlayer()
+				local localChar = Players.LocalPlayer.Character
+				if not localChar then return end
+				local root = localChar:FindFirstChild("HumanoidRootPart")
+				if not root then return end
+				local nearest, dist = nil, math.huge
+				for _, p in ipairs(Players:GetPlayers()) do
+					if p ~= Players.LocalPlayer then
+						local char = p.Character
+						if char and char:FindFirstChild("Humanoid") and char.Humanoid.Health > 0 then
+							local targetRoot = char:FindFirstChild("HumanoidRootPart")
+							if targetRoot then
+								local diffY = targetRoot.Position.Y - root.Position.Y
+								if diffY >= -5 then
+									local d = (targetRoot.Position - root.Position).Magnitude
+									if d < dist then
+										dist = d
+										nearest = targetRoot
+									end
+								end
+							end
+						end
+					end
+				end
+				return nearest, dist
+			end
+
+			speedConn = RunService.Heartbeat:Connect(function()
+				local char = Players.LocalPlayer.Character
+				if not char then return end
+				local root = char:FindFirstChild("HumanoidRootPart")
+				local hum = char:FindFirstChildWhichIsA("Humanoid")
+				if root and hum then
+					local moveDir = hum.MoveDirection
+					if moveDir.Magnitude > 0 then
+						moveDir = moveDir.Unit
+					end
+					root.Velocity = Vector3.new(moveDir.X * 100, root.Velocity.Y, moveDir.Z * 100)
+				end
+			end)
+
+			slapConn = RunService.Heartbeat:Connect(function()
+				local root = Players.LocalPlayer.Character and Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+				if not root then return end
+				local target, dist = getNearestPlayer()
+				if target then
+					local direction = (target.Position - root.Position)
+					direction = Vector3.new(direction.X, 0, direction.Z).Unit
+					root.CFrame = root.CFrame + direction * math.min(dist, 1)
+					if dist <= 4 then
+						VirtualInput:SendMouseButtonEvent(0,0,0,true,game,0)
+						VirtualInput:SendMouseButtonEvent(0,0,0,false,game,0)
+					end
+				end
+			end)
+
+		else
+			if slapConn then slapConn:Disconnect() slapConn = nil end
+			if speedConn then speedConn:Disconnect() speedConn = nil end
+		end
+	end
+})
+
 Games:CreateButton({
 	Name = "Get Badge Gloves [TRICKHUB]",
 	Callback = function()
