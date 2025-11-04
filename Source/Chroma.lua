@@ -43,6 +43,7 @@ local activeThreads = {}
 
 -- Below is some Slap Battles stuff
 
+if game.PlaceId == 6403373529 then
 local slapDelay = 0.2
 local currentTarget
 local running = false
@@ -239,6 +240,7 @@ gloveHits = {
     ["God's Hand"] = game.ReplicatedStorage.Godshand,
     ["Error"] = game.ReplicatedStorage.Errorhit
 }
+end
 
 local function getNextTarget(prev)
 	local char = LocalPlayer.Character
@@ -1556,6 +1558,7 @@ Games:CreateToggle({
 	end
 })
 
+if game.PlaceId == 6403373529 then
 Games:CreateSection("Slap Battles")
 
 Games:CreateToggle({
@@ -1658,6 +1661,7 @@ Games:CreateButton({
 		end
 	end
 })
+end
 
 Games:CreateSection("a literal baseplate")
 
