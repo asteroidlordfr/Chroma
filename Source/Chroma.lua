@@ -1180,7 +1180,7 @@ end
 Games:CreateSlider({
 	Name = "Circle Radius",
 	Range = {5, 100},
-	Default = 20,
+	CurrentValue = 20,
 	Callback = function(value)
 		circleRadius = value
 	end
