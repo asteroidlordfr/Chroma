@@ -24,12 +24,14 @@ local UserInputService = game:GetService("UserInputService")
 local workspace = workspace
 local Camera = workspace.CurrentCamera
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Networking = ReplicatedStorage
 local ReplicaSignal
 if ReplicatedStorage:FindFirstChild("ReplicaRemoteEvents") and ReplicatedStorage.ReplicaRemoteEvents:FindFirstChild("Replica_ReplicaSignal") then
     ReplicaSignal = ReplicatedStorage.ReplicaRemoteEvents.Replica_ReplicaSignal
 end
 
-local PlaceBlock = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("PlaceBlock") -- this is for Voxels
+
+local PlaceBlock = (ReplicatedStorage:FindFirstChild("Remotes") and ReplicatedStorage.Remotes:FindFirstChild("PlaceBlock")) -- this is for Voxels
 
 -- Below is Plants vs Brainrots references (Kill me)
 
@@ -38,8 +40,8 @@ local humanoid = player.Character or player.CharacterAdded:Wait():WaitForChild("
 local seedsFrame = player.PlayerGui.Main.Seeds.Frame.ScrollingFrame
 local gearsFrame = player.PlayerGui.Main.Gears.Frame.ScrollingFrame
 local Networking = game:GetService("ReplicatedStorage")
-local dataRemoteEvent = Networking:WaitForChild("BridgeNet2"):WaitForChild("dataRemoteEvent")
-local useItemRemote = Networking:WaitForChild("Remotes"):WaitForChild("UseItem")
+local dataRemoteEvent = (Networking:FindFirstChild("BridgeNet2") and Networking.BridgeNet2:FindFirstChild("dataRemoteEvent"))
+local useItemRemote = (Networking:FindFirstChild("Remotes") and Networking.Remotes:FindFirstChild("UseItem"))
 
 -- Below is the variable warehouse
 
