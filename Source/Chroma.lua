@@ -8,6 +8,9 @@
 -- (Yes yes, some of this code is GPT but only i'd say only 15/100 is GPT as I don't know much Lua.)
 --]
 
+repeat task.wait() until game:IsLoaded() -- Thank you TRICK-HUBB/TrickHub for this, very cool but easy
+task.wait(0.3)
+
 local Library = loadstring(game:HttpGet('https://raw.githubusercontent.com/asteroidlordfr/Chroma/main/Source/Library.lua'))()
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -23,6 +26,8 @@ local ReplicaSignal
 if ReplicatedStorage:FindFirstChild("ReplicaRemoteEvents") and ReplicatedStorage.ReplicaRemoteEvents:FindFirstChild("Replica_ReplicaSignal") then
     ReplicaSignal = ReplicatedStorage.ReplicaRemoteEvents.Replica_ReplicaSignal
 end
+
+local PlaceBlock = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("PlaceBlock") -- this is for Voxels
 
 local defaultWalkSpeed = 16
 local defaultJumpPower = 50
@@ -62,6 +67,15 @@ fovCircle.Color = Color3.fromRGB(255,255,255)
 fovCircle.Thickness = 1
 fovCircle.NumSides = 64
 fovCircle.Filled = false
+
+local function pos()
+	local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+	local root = char:FindFirstChild("HumanoidRootPart") -- r15
+	if not root then
+		root = char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso") -- r6
+	end
+	return root
+end
 
 local function loadAnswers(url)
     local success, response = pcall(function()
@@ -296,6 +310,39 @@ Movement:CreateToggle({
             end
         end
     end
+})
+
+Movement:CreateToggle({
+	Name = "Walk On Water",
+	CurrentValue = false,
+	Callback = function(state)
+		local walkWater = state
+		local conn
+		local function set()
+			local char = LocalPlayer.Character
+			if not char then return end
+			local hrp = char:FindFirstChild("HumanoidRootPart")
+			if not hrp then return end
+			local ray = Ray.new(hrp.Position, Vector3.new(0, -5, 0))
+			local hit, pos = workspace:FindPartOnRay(ray, char)
+			if hit and hit.Material == Enum.Material.Water then
+				hrp.CFrame = CFrame.new(Vector3.new(hrp.Position.X, pos.Y + 3, hrp.Position.Z))
+			end
+		end
+
+		if state then
+			conn = RunService.Heartbeat:Connect(function()
+				if walkWater then
+					set()
+				end
+			end)
+		else
+			if conn then
+				conn:Disconnect()
+				conn = nil
+			end
+		end
+	end
 })
 
 Movement:CreateToggle({
@@ -906,6 +953,156 @@ Games:CreateSlider({
             end)
         end
     end
+})
+
+Games:CreateSection("Voxels")
+
+Games:CreateToggle({
+	Name = "Perfect Circle",
+	CurrentValue = false,
+	Callback = function(enabled)
+		local root = pos()
+		local radius = 20
+		local step = 3
+		local toggle = enabled
+		spawn(function()
+			while toggle do
+				local center = root.Position
+				for x = -radius, radius, step do
+					for z = -radius, radius, step do
+						local offset = Vector3.new(x, 0, z)
+						if offset.Magnitude <= radius and offset.Magnitude >= radius - step then
+							local point = center + offset
+							PlaceBlock:FireServer(workspace["1Grass"], Enum.NormalId.Top, point, "Oak Planks")
+						end
+					end
+				end
+				task.wait(0.1)
+			end
+		end)
+	end
+})
+
+Games:CreateToggle({
+	Name = "Plank Spammer",
+	CurrentValue = false,
+	Callback = function(enabled)
+		local root = pos()
+		local toggle = enabled
+		local radius = 10
+		local step = 2
+		spawn(function()
+			while toggle do
+				local center = root.Position
+				for x = -radius, radius, step do
+					for y = -radius, radius, step do
+						for z = -radius, radius, step do
+							local offset = Vector3.new(x, y, z)
+							if offset.Magnitude <= radius then
+								local point = center + offset
+								PlaceBlock:FireServer(workspace["1Grass"], Enum.NormalId.Top, point, "Oak Planks")
+							end
+						end
+					end
+				end
+				task.wait(0.05)
+			end
+		end)
+	end
+})
+
+Games:CreateToggle({
+	Name = "Plank Tower",
+	CurrentValue = false,
+	Callback = function(enabled)
+		local root = pos()
+		local toggle = enabled
+		local yOffset = 0
+		spawn(function()
+			while toggle do
+				local point = root.Position + Vector3.new(0, yOffset, 0)
+				PlaceBlock:FireServer(workspace["1Grass"], Enum.NormalId.Top, point, "Oak Planks")
+				yOffset = yOffset + 4
+				task.wait(0.1)
+			end
+		end)
+	end
+})
+
+Games:CreateSection("Slap Battles")
+
+Games:CreateButton({
+	Name = "Get Badge Gloves [TRICKHUB]",
+	Callback = function()
+		local lobby = workspace:FindFirstChild("Lobby")
+		if lobby then
+			for _, part in ipairs(lobby:GetChildren()) do
+				if part:IsA("BasePart") then
+					print("Lobby object Z position:", part.CFrame.Z)
+				end
+			end
+		else
+			warn("Lobby not found in Workspace")
+		end
+
+		local networkFolder = game:GetService("ReplicatedStorage"):FindFirstChild("_NETWORK")
+		if networkFolder and lobby then
+			for _, obj in ipairs(networkFolder:GetChildren()) do
+				for _, v in pairs(lobby:GetChildren()) do
+					if obj:IsA("RemoteEvent") and v:IsA("MeshPart") then
+						obj:FireServer(v.Name)
+					else
+						warn(obj.Name .. " is not a RemoteEvent or " .. v.Name .. " is not a MeshPart, skipping.")
+					end
+				end
+			end
+		else
+			warn("_NETWORK folder not found in ReplicatedStorage or Lobby missing")
+		end
+	end
+})
+
+Games:CreateSection("a literal baseplate")
+
+Games:CreateToggle({
+	Name = "Anti Fling",
+	CurrentValue = false,
+	Callback = function(state)
+		local enabled = state
+		local function setCollision(c, collide)
+			for _, part in pairs(c:GetChildren()) do
+				if part:IsA("BasePart") then
+					part.CanCollide = collide
+				end
+			end
+		end
+
+		local conn
+		if enabled then
+			for _, pl in pairs(Players:GetPlayers()) do
+				if pl ~= LocalPlayer and pl.Character then
+					setCollision(pl.Character, false)
+				end
+			end
+			conn = Players.PlayerAdded:Connect(function(pl)
+				pl.CharacterAdded:Connect(function(c)
+					if enabled then
+						setCollision(c, false)
+					end
+				end)
+			end)
+		else
+			for _, pl in pairs(Players:GetPlayers()) do
+				if pl.Character then
+					setCollision(pl.Character, true)
+				end
+			end
+			if conn then
+				conn:Disconnect()
+				conn = nil
+			end
+		end
+	end
 })
 
 Games:CreateSection("Da Hood")
@@ -1546,6 +1743,39 @@ OP:CreateToggle({ -- No clue if this works , highly doubt it does. If it does th
 					if hum and hum.Health < 30 then
 						hum.Health = 100
 					end
+				end
+			end)
+		else
+			if conn then
+				conn:Disconnect()
+				conn = nil
+			end
+		end
+	end
+})
+
+OP:CreateToggle({
+	Name = "Walk On Water",
+	CurrentValue = false,
+	Callback = function(state)
+		local walkWater = state
+		local conn
+		local function set()
+			local char = LocalPlayer.Character
+			if not char then return end
+			local hrp = char:FindFirstChild("HumanoidRootPart")
+			if not hrp then return end
+			local ray = Ray.new(hrp.Position, Vector3.new(0, -5, 0))
+			local hit, pos = workspace:FindPartOnRay(ray, char)
+			if hit and hit.Material == Enum.Material.Water then
+				hrp.CFrame = CFrame.new(Vector3.new(hrp.Position.X, pos.Y + 3, hrp.Position.Z))
+			end
+		end
+
+		if state then
+			conn = RunService.Heartbeat:Connect(function()
+				if walkWater then
+					set()
 				end
 			end)
 		else
