@@ -620,7 +620,7 @@ Cheats:CreateToggle({
 
 Cheats:CreateSection("Shooter")
 
-Cheats:CreateToggle({ -- This was GPT cause I couldn't get inputs working correctly
+Cheats:CreateToggle({
     Name = "Triggerbot",
     CurrentValue = false,
     Callback = function(state)
@@ -630,7 +630,12 @@ Cheats:CreateToggle({ -- This was GPT cause I couldn't get inputs working correc
         end
 
         if state then
+            local lastClick = 0
             _G.triggerbotConnection = RunService.RenderStepped:Connect(function()
+                local now = tick()
+                if now - lastClick < 0.15 then return end
+                lastClick = now
+
                 local mouse = LocalPlayer:GetMouse()
                 local targetPart = mouse.Target
                 if not targetPart then return end
