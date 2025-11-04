@@ -30,20 +30,7 @@ if ReplicatedStorage:FindFirstChild("ReplicaRemoteEvents") and ReplicatedStorage
     ReplicaSignal = ReplicatedStorage.ReplicaRemoteEvents.Replica_ReplicaSignal
 end
 
-
 local PlaceBlock = (ReplicatedStorage:FindFirstChild("Remotes") and ReplicatedStorage.Remotes:FindFirstChild("PlaceBlock")) -- this is for Voxels
-
--- Below is Plants vs Brainrots references (Kill me)
-
-local player = game:GetService("Players").LocalPlayer
-local humanoid = player.Character or player.CharacterAdded:Wait():WaitForChild("Humanoid")
-if game.PlaceId == 127742093697776 then
-    local seedsFrame = player.PlayerGui.Main.Seeds.Frame.ScrollingFrame
-    local gearsFrame = player.PlayerGui.Main.Gears.Frame.ScrollingFrame
-end
-local Networking = game:GetService("ReplicatedStorage")
-local dataRemoteEvent = (Networking:FindFirstChild("BridgeNet2") and Networking.BridgeNet2:FindFirstChild("dataRemoteEvent"))
-local useItemRemote = (Networking:FindFirstChild("Remotes") and Networking.Remotes:FindFirstChild("UseItem"))
 
 -- Below is the variable warehouse
 
@@ -1050,104 +1037,6 @@ Games:CreateToggle({
 				PlaceBlock:FireServer(workspace["1Grass"], Enum.NormalId.Top, point, "Oak Planks")
 				yOffset = yOffset + 4
 				task.wait(0.1)
-			end
-		end)
-	end
-})
-
-Games:CreateSection("Plants vs Brainrots")
-
-Games:CreateToggle({
-	Name = "Auto Buy [BEST SEEDS]",
-	CurrentValue = false,
-	Callback = function(val)
-		local running = val
-		spawn(function()
-			while running do
-				for _, itemFrame in ipairs(seedsFrame:GetChildren()) do
-					if itemFrame:IsA("Frame") and itemFrame:FindFirstChild("Stock") and string.match(itemFrame.Name,"Premium") then
-						local amount = tonumber(itemFrame.Stock.Text:match("x(%d+)")) or 0
-						for i = 1, amount do
-							dataRemoteEvent:FireServer({itemFrame.Name, "\b"})
-						end
-					end
-				end
-				task.wait(1)
-			end
-		end)
-	end
-})
-
-Games:CreateToggle({
-	Name = "Auto Buy [BAD SEEDS]",
-	CurrentValue = false,
-	Callback = function(val)
-		local running = val
-		spawn(function()
-			while running do
-				for _, itemFrame in ipairs(seedsFrame:GetChildren()) do
-					if itemFrame:IsA("Frame") and itemFrame:FindFirstChild("Stock") and not string.match(itemFrame.Name,"Premium") then
-						local amount = tonumber(itemFrame.Stock.Text:match("x(%d+)")) or 0
-						for i = 1, amount do
-							dataRemoteEvent:FireServer({itemFrame.Name, "\b"})
-						end
-					end
-				end
-				task.wait(1)
-			end
-		end)
-	end
-})
-
-Games:CreateToggle({
-	Name = "Auto Buy [GEARS]",
-	CurrentValue = false,
-	Callback = function(val)
-		local running = val
-		spawn(function()
-			while running do
-				for _, itemFrame in ipairs(gearsFrame:GetChildren()) do
-					if itemFrame:IsA("Frame") and itemFrame:FindFirstChild("Stock") then
-						local amount = tonumber(itemFrame.Stock.Text:match("x(%d+)")) or 0
-						for i = 1, amount do
-							dataRemoteEvent:FireServer({itemFrame.Name, "\026"})
-						end
-					end
-				end
-				task.wait(1)
-			end
-		end)
-	end
-})
-
-Games:CreateToggle({
-	Name = "Auto Frost Grenade All",
-	CurrentValue = false,
-	Callback = function(val)
-		local running = val
-		spawn(function()
-			while running do
-				for _, brainrot in ipairs(Workspace.ScriptedMap.Brainrots:GetChildren()) do
-					local progress = brainrot:GetAttribute("Progress") or 0
-					if progress > 0.6 then
-						local tool
-						for _, container in ipairs({player.Character, player.Backpack}) do
-							for _, item in ipairs(container:GetChildren()) do
-								if item:IsA("Tool") and string.match(item.Name, "^%[x%d+%] Frost Grenade$") then
-									tool = item
-								end
-							end
-						end
-						if tool then
-							humanoid:EquipTool(tool)
-							local bp = brainrot.PrimaryPart or brainrot:FindFirstChildWhichIsA("BasePart")
-							if bp then
-								useItemRemote:FireServer({{Toggle=true, Tool=tool, Time=0.5, Pos=bp.Position}})
-							end
-						end
-					end
-				end
-				task.wait(2)
 			end
 		end)
 	end
