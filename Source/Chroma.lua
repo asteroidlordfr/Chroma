@@ -1,4 +1,4 @@
---[
+--[[
 -- Chroma
 --
 -- A open-source Roblox Universal tool to tweak your gameplay to the max.
@@ -8,7 +8,7 @@
 -- (Yes yes, some of this code is GPT but only i'd say only 15/100 is GPT as I don't know much Lua.)
 -- (also, forgive me for how bad some of this is organized)
 --
---]
+--]]
 
 repeat task.wait() until game:IsLoaded() -- Simple but thank you to TRICK-HUBB/TrickHub for this
 task.wait(0.3)
@@ -31,6 +31,9 @@ if ReplicatedStorage:FindFirstChild("ReplicaRemoteEvents") and ReplicatedStorage
 end
 
 local PlaceBlock = (ReplicatedStorage:FindFirstChild("Remotes") and ReplicatedStorage.Remotes:FindFirstChild("PlaceBlock")) -- this is for Voxels
+local voxels = {}
+local spawnedBlocks = {}
+local circleRadius = 20
 
 -- Below is Plants vs Brainrots references (Kill me)
 
@@ -174,30 +177,91 @@ local function toggleAimbot(enable)
             local UserInputService = game:GetService("UserInputService")
             local Camera = workspace.CurrentCamera
             local LocalPlayer = game.Players.LocalPlayer
+
+            local target = getClosestPlayer()
+            local mousePos = UserInputService:GetMouseLocation()
+            fovCircle.Visible = fovCircleVisible and enable
+            fovCircle.Position = mousePos
+            fovCircle.Radius = 120
+
+            if aimbotRightClick and not UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then return end
+            if not target or not target.Character then return end
+
+            local function partScreenInfo(part)
+                local p = part
+                if not p then return nil, false end
+                local screenPos, onScreen = Camera:WorldToScreenPoint(p.Position)
+                return Vector2.new(screenPos.X, screenPos.Y), onScreen
+            end
+            local chosenPart = nil
+            local head = target.Character:FindFirstChild("Head")
+            if head then
+                local _, headOn = partScreenInfo(head)
+                if headOn then
+                    chosenPart = head
+                end
+            end
+
+            if not chosenPart then
+                local candidates = {
+                    "HumanoidRootPart","UpperTorso","LowerTorso","Torso",
+                    "RightUpperArm","LeftUpperArm","RightLowerArm","LeftLowerArm",
+                    "RightUpperLeg","LeftUpperLeg","RightLowerLeg","LeftLowerLeg",
+                    "RightArm","LeftArm","RightLeg","LeftLeg","Torso","UpperTorso"
+                }
+                local visibleParts = {}
+                for _, name in ipairs(candidates) do
+                    local p = target.Character:FindFirstChild(name)
+                    if p and p:IsA("BasePart") then
+                        local _, on = partScreenInfo(p)
+                        if on then
+                            table.insert(visibleParts, p)
+                        end
+                    end
+                end
+                if #visibleParts > 0 then
+                    chosenPart = visibleParts[math.random(1, #visibleParts)]
+                else
+                    chosenPart = head or target.Character:FindFirstChild("HumanoidRootPart")
+                end
+            end
+
+            if chosenPart and chosenPart:IsA("BasePart") then
+                local cam = Camera
+                cam.CFrame = CFrame.new(cam.CFrame.Position, chosenPart.Position)
+            end
+        end)
+    end
+end
+
+--[[
+local aimbotConnection
+local function toggleAimbot(enable)
+    if aimbotConnection then
+        aimbotConnection:Disconnect()
+        aimbotConnection = nil
+    end
+    if enable then
+        aimbotConnection = game:GetService("RunService").RenderStepped:Connect(function()
+            local UserInputService = game:GetService("UserInputService")
+            local Camera = workspace.CurrentCamera
+            local LocalPlayer = game.Players.LocalPlayer
             local target = getClosestPlayer()
             local mousePos = UserInputService:GetMouseLocation()
             fovCircle.Visible = fovCircleVisible and enable
             fovCircle.Position = mousePos
             fovCircle.Radius = 120
             if aimbotRightClick and not UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then return end
-			if target and target.Character then
-			    local cam = Camera
-			    local aimPart = target.Character:FindFirstChild("Head") 
-			    if not aimPart then
-			        for _, part in ipairs(target.Character:GetChildren()) do
-			            if part:IsA("BasePart") then
-			                aimPart = part
-			                break
-			            end
-			        end
-			    end
-			    if aimPart then
-			        cam.CFrame = CFrame.new(cam.CFrame.Position, aimPart.Position)
-			    end
-			end
+            if target and target.Character and target.Character:FindFirstChild("Head") then
+                local cam = Camera
+                cam.CFrame = CFrame.new(cam.CFrame.Position, target.Character.Head.Position)
+            end
         end)
     end
 end
+
+^^ Old aimbot system
+--]]
 
 local function submitAnswers()
     if not ReplicaSignal then return end
@@ -1113,53 +1177,30 @@ Games:CreateToggle({
 })
 end
 
-Games:CreateSection("Voxels")
+Games:CreateSlider({
+	Name = "Circle Radius",
+	Min = 5,
+	Max = 50,
+	Default = 20,
+	Callback = function(value)
+		circleRadius = value
+	end
+})
 
 Games:CreateToggle({
 	Name = "Perfect Circle",
 	CurrentValue = false,
 	Callback = function(enabled)
-		local root = pos()
-		local radius = 20
-		local step = 3
-		local toggle = enabled
+		voxels.PerfectCircle = enabled
 		spawn(function()
-			while toggle do
-				local center = root.Position
-				for x = -radius, radius, step do
-					for z = -radius, radius, step do
+			local step = 3
+			while voxels.PerfectCircle do
+				local rootPos = pos().Position
+				for x = -circleRadius, circleRadius, step do
+					for z = -circleRadius, circleRadius, step do
 						local offset = Vector3.new(x, 0, z)
-						if offset.Magnitude <= radius and offset.Magnitude >= radius - step then
-							local point = center + offset
-							PlaceBlock:FireServer(workspace["1Grass"], Enum.NormalId.Top, point, "Oak Planks")
-						end
-					end
-				end
-				task.wait(0.1)
-			end
-		end)
-	end
-})
-
-Games:CreateToggle({
-	Name = "Plank Spammer",
-	CurrentValue = false,
-	Callback = function(enabled)
-		local root = pos()
-		local toggle = enabled
-		local radius = 10
-		local step = 2
-		spawn(function()
-			while toggle do
-				local center = root.Position
-				for x = -radius, radius, step do
-					for y = -radius, radius, step do
-						for z = -radius, radius, step do
-							local offset = Vector3.new(x, y, z)
-							if offset.Magnitude <= radius then
-								local point = center + offset
-								PlaceBlock:FireServer(workspace["1Grass"], Enum.NormalId.Top, point, "Oak Planks")
-							end
+						if offset.Magnitude <= circleRadius and offset.Magnitude >= circleRadius - step then
+							PlaceBlock:FireServer(workspace["1Grass"], Enum.NormalId.Top, rootPos + offset, "Oak Planks")
 						end
 					end
 				end
@@ -1170,17 +1211,63 @@ Games:CreateToggle({
 })
 
 Games:CreateToggle({
+	Name = "Plank Spammer",
+	CurrentValue = false,
+	Callback = function(enabled)
+		voxels.PlankSpammer = enabled
+		spawn(function()
+			while voxels.PlankSpammer do
+				PlaceBlock:FireServer(workspace["1Grass"], Enum.NormalId.Top, pos().Position, "Oak Planks")
+				task.wait(0.02)
+			end
+		end)
+	end
+})
+
+Games:CreateToggle({
 	Name = "Plank Tower",
 	CurrentValue = false,
 	Callback = function(enabled)
-		local root = pos()
-		local toggle = enabled
-		local yOffset = 0
+		voxels.PlankTower = enabled
 		spawn(function()
-			while toggle do
-				local point = root.Position + Vector3.new(0, yOffset, 0)
-				PlaceBlock:FireServer(workspace["1Grass"], Enum.NormalId.Top, point, "Oak Planks")
+			local yOffset = 0
+			while voxels.PlankTower do
+				PlaceBlock:FireServer(workspace["1Grass"], Enum.NormalId.Top, pos().Position + Vector3.new(0, yOffset, 0), "Oak Planks")
 				yOffset = yOffset + 4
+				task.wait(0.05)
+			end
+		end)
+	end
+})
+
+Games:CreateToggle({
+	Name = "Hollow Box",
+	CurrentValue = false,
+	Callback = function(enabled)
+		voxels.HollowBox = enabled
+		if not enabled then
+			for _, blockPos in ipairs(spawnedBlocks) do
+				PlaceBlock:FireServer(workspace["1Grass"], Enum.NormalId.Top, blockPos, "Air")
+			end
+			spawnedBlocks = {}
+			return
+		end
+		spawn(function()
+			local size = 20
+			local step = 4
+			while voxels.HollowBox do
+				local rootPos = pos().Position
+				for x = -size, size, step do
+					for y = 0, size * 2, step do
+						for z = -size, size, step do
+							if x == -size or x == size or y == 0 or y == size*2 or z == -size or z == size then
+								local blockPos = rootPos + Vector3.new(x, y, z)
+								PlaceBlock:FireServer(workspace["1Grass"], Enum.NormalId.Top, blockPos, "Oak Planks")
+								table.insert(spawnedBlocks, blockPos)
+							end
+						end
+					end
+				end
 				task.wait(0.1)
 			end
 		end)
