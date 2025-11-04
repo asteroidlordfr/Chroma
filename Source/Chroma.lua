@@ -240,7 +240,6 @@ gloveHits = {
     ["God's Hand"] = game.ReplicatedStorage.Godshand,
     ["Error"] = game.ReplicatedStorage.Errorhit
 }
-end
 
 local function getNextTarget(prev)
 	local char = LocalPlayer.Character
@@ -286,17 +285,20 @@ local function slapTarget()
 	return target
 end
 
+end
+
 -- Below is Plants vs Brainrots references (Kill me)
 
-local player = game:GetService("Players").LocalPlayer
-local humanoid = player.Character or player.CharacterAdded:Wait():WaitForChild("Humanoid")
-if game.PlaceId == 127742093697776 then
+if game.PlaceId == 127742093697776 then	
+	local player = game:GetService("Players").LocalPlayer
+	local humanoid = player.Character or player.CharacterAdded:Wait():WaitForChild("Humanoid")
     local seedsFrame = player.PlayerGui.Main.Seeds.Frame.ScrollingFrame
     local gearsFrame = player.PlayerGui.Main.Gears.Frame.ScrollingFrame
+
+	local Networking = game:GetService("ReplicatedStorage")
+	local dataRemoteEvent = (Networking:FindFirstChild("BridgeNet2") and Networking.BridgeNet2:FindFirstChild("dataRemoteEvent"))
+	local useItemRemote = (Networking:FindFirstChild("Remotes") and Networking.Remotes:FindFirstChild("UseItem"))
 end
-local Networking = game:GetService("ReplicatedStorage")
-local dataRemoteEvent = (Networking:FindFirstChild("BridgeNet2") and Networking.BridgeNet2:FindFirstChild("dataRemoteEvent"))
-local useItemRemote = (Networking:FindFirstChild("Remotes") and Networking.Remotes:FindFirstChild("UseItem"))
 
 -- Below is the variable warehouse
 
@@ -380,10 +382,7 @@ local function loadAnswers(url)
     return {}
 end
 
--- Some answers thing
-
 Answers = loadAnswers("https://raw.githubusercontent.com/asteroidlordfr/Chroma/main/Resources/LAW/Answers.txt")
-loadstring(game:HttpGet("https://raw.githubusercontent.com/username/repo/main/script.lua"))()
 
 -- Back to the function warehouse
 
