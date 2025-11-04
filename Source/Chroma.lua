@@ -43,10 +43,10 @@ local activeThreads = {}
 
 -- Below is some Slap Battles stuff
 
-local slapDelay = 1
+local slapDelay = 0.6
 local currentTarget
 local farmConn, speedConn, slapConn, slapLoop
-local Reach = 5
+local Reach = 7
 
 gloveHits = {
     ["Default"] = game.ReplicatedStorage.b,
