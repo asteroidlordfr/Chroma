@@ -395,6 +395,7 @@ local function getClosestPlayer()
     local closestDist = math.huge
     local target
     local localPlayer = game.Players.LocalPlayer
+    if not localPlayer then return nil end
     local players = game.Players
     local playerTeams = {}
 
@@ -406,7 +407,7 @@ local function getClosestPlayer()
 
     local teamCount = 0
     for _ in pairs(playerTeams) do
-        teamCount += 1
+        teamCount = teamCount + 1
     end
 
     local ffa = (teamCount <= 1)
@@ -414,22 +415,28 @@ local function getClosestPlayer()
     for _, plr in pairs(players:GetPlayers()) do
         if plr ~= localPlayer and plr.Character and plr.Character:FindFirstChild("Head") then
             local humanoid = plr.Character:FindFirstChild("Humanoid")
-            if humanoid and humanoid.Health > 0 then
-                if teamCheck and not ffa and plr.Team == localPlayer.Team then continue end
+            if humanoid and type(humanoid.Health) == "number" and humanoid.Health > 0 then
+                if teamCheck and not ffa and plr.Team == localPlayer.Team then
+                    continue
+                end
                 if wallCheck then
-                    local origin = workspace.CurrentCamera.CFrame.Position
-                    local direction = (plr.Character.Head.Position - origin)
-                    local raycastParams = RaycastParams.new()
-                    raycastParams.FilterDescendantsInstances = {localPlayer.Character}
-                    raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
-                    local raycast = workspace:Raycast(origin, direction, raycastParams)
-                    if raycast and not raycast.Instance:IsDescendantOf(plr.Character) then continue end
+                    local origin = workspace.CurrentCamera and workspace.CurrentCamera.CFrame and workspace.CurrentCamera.CFrame.Position or nil
+                    if origin then
+                        local direction = (plr.Character.Head.Position - origin)
+                        local raycastParams = RaycastParams.new()
+                        raycastParams.FilterDescendantsInstances = {localPlayer.Character}
+                        raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+                        local raycast = workspace:Raycast(origin, direction, raycastParams)
+                        if raycast and raycast.Instance and not raycast.Instance:IsDescendantOf(plr.Character) then
+                            continue
+                        end
+                    end
                 end
                 local root = plr.Character:FindFirstChild("HumanoidRootPart") or plr.Character:FindFirstChild("Head")
                 local localRoot = localPlayer.Character and (localPlayer.Character:FindFirstChild("HumanoidRootPart") or localPlayer.Character:FindFirstChild("Head"))
-                if root and localRoot then
+                if root and localRoot and root:IsA("BasePart") and localRoot:IsA("BasePart") then
                     local dist = (localRoot.Position - root.Position).Magnitude
-                    if dist < closestDist then
+                    if type(dist) == "number" and type(closestDist) == "number" and dist < closestDist then
                         closestDist = dist
                         target = plr
                     end
@@ -464,14 +471,24 @@ local function toggleAimbot(enable)
             local target = getClosestPlayer()
             local mousePos = UserInputService:GetMouseLocation()
             if fovCircle then
-                fovCircle.Visible = fovCircleVisible and enable
-                fovCircle.Position = mousePos
-                fovCircle.Radius = 120
+                if type(fovCircleVisible) == "boolean" then
+                    fovCircle.Visible = fovCircleVisible and enable
+                else
+                    fovCircle.Visible = enable
+                end
+                if typeof(mousePos) == "Vector2" then
+                    pcall(function() fovCircle.Position = mousePos end)
+                end
+                if type(fovCircle.Radius) == "number" then
+                    fovCircle.Radius = 120
+                end
             end
             if aimbotRightClick and not UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then return end
-            if target and target.Character and target.Character:FindFirstChild("Head") then
-                local cam = Camera
-                cam.CFrame = CFrame.new(cam.CFrame.Position, target.Character.Head.Position)
+            if target and target.Character and target.Character:FindFirstChild("Head") and Camera and Camera.CFrame then
+                local head = target.Character.Head
+                if head and head:IsA("BasePart") then
+                    Camera.CFrame = CFrame.new(Camera.CFrame.Position, head.Position)
+                end
             end
         end)
     end
