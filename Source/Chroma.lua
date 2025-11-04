@@ -68,7 +68,7 @@ local chatInput = ""
 local chatEnabled = false
 local chatConnection
 local CFspeed = 50
-local farmConn, speedConn, slapConn
+local farmConn, speedConn, slapConn, slapLoop
 local CFloop
 local flyConn
 local flying = false
@@ -1362,6 +1362,7 @@ Games:CreateToggle({
 	Callback = function(enabled)
 		if speedConn then speedConn:Disconnect() speedConn = nil end
 		if slapConn then slapConn:Disconnect() slapConn = nil end
+		if slapLoop then slapLoop:Disconnect() slapLoop = nil end
 
 		if enabled then
 			speedConn = RunService.Heartbeat:Connect(function()
@@ -1378,14 +1379,25 @@ Games:CreateToggle({
 
 			slapConn = RunService.Heartbeat:Connect(function()
 				local char = LocalPlayer.Character
-				if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+				if not char or not char:FindFirstChild("HumanoidRootPart") then
+					Games:Toggle("Autofarm Slaps", false)
+					return
+				end
 				local targetPlayer = slapTarget()
 				if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
 					char.HumanoidRootPart.CFrame = targetPlayer.Character.HumanoidRootPart.CFrame
-					local remote = getGloveRemote()
-					if remote then
-						remote:FireServer(targetPlayer.Character.HumanoidRootPart, true)
-					end
+				end
+			end)
+
+			slapLoop = RunService.Heartbeat:Connect(function(dt)
+				if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") or LocalPlayer.Character:FindFirstChildWhichIsA("Humanoid").Health <= 0 then
+					Games:Toggle("Autofarm Slaps", false)
+					return
+				end
+				local targetPlayer = slapTarget()
+				local remote = getGloveRemote()
+				if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") and remote then
+					remote:FireServer(targetPlayer.Character.HumanoidRootPart, true)
 				end
 			end)
 		end
