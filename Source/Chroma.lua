@@ -1588,11 +1588,11 @@ Games:CreateToggle({
 	Name = "Autofarm Slaps",
 	CurrentValue = false,
 	Callback = function(enabled)
-		if slapConn then slapConn:Disconnect() slapConn = nil end
+		if slapConn then task.cancel(slapConn) slapConn = nil end
 
 		if enabled then
 			slapConn = task.spawn(function()
-				while enabled do
+				while Games.Flags["Autofarm Slaps"] do
 					local char = LocalPlayer.Character
 					if not char or not char:FindFirstChild("HumanoidRootPart") then
 						task.wait(1)
