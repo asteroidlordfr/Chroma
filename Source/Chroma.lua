@@ -45,6 +45,7 @@ local activeThreads = {}
 
 local slapDelay = 0.2
 local currentTarget
+local running = false
 local farmConn, speedConn, slapConn, slapLoop
 local Reach = 13
 
@@ -1588,11 +1589,16 @@ Games:CreateToggle({
 	Name = "Autofarm Slaps",
 	CurrentValue = false,
 	Callback = function(enabled)
-		if slapConn then task.cancel(slapConn) slapConn = nil end
+		if slapConnTask then
+			pcall(function() task.cancel(slapConnTask) end)
+			slapConnTask = nil
+		end
 
-		if enabled then
-			slapConn = task.spawn(function()
-				while Games.Flags["Autofarm Slaps"] do
+		running = enabled
+
+		if running then
+			slapConnTask = task.spawn(function()
+				while running do
 					local char = LocalPlayer.Character
 					if not char or not char:FindFirstChild("HumanoidRootPart") then
 						task.wait(1)
@@ -1601,15 +1607,20 @@ Games:CreateToggle({
 
 					local target = getRandomTarget()
 					if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+						-- place yourself directly inside target (tiny random offset)
 						char.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame * CFrame.new(math.random(-1,1), 0, math.random(-1,1))
+
 						local dist = (char.HumanoidRootPart.Position - target.Character.HumanoidRootPart.Position).Magnitude
 						if dist <= Reach then
 							local remote = getGloveRemote()
-							pcall(function()
-								remote:FireServer(target.Character.HumanoidRootPart, true)
-							end)
+							if remote then
+								pcall(function()
+									remote:FireServer(target.Character.HumanoidRootPart, true)
+								end)
+							end
 						end
 					end
+
 					task.wait(slapDelay)
 				end
 			end)
