@@ -200,9 +200,10 @@ local Window = Library:CreateWindow({
    LoadingTitle = "An open-sourced Roblox universal cheat.",
    LoadingSubtitle = "Licensed under GPLv3",
    Theme = "Ocean",
-   ConfigurationSaving = {Enabled = true, FolderName = nil, FileName = "Chroma"},
+   ConfigurationSaving = {Enabled = true, FolderName = "ChromaConfigs", FileName = "Chroma"},
    KeySystem = false,
 })
+
 
 -- Below is all the spicy toggle stuff and categories, enjoy.
 
