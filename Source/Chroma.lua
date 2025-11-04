@@ -30,8 +30,6 @@ if ReplicatedStorage:FindFirstChild("ReplicaRemoteEvents") and ReplicatedStorage
 end
 
 local PlaceBlock = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("PlaceBlock") -- this is for Voxels
-local DamageFolder = Networking:WaitForChild("Server"):WaitForChild("RemoteEvents"):WaitForChild("DamageEvents") -- For some stupid gubby game
-if not DamageFolder then return end
 
 -- Below is Plants vs Brainrots references (Kill me)
 
@@ -77,32 +75,6 @@ local fovCircle = Drawing.new("Circle")
 local fov = 120
 local smoothing = 10
 local showFovCircle = true
-
-local remotes = {}
-local remoteTemplates = {
-    "PhysicsDamage","SlapDamage","FistDamage","TaserDamage","JackhammerDamage",
-    "AirstrikeDamage","FlamethrowerDamage","GrenadeDamage","BaseballDamage",
-    "BowlingBallDamage","LandmineDamage","EnvironmentFireDamage","JobApplicationDamage",
-    "TimeBombDamage","MinigunDamage","RocketLauncherDamage","BurnDamage","SmiteDamage",
-    "EarthquakeDamage","VoidDamage"
-}
-for _, name in ipairs(remoteTemplates) do
-    local remoteInst = DamageFolder:FindFirstChild(name)
-    if remoteInst then
-        table.insert(remotes, remoteInst)
-    end
-end
-
-local toolNames = {
-    "SlapHand","FistHand","BuzzSawTool","TaserTool","JackhammerTool",
-    "AirstrikeTool","FlamethrowerTool","GrenadeWeapon","BaseballWeapon",
-    "LandmineWeapon","MolotovWeapon","PaintballGunWeapon","JobApplicationWeapon",
-    "BowlingBallWeapon","TimeBombWeapon","MinigunWeapon","RocketLauncherWeapon",
-    "FireballMagic","SmiteMagic","EarthquakeMagic","GravityWellMagic",
-}
-
-local PurchaseAction = Networking:WaitForChild("Server"):WaitForChild("RemoteEvents"):FindFirstChild("PurchaseAction")
-local posss = Vector3.new(-0.8127598762512207, 3.0275533199310303, 0.008699118159711361)
 
 -- Below is the preset warehouse
 
@@ -1003,38 +975,6 @@ Games:CreateSlider({
             end)
         end
     end
-})
-
-Games:CreateSection("Beat up Gubby in His Own Home")
-
-Games:CreateToggle({
-	Name = "Infinite Cash",
-	CurrentValue = false,
-	Callback = function(val)
-		running = val
-		spawn(function()
-			while running do
-				for _, remote in ipairs(remotes) do
-					pcall(function()
-						remote:FireServer(posss)
-					end)
-				end
-				task.wait(2)
-			end
-		end)
-	end
-})
-
-Games:CreateButton({
-	Name = "Buy All Tools",
-	Callback = function()
-		if not PurchaseAction then return end
-		for _, toolName in ipairs(toolNames) do
-			pcall(function()
-				PurchaseAction:FireServer(toolName)
-			end)
-		end
-	end
 })
 
 Games:CreateSection("Voxels")
