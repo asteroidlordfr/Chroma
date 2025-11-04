@@ -43,7 +43,7 @@ local activeThreads = {}
 
 -- Below is some Slap Battles stuff
 
-local slapDelay = 1
+local slapDelay = 3
 local currentTarget
 local farmConn, speedConn, slapConn, slapLoop
 local Reach = 5
