@@ -119,6 +119,28 @@ local function glitter()
 	end
 end
 
+local function slapTarget()
+	local closestDist = math.huge
+	local target = nil
+	local char = LocalPlayer.Character
+	if not char or not char:FindFirstChild("HumanoidRootPart") then return nil end
+	local root = char.HumanoidRootPart
+
+	for _, p in pairs(Players:GetPlayers()) do
+		if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and p.Character:FindFirstChild("Humanoid") then
+			local hum = p.Character.Humanoid
+			if hum.Health > 0 and p.Character:FindFirstChild("entered") then
+				local dist = (p.Character.HumanoidRootPart.Position - root.Position).Magnitude
+				if dist < closestDist then
+					closestDist = dist
+					target = p
+				end
+			end
+		end
+	end
+	return target
+end
+
 local function loadAnswers(url)
     local success, response = pcall(function()
         return game:HttpGet(url)
@@ -1357,7 +1379,7 @@ Games:CreateToggle({
 			slapConn = RunService.Heartbeat:Connect(function()
 				local char = LocalPlayer.Character
 				if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-				local targetPlayer = getClosestPlayer()
+				local targetPlayer = slapTarget()
 				if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
 					char.HumanoidRootPart.CFrame = targetPlayer.Character.HumanoidRootPart.CFrame
 					local remote = getGloveRemote()
