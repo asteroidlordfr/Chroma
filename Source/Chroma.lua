@@ -32,13 +32,14 @@ end
 
 local PlaceBlock = (ReplicatedStorage:FindFirstChild("Remotes") and ReplicatedStorage.Remotes:FindFirstChild("PlaceBlock")) -- this is for Voxels
 local voxels = {}
-local circleRadius = 20
 
+local blockTypes = {"Oak Planks", "Bricks", "Dirt", "Cobblestone", "Oak Log", "Oak Leaves", "Glass", "Stone", "Yellow Wool"}
 local spawnedBlocks = {
 	PerfectCircle = {},
 	PlankSpammer = {},
 	PlankTower = {}
 }
+local activeThreads = {}
 
 -- Below is Plants vs Brainrots references (Kill me)
 
@@ -1193,17 +1194,18 @@ Games:CreateToggle({
 })
 end
 
-Games:CreateLabel("Voxels")
+Games:CreateSection("Voxels")
 
-Games:CreateSlider({
-	Name = "Circle Radius",
-	Range = {5, 100},
-	Increment = 0,
-	CurrentValue = circleRadius,
-	Callback = function(value)
-		circleRadius = value
+local function spawnLoop(toggleName, loopFunc)
+	if activeThreads[toggleName] then return end
+	activeThreads[toggleName] = task.spawn(loopFunc)
+end
+
+local function stopLoop(toggleName)
+	if activeThreads[toggleName] then
+		activeThreads[toggleName] = nil
 	end
-})
+end
 
 Games:CreateToggle({
 	Name = "Perfect Circle",
@@ -1215,19 +1217,22 @@ Games:CreateToggle({
 				PlaceBlock:FireServer(workspace["1Grass"], Enum.NormalId.Top, blockPos, "Air")
 			end
 			spawnedBlocks.PerfectCircle = {}
+			stopLoop("PerfectCircle")
 			return
 		end
-		spawn(function()
+		spawnLoop("PerfectCircle", function()
 			local step = 3
+			local typeIndex = 1
 			while voxels.PerfectCircle do
 				local rootPos = glitter().Position
-				for x = -circleRadius, circleRadius, step do
-					for z = -circleRadius, circleRadius, step do
+				for x = -20, 20, step do
+					for z = -20, 20, step do
 						local offset = Vector3.new(x, 0, z)
-						if offset.Magnitude <= circleRadius and offset.Magnitude >= circleRadius - step then
+						if offset.Magnitude <= 20 and offset.Magnitude >= 20 - step then
 							local blockPos = rootPos + offset
-							PlaceBlock:FireServer(workspace["1Grass"], Enum.NormalId.Top, blockPos, "Oak Planks")
+							PlaceBlock:FireServer(workspace["1Grass"], Enum.NormalId.Top, blockPos, blockTypes[typeIndex])
 							table.insert(spawnedBlocks.PerfectCircle, blockPos)
+							typeIndex = typeIndex % #blockTypes + 1
 						end
 					end
 				end
@@ -1247,13 +1252,16 @@ Games:CreateToggle({
 				PlaceBlock:FireServer(workspace["1Grass"], Enum.NormalId.Top, blockPos, "Air")
 			end
 			spawnedBlocks.PlankSpammer = {}
+			stopLoop("PlankSpammer")
 			return
 		end
-		spawn(function()
+		spawnLoop("PlankSpammer", function()
+			local typeIndex = 1
 			while voxels.PlankSpammer do
 				local blockPos = glitter().Position
-				PlaceBlock:FireServer(workspace["1Grass"], Enum.NormalId.Top, blockPos, "Oak Planks")
+				PlaceBlock:FireServer(workspace["1Grass"], Enum.NormalId.Top, blockPos, blockTypes[typeIndex])
 				table.insert(spawnedBlocks.PlankSpammer, blockPos)
+				typeIndex = typeIndex % #blockTypes + 1
 				task.wait(0.02)
 			end
 		end)
@@ -1270,15 +1278,18 @@ Games:CreateToggle({
 				PlaceBlock:FireServer(workspace["1Grass"], Enum.NormalId.Top, blockPos, "Air")
 			end
 			spawnedBlocks.PlankTower = {}
+			stopLoop("PlankTower")
 			return
 		end
-		spawn(function()
+		spawnLoop("PlankTower", function()
 			local yOffset = 0
+			local typeIndex = 1
 			while voxels.PlankTower do
 				local blockPos = glitter().Position + Vector3.new(0, yOffset, 0)
-				PlaceBlock:FireServer(workspace["1Grass"], Enum.NormalId.Top, blockPos, "Oak Planks")
+				PlaceBlock:FireServer(workspace["1Grass"], Enum.NormalId.Top, blockPos, blockTypes[typeIndex])
 				table.insert(spawnedBlocks.PlankTower, blockPos)
 				yOffset = yOffset + 4
+				typeIndex = typeIndex % #blockTypes + 1
 				task.wait(0.05)
 			end
 		end)
