@@ -43,10 +43,10 @@ local activeThreads = {}
 
 -- Below is some Slap Battles stuff
 
-local slapDelay = 3
+local slapDelay = 6
 local currentTarget
 local farmConn, speedConn, slapConn, slapLoop
-local Reach = 2
+local Reach = 1
 
 gloveHits = {
     ["Default"] = game.ReplicatedStorage.b,
@@ -239,7 +239,7 @@ gloveHits = {
     ["Error"] = game.ReplicatedStorage.Errorhit
 }
 
-local function getNextTarget()
+local function getNextTarget(prev)
 	local char = LocalPlayer.Character
 	if not char or not char:FindFirstChild("HumanoidRootPart") then return nil end
 	local root = char.HumanoidRootPart
@@ -247,11 +247,11 @@ local function getNextTarget()
 	local target = nil
 
 	for _, p in pairs(Players:GetPlayers()) do
-		if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and p.Character:FindFirstChild("Humanoid") and p.Character:FindFirstChild("entered") then
+		if p ~= LocalPlayer and p ~= prev and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and p.Character:FindFirstChild("Humanoid") and p.Character:FindFirstChild("entered") then
 			local hum = p.Character.Humanoid
 			if hum.Health > 0 then
 				local dist = (p.Character.HumanoidRootPart.Position - root.Position).Magnitude
-				if dist < closestDist then
+				if dist < closestDist and dist <= Reach then
 					closestDist = dist
 					target = p
 				end
