@@ -41,10 +41,6 @@ local spawnedBlocks = {
 }
 local activeThreads = {}
 
--- Below is Slap Battles references
-
-local gloveHits = require(game.ReplicatedStorage:WaitForChild("Remotes"))
-
 -- Below is Plants vs Brainrots references (Kill me)
 
 local player = game:GetService("Players").LocalPlayer
@@ -1308,13 +1304,13 @@ Games:CreateToggle({
 	Callback = function(enabled)
 		local farmConn
 		if enabled then
-			farmConn = game:GetService("RunService").Heartbeat:Connect(function()
-				local localChar = game.Players.LocalPlayer.Character
+			farmConn = RunService.Heartbeat:Connect(function()
+				local localChar = Players.LocalPlayer.Character
 				if not localChar or not localChar:FindFirstChild("entered") or not localChar:FindFirstChild("HumanoidRootPart") then return end
 
 				for _, v in pairs(workspace.Arena.island5.Slapples:GetChildren()) do
 					if v:FindFirstChild("Glove") and v.Glove:FindFirstChildWhichIsA("TouchTransmitter") then
-						if (v.Name == "Slapple" or v.Name == "GoldenSlapple") then
+						if v.Name == "Slapple" or v.Name == "GoldenSlapple" then
 							firetouchinterest(localChar.HumanoidRootPart, v.Glove, 0)
 							firetouchinterest(localChar.HumanoidRootPart, v.Glove, 1)
 						end
@@ -1336,34 +1332,31 @@ Games:CreateToggle({
 	Callback = function(enabled)
 		local speedConn, slapConn
 
-		if enabled then
-
-			local function getNearestPlayer()
-				local localChar = Players.LocalPlayer.Character
-				if not localChar then return end
-				local root = localChar:FindFirstChild("HumanoidRootPart")
-				if not root then return end
-				local nearest, dist = nil, math.huge
-				for _, p in ipairs(Players:GetPlayers()) do
-					if p ~= Players.LocalPlayer then
-						local char = p.Character
-						if char and char:FindFirstChild("Humanoid") and char.Humanoid.Health > 0 and char:FindFirstChild("entered") then
-							if char:FindFirstChild("stevebody") == nil and char:FindFirstChild("rock") == nil and char.HumanoidRootPart.BrickColor ~= BrickColor.new("New Yeller") and char.Ragdolled.Value == false then
-								local diffY = char.HumanoidRootPart.Position.Y - root.Position.Y
-								if diffY >= -5 then
-									local d = (char.HumanoidRootPart.Position - root.Position).Magnitude
-									if d < dist then
-										dist = d
-										nearest = char
-									end
-								end
+		local function getNearestPlayer()
+			local localChar = Players.LocalPlayer.Character
+			if not localChar then return end
+			local root = localChar:FindFirstChild("HumanoidRootPart")
+			if not root then return end
+			local nearest, dist = nil, math.huge
+			for _, p in ipairs(Players:GetPlayers()) do
+				if p ~= Players.LocalPlayer then
+					local char = p.Character
+					if char and char:FindFirstChild("Humanoid") and char.Humanoid.Health > 0 and char:FindFirstChild("entered") then
+						local rootPart = char:FindFirstChild("HumanoidRootPart")
+						if rootPart then
+							local d = (rootPart.Position - root.Position).Magnitude
+							if d < dist then
+								dist = d
+								nearest = char
 							end
 						end
 					end
 				end
-				return nearest, dist
 			end
+			return nearest
+		end
 
+		if enabled then
 			speedConn = RunService.Heartbeat:Connect(function()
 				local char = Players.LocalPlayer.Character
 				if not char then return end
@@ -1371,9 +1364,7 @@ Games:CreateToggle({
 				local hum = char:FindFirstChildWhichIsA("Humanoid")
 				if root and hum then
 					local moveDir = hum.MoveDirection
-					if moveDir.Magnitude > 0 then
-						moveDir = moveDir.Unit
-					end
+					if moveDir.Magnitude > 0 then moveDir = moveDir.Unit end
 					root.Velocity = Vector3.new(moveDir.X * 100, root.Velocity.Y, moveDir.Z * 100)
 				end
 			end)
@@ -1386,13 +1377,8 @@ Games:CreateToggle({
 					local direction = (target.HumanoidRootPart.Position - root.Position)
 					direction = Vector3.new(direction.X, 0, direction.Z).Unit
 					root.CFrame = root.CFrame + direction * math.min((target.HumanoidRootPart.Position - root.Position).Magnitude, 1)
-					
-					if (target.HumanoidRootPart.Position - root.Position).Magnitude <= 4 then
-						gloveHits[Players.LocalPlayer.leaderstats.Glove.Value]:FireServer(target.HumanoidRootPart, true)
-					end
 				end
 			end)
-
 		else
 			if slapConn then slapConn:Disconnect() slapConn = nil end
 			if speedConn then speedConn:Disconnect() speedConn = nil end
