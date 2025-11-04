@@ -36,8 +36,10 @@ local PlaceBlock = (ReplicatedStorage:FindFirstChild("Remotes") and ReplicatedSt
 
 local player = game:GetService("Players").LocalPlayer
 local humanoid = player.Character or player.CharacterAdded:Wait():WaitForChild("Humanoid")
-local seedsFrame = player.PlayerGui.Main.Seeds.Frame.ScrollingFrame
-local gearsFrame = player.PlayerGui.Main.Gears.Frame.ScrollingFrame
+if game.PlaceId == 127742093697776 then
+    local seedsFrame = player.PlayerGui.Main.Seeds.Frame.ScrollingFrame
+    local gearsFrame = player.PlayerGui.Main.Gears.Frame.ScrollingFrame
+end
 local Networking = game:GetService("ReplicatedStorage")
 local dataRemoteEvent = (Networking:FindFirstChild("BridgeNet2") and Networking.BridgeNet2:FindFirstChild("dataRemoteEvent"))
 local useItemRemote = (Networking:FindFirstChild("Remotes") and Networking.Remotes:FindFirstChild("UseItem"))
@@ -940,6 +942,7 @@ Games:CreateSlider({
     end
 })
 
+if game.PlaceId == 127742093697776 then
 Games:CreateSection("Plants vs Brainrots")
 
 Games:CreateToggle({
@@ -1037,6 +1040,7 @@ Games:CreateToggle({
 		end)
 	end
 })
+end
 
 Games:CreateSection("Voxels")
 
