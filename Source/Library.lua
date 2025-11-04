@@ -1629,7 +1629,7 @@ function yogurtLibrary:CreateWindow(Settings)
 	LoadingFrame.Subtitle.Text = Settings.LoadingSubtitle or "Interface Suite"
 
 	if Settings.LoadingTitle ~= "yogurt Interface Suite" then
-		LoadingFrame.Version.Text = "yogurt UI"
+		LoadingFrame.Version.Text = "loading..."
 	end
 
 	if Settings.Icon and Settings.Icon ~= 0 and Topbar:FindFirstChild('Icon') then
