@@ -456,75 +456,6 @@ local function toggleAimbot(enable)
             local UserInputService = game:GetService("UserInputService")
             local Camera = workspace.CurrentCamera
             local LocalPlayer = game.Players.LocalPlayer
-
-            local target = getClosestPlayer()
-            local mousePos = UserInputService:GetMouseLocation()
-            fovCircle.Visible = fovCircleVisible and enable
-            fovCircle.Position = mousePos
-            fovCircle.Radius = 120
-
-            if aimbotRightClick and not UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then return end
-            if not target or not target.Character then return end
-
-            local function partScreenInfo(part)
-                local p = part
-                if not p then return nil, false end
-                local screenPos, onScreen = Camera:WorldToScreenPoint(p.Position)
-                return Vector2.new(screenPos.X, screenPos.Y), onScreen
-            end
-            local chosenPart = nil
-            local head = target.Character:FindFirstChild("Head")
-            if head then
-                local _, headOn = partScreenInfo(head)
-                if headOn then
-                    chosenPart = head
-                end
-            end
-
-            if not chosenPart then
-                local candidates = {
-                    "HumanoidRootPart","UpperTorso","LowerTorso","Torso",
-                    "RightUpperArm","LeftUpperArm","RightLowerArm","LeftLowerArm",
-                    "RightUpperLeg","LeftUpperLeg","RightLowerLeg","LeftLowerLeg",
-                    "RightArm","LeftArm","RightLeg","LeftLeg","Torso","UpperTorso"
-                }
-                local visibleParts = {}
-                for _, name in ipairs(candidates) do
-                    local p = target.Character:FindFirstChild(name)
-                    if p and p:IsA("BasePart") then
-                        local _, on = partScreenInfo(p)
-                        if on then
-                            table.insert(visibleParts, p)
-                        end
-                    end
-                end
-                if #visibleParts > 0 then
-                    chosenPart = visibleParts[math.random(1, #visibleParts)]
-                else
-                    chosenPart = head or target.Character:FindFirstChild("HumanoidRootPart")
-                end
-            end
-
-            if chosenPart and chosenPart:IsA("BasePart") then
-                local cam = Camera
-                cam.CFrame = CFrame.new(cam.CFrame.Position, chosenPart.Position)
-            end
-        end)
-    end
-end
-
---[[
-local aimbotConnection
-local function toggleAimbot(enable)
-    if aimbotConnection then
-        aimbotConnection:Disconnect()
-        aimbotConnection = nil
-    end
-    if enable then
-        aimbotConnection = game:GetService("RunService").RenderStepped:Connect(function()
-            local UserInputService = game:GetService("UserInputService")
-            local Camera = workspace.CurrentCamera
-            local LocalPlayer = game.Players.LocalPlayer
             local target = getClosestPlayer()
             local mousePos = UserInputService:GetMouseLocation()
             fovCircle.Visible = fovCircleVisible and enable
@@ -538,9 +469,6 @@ local function toggleAimbot(enable)
         end)
     end
 end
-
-^^ Old aimbot system
---]]
 
 local function submitAnswers()
     if not ReplicaSignal then return end
