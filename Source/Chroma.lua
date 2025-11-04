@@ -430,6 +430,18 @@ local function getClosestPlayer()
     return target
 end
 
+local function getRandomTarget()
+	local valid = {}
+	for _, p in pairs(Players:GetPlayers()) do
+		if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and p.Character:FindFirstChild("Humanoid") and p.Character:FindFirstChild("entered") then
+			table.insert(valid, p)
+		end
+	end
+	if #valid > 0 then
+		return valid[math.random(1, #valid)]
+	end
+end
+
 local aimbotConnection
 local function toggleAimbot(enable)
     if aimbotConnection then
@@ -1577,7 +1589,6 @@ Games:CreateToggle({
 	CurrentValue = false,
 	Callback = function(enabled)
 		if slapConn then slapConn:Disconnect() slapConn = nil end
-		currentTarget = nil
 
 		if enabled then
 			slapConn = RunService.Heartbeat:Connect(function()
@@ -1587,31 +1598,17 @@ Games:CreateToggle({
 					return
 				end
 
-				if not currentTarget or not currentTarget.Character or not currentTarget.Character:FindFirstChild("HumanoidRootPart") then
-					currentTarget = getNextTarget(currentTarget)
-				end
-
-				if currentTarget and currentTarget.Character and currentTarget.Character:FindFirstChild("HumanoidRootPart") then
-					local root = char.HumanoidRootPart
-					local targetRoot = currentTarget.Character.HumanoidRootPart
-					local dist = (targetRoot.Position - root.Position).Magnitude
-
-					-- minimal follow
-					if dist > 3 then
-						local direction = (targetRoot.Position - root.Position)
-						direction = Vector3.new(direction.X, 0, direction.Z).Unit
-						root.CFrame = root.CFrame + direction * math.min(dist, 2)
-					end
-
-					-- slap only if within reach
+				local target = getRandomTarget()
+				if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+					char:MoveTo(target.Character.HumanoidRootPart.Position)
+					local dist = (char.HumanoidRootPart.Position - target.Character.HumanoidRootPart.Position).Magnitude
 					if dist <= Reach then
 						local remote = getGloveRemote()
 						pcall(function()
-							remote:FireServer(targetRoot, true)
+							remote:FireServer(target.Character.HumanoidRootPart, true)
 						end)
-						currentTarget = nil
-						task.wait(slapDelay)
 					end
+					task.wait(slapDelay)
 				else
 					task.wait(0.5)
 				end
