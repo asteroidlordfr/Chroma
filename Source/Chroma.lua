@@ -6,6 +6,8 @@
 --
 -- Have fun!
 -- (Yes yes, some of this code is GPT but only i'd say only 15/100 is GPT as I don't know much Lua.)
+-- (also, forgive me for how bad some of this is organized)
+--
 --]
 
 repeat task.wait() until game:IsLoaded() -- Thank you TRICK-HUBB/TrickHub for this, very cool but easy
@@ -28,6 +30,20 @@ if ReplicatedStorage:FindFirstChild("ReplicaRemoteEvents") and ReplicatedStorage
 end
 
 local PlaceBlock = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("PlaceBlock") -- this is for Voxels
+local DamageFolder = Networking:WaitForChild("Server"):WaitForChild("RemoteEvents"):WaitForChild("DamageEvents") -- For some stupid gubby game
+if not DamageFolder then return end
+
+-- Below is Plants vs Brainrots references (Kill me)
+
+local player = game:GetService("Players").LocalPlayer
+local humanoid = player.Character or player.CharacterAdded:Wait():WaitForChild("Humanoid")
+local seedsFrame = player.PlayerGui.Main.Seeds.Frame.ScrollingFrame
+local gearsFrame = player.PlayerGui.Main.Gears.Frame.ScrollingFrame
+local Networking = game:GetService("ReplicatedStorage")
+local dataRemoteEvent = Networking:WaitForChild("BridgeNet2"):WaitForChild("dataRemoteEvent")
+local useItemRemote = Networking:WaitForChild("Remotes"):WaitForChild("UseItem")
+
+-- Below is the variable warehouse
 
 local defaultWalkSpeed = 16
 local defaultJumpPower = 50
@@ -62,11 +78,43 @@ local fov = 120
 local smoothing = 10
 local showFovCircle = true
 
+local remotes = {}
+local remoteTemplates = {
+    "PhysicsDamage","SlapDamage","FistDamage","TaserDamage","JackhammerDamage",
+    "AirstrikeDamage","FlamethrowerDamage","GrenadeDamage","BaseballDamage",
+    "BowlingBallDamage","LandmineDamage","EnvironmentFireDamage","JobApplicationDamage",
+    "TimeBombDamage","MinigunDamage","RocketLauncherDamage","BurnDamage","SmiteDamage",
+    "EarthquakeDamage","VoidDamage"
+}
+for _, name in ipairs(remoteTemplates) do
+    local remoteInst = DamageFolder:FindFirstChild(name)
+    if remoteInst then
+        table.insert(remotes, remoteInst)
+    end
+end
+
+local toolNames = {
+    "SlapHand","FistHand","BuzzSawTool","TaserTool","JackhammerTool",
+    "AirstrikeTool","FlamethrowerTool","GrenadeWeapon","BaseballWeapon",
+    "LandmineWeapon","MolotovWeapon","PaintballGunWeapon","JobApplicationWeapon",
+    "BowlingBallWeapon","TimeBombWeapon","MinigunWeapon","RocketLauncherWeapon",
+    "FireballMagic","SmiteMagic","EarthquakeMagic","GravityWellMagic",
+}
+
+local PurchaseAction = Networking:WaitForChild("Server"):WaitForChild("RemoteEvents"):FindFirstChild("PurchaseAction")
+local posss = Vector3.new(-0.8127598762512207, 3.0275533199310303, 0.008699118159711361)
+
+-- Below is the preset warehouse
+
 fovCircle.Visible = false
 fovCircle.Color = Color3.fromRGB(255,255,255)
 fovCircle.Thickness = 1
 fovCircle.NumSides = 64
 fovCircle.Filled = false
+
+Answers = loadAnswers("https://raw.githubusercontent.com/asteroidlordfr/Chroma/main/Resources/LAW/Answers.txt")
+
+-- Below is the function warehouse
 
 local function pos()
 	local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
@@ -92,8 +140,6 @@ local function loadAnswers(url)
     end
     return {}
 end
-
-Answers = loadAnswers("https://raw.githubusercontent.com/asteroidlordfr/Chroma/main/Resources/LAW/Answers.txt")
 
 local function getClosestPlayer()
     local closestDist = math.huge
@@ -163,6 +209,15 @@ local function toggleAimbot(enable)
     end
 end
 
+local function submitAnswers()
+    if not ReplicaSignal then return end
+    for _, answer in ipairs(Answers) do
+        ReplicaSignal:FireServer(2, "Answer", answer)
+    end
+end
+
+-- Below is the Rayfield [Library reference] window creation
+
 local Window = Library:CreateWindow({
    Name = "🟢 Chroma",
    LoadingTitle = "An open-sourced Roblox universal cheat.",
@@ -172,12 +227,7 @@ local Window = Library:CreateWindow({
    KeySystem = false,
 })
 
-local function submitAnswers()
-    if not ReplicaSignal then return end
-    for _, answer in ipairs(Answers) do
-        ReplicaSignal:FireServer(2, "Answer", answer)
-    end
-end
+-- Below is all the spicy toggle stuff and categories, enjoy.
 
 local Movement = Window:CreateTab("🎮 Movement")
 Movement:CreateSection("Sliders")
@@ -955,6 +1005,38 @@ Games:CreateSlider({
     end
 })
 
+Games:CreateSection("Beat up Gubby in His Own Home")
+
+Games:CreateToggle({
+	Name = "Infinite Cash",
+	CurrentValue = false,
+	Callback = function(val)
+		running = val
+		spawn(function()
+			while running do
+				for _, remote in ipairs(remotes) do
+					pcall(function()
+						remote:FireServer(posss)
+					end)
+				end
+				task.wait(2)
+			end
+		end)
+	end
+})
+
+Games:CreateButton({
+	Name = "Buy All Tools",
+	Callback = function()
+		if not PurchaseAction then return end
+		for _, toolName in ipairs(toolNames) do
+			pcall(function()
+				PurchaseAction:FireServer(toolName)
+			end)
+		end
+	end
+})
+
 Games:CreateSection("Voxels")
 
 Games:CreateToggle({
@@ -1024,6 +1106,104 @@ Games:CreateToggle({
 				PlaceBlock:FireServer(workspace["1Grass"], Enum.NormalId.Top, point, "Oak Planks")
 				yOffset = yOffset + 4
 				task.wait(0.1)
+			end
+		end)
+	end
+})
+
+Games:CreateSection("Plants vs Brainrots")
+
+Games:CreateToggle({
+	Name = "Auto Buy [BEST SEEDS]",
+	CurrentValue = false,
+	Callback = function(val)
+		local running = val
+		spawn(function()
+			while running do
+				for _, itemFrame in ipairs(seedsFrame:GetChildren()) do
+					if itemFrame:IsA("Frame") and itemFrame:FindFirstChild("Stock") and string.match(itemFrame.Name,"Premium") then
+						local amount = tonumber(itemFrame.Stock.Text:match("x(%d+)")) or 0
+						for i = 1, amount do
+							dataRemoteEvent:FireServer({itemFrame.Name, "\b"})
+						end
+					end
+				end
+				task.wait(1)
+			end
+		end)
+	end
+})
+
+Games:CreateToggle({
+	Name = "Auto Buy [BAD SEEDS]",
+	CurrentValue = false,
+	Callback = function(val)
+		local running = val
+		spawn(function()
+			while running do
+				for _, itemFrame in ipairs(seedsFrame:GetChildren()) do
+					if itemFrame:IsA("Frame") and itemFrame:FindFirstChild("Stock") and not string.match(itemFrame.Name,"Premium") then
+						local amount = tonumber(itemFrame.Stock.Text:match("x(%d+)")) or 0
+						for i = 1, amount do
+							dataRemoteEvent:FireServer({itemFrame.Name, "\b"})
+						end
+					end
+				end
+				task.wait(1)
+			end
+		end)
+	end
+})
+
+Games:CreateToggle({
+	Name = "Auto Buy [GEARS]",
+	CurrentValue = false,
+	Callback = function(val)
+		local running = val
+		spawn(function()
+			while running do
+				for _, itemFrame in ipairs(gearsFrame:GetChildren()) do
+					if itemFrame:IsA("Frame") and itemFrame:FindFirstChild("Stock") then
+						local amount = tonumber(itemFrame.Stock.Text:match("x(%d+)")) or 0
+						for i = 1, amount do
+							dataRemoteEvent:FireServer({itemFrame.Name, "\026"})
+						end
+					end
+				end
+				task.wait(1)
+			end
+		end)
+	end
+})
+
+Games:CreateToggle({
+	Name = "Auto Frost Grenade All",
+	CurrentValue = false,
+	Callback = function(val)
+		local running = val
+		spawn(function()
+			while running do
+				for _, brainrot in ipairs(Workspace.ScriptedMap.Brainrots:GetChildren()) do
+					local progress = brainrot:GetAttribute("Progress") or 0
+					if progress > 0.6 then
+						local tool
+						for _, container in ipairs({player.Character, player.Backpack}) do
+							for _, item in ipairs(container:GetChildren()) do
+								if item:IsA("Tool") and string.match(item.Name, "^%[x%d+%] Frost Grenade$") then
+									tool = item
+								end
+							end
+						end
+						if tool then
+							humanoid:EquipTool(tool)
+							local bp = brainrot.PrimaryPart or brainrot:FindFirstChildWhichIsA("BasePart")
+							if bp then
+								useItemRemote:FireServer({{Toggle=true, Tool=tool, Time=0.5, Pos=bp.Position}})
+							end
+						end
+					end
+				end
+				task.wait(2)
 			end
 		end)
 	end
