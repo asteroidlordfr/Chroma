@@ -1304,7 +1304,7 @@ Games:CreateSection("Slap Battles")
 
 Games:CreateToggle({
 	Name = "Autofarm Slapples",
-	Default = false,
+	CurrentValue = false,
 	Callback = function(enabled)
 		local farmConn
 		if enabled then
