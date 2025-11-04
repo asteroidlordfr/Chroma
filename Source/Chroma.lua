@@ -1600,7 +1600,7 @@ Games:CreateToggle({
 
 				local target = getRandomTarget()
 				if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-					char:MoveTo(target.Character.HumanoidRootPart.Position)
+					char.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame * CFrame.new(math.random(-1,1), 0, math.random(-1,1))
 					local dist = (char.HumanoidRootPart.Position - target.Character.HumanoidRootPart.Position).Magnitude
 					if dist <= Reach then
 						local remote = getGloveRemote()
