@@ -43,6 +43,11 @@ local activeThreads = {}
 
 -- Below is some Slap Battles stuff
 
+local slapDelay = 1
+local currentTarget
+local farmConn, speedConn, slapConn, slapLoop
+local Reach = 5
+
 gloveHits = {
     ["Default"] = game.ReplicatedStorage.b,
     ["Extended"] = game.ReplicatedStorage.b,
@@ -234,6 +239,50 @@ gloveHits = {
     ["Error"] = game.ReplicatedStorage.Errorhit
 }
 
+local function getNextTarget()
+	local char = LocalPlayer.Character
+	if not char or not char:FindFirstChild("HumanoidRootPart") then return nil end
+	local root = char.HumanoidRootPart
+	local closestDist = math.huge
+	local target = nil
+
+	for _, p in pairs(Players:GetPlayers()) do
+		if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and p.Character:FindFirstChild("Humanoid") and p.Character:FindFirstChild("entered") then
+			local hum = p.Character.Humanoid
+			if hum.Health > 0 then
+				local dist = (p.Character.HumanoidRootPart.Position - root.Position).Magnitude
+				if dist < closestDist then
+					closestDist = dist
+					target = p
+				end
+			end
+		end
+	end
+	return target
+end
+
+local function slapTarget()
+	local closestDist = math.huge
+	local target = nil
+	local char = LocalPlayer.Character
+	if not char or not char:FindFirstChild("HumanoidRootPart") then return nil end
+	local root = char.HumanoidRootPart
+
+	for _, p in pairs(Players:GetPlayers()) do
+		if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and p.Character:FindFirstChild("Humanoid") and p.Character:FindFirstChild("entered") then
+			local hum = p.Character.Humanoid
+			if hum.Health > 0 then
+				local dist = (p.Character.HumanoidRootPart.Position - root.Position).Magnitude
+				if dist < closestDist then
+					closestDist = dist
+					target = p
+				end
+			end
+		end
+	end
+	return target
+end
+
 -- Below is Plants vs Brainrots references (Kill me)
 
 local player = game:GetService("Players").LocalPlayer
@@ -261,10 +310,6 @@ local chatInput = ""
 local chatEnabled = false
 local chatConnection
 local CFspeed = 50
-
-local farmConn, speedConn, slapConn, slapLoop
-local Reach = 20
-
 local CFloop
 local flyConn
 local flying = false
@@ -313,28 +358,6 @@ local function glitter()
 	elseif char:FindFirstChild("UpperTorso") then
 		return char.UpperTorso
 	end
-end
-
-local function slapTarget()
-	local closestDist = math.huge
-	local target = nil
-	local char = LocalPlayer.Character
-	if not char or not char:FindFirstChild("HumanoidRootPart") then return nil end
-	local root = char.HumanoidRootPart
-
-	for _, p in pairs(Players:GetPlayers()) do
-		if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and p.Character:FindFirstChild("Humanoid") and p.Character:FindFirstChild("entered") then
-			local hum = p.Character.Humanoid
-			if hum.Health > 0 then
-				local dist = (p.Character.HumanoidRootPart.Position - root.Position).Magnitude
-				if dist < closestDist then
-					closestDist = dist
-					target = p
-				end
-			end
-		end
-	end
-	return target
 end
 
 local function loadAnswers(url)
@@ -1555,7 +1578,7 @@ Games:CreateToggle({
 	Callback = function(enabled)
 		if speedConn then speedConn:Disconnect() speedConn = nil end
 		if slapConn then slapConn:Disconnect() slapConn = nil end
-		if slapLoop then slapLoop:Disconnect() slapLoop = nil end
+		currentTarget = nil
 
 		if enabled then
 			speedConn = RunService.Heartbeat:Connect(function()
@@ -1563,29 +1586,31 @@ Games:CreateToggle({
 				if not char then return end
 				local root = char:FindFirstChild("HumanoidRootPart")
 				local hum = char:FindFirstChildWhichIsA("Humanoid")
-				if root and hum then
-					local dir = hum.MoveDirection
-					if dir.Magnitude > 0 then dir = dir.Unit end
-					root.Velocity = Vector3.new(dir.X * 100, root.Velocity.Y, dir.Z * 100)
+				if root and hum and currentTarget and currentTarget.Character and currentTarget.Character:FindFirstChild("HumanoidRootPart") then
+					local targetRoot = currentTarget.Character.HumanoidRootPart
+					local direction = (targetRoot.Position - root.Position)
+					direction = Vector3.new(direction.X, 0, direction.Z).Unit
+					root.CFrame = root.CFrame + direction * math.min((targetRoot.Position - root.Position).Magnitude, 1)
 				end
 			end)
 
-			slapLoop = RunService.Heartbeat:Connect(function(dt)
+			slapConn = RunService.Heartbeat:Connect(function()
 				local char = LocalPlayer.Character
 				if not char or not char:FindFirstChild("HumanoidRootPart") or char:FindFirstChildWhichIsA("Humanoid").Health <= 0 then
 					Games:Toggle("Autofarm Slaps", false)
 					return
 				end
 
-				for _, p in pairs(Players:GetPlayers()) do
-					if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and p.Character:FindFirstChild("Humanoid") and p.Character:FindFirstChild("entered") then
-						local dist = (p.Character.HumanoidRootPart.Position - char.HumanoidRootPart.Position).Magnitude
-						if dist <= Reach then
-							local remote = getGloveRemote()
-							pcall(function()
-								remote:FireServer(p.Character.HumanoidRootPart, true)
-							end)
-						end
+				currentTarget = getNextTarget()
+				if currentTarget and currentTarget.Character and currentTarget.Character:FindFirstChild("HumanoidRootPart") then
+					local root = char.HumanoidRootPart
+					local dist = (currentTarget.Character.HumanoidRootPart.Position - root.Position).Magnitude
+					if dist <= Reach then
+						local remote = getGloveRemote()
+						pcall(function()
+							remote:FireServer(currentTarget.Character.HumanoidRootPart, true)
+						end)
+						task.wait(slapDelay)
 					end
 				end
 			end)
