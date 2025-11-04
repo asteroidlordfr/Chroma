@@ -303,10 +303,12 @@ local useItemRemote = (Networking:FindFirstChild("Remotes") and Networking.Remot
 local defaultWalkSpeed = 16
 local defaultJumpPower = 50
 local AnswersSent = false
+local aimbotConnection
 local aimbotEnabled = false
 local aimbotRightClick = false
+local teamCheck = true
 local wallCheck = false
-local teamCheck = false
+local fovCircleVisible = true
 local defaultFOV = workspace.CurrentCamera.FieldOfView
 local antiAfkEnabled = false
 local chatInput = ""
@@ -331,7 +333,6 @@ local aimbotConnection
 local fovCircle = Drawing.new("Circle")
 local fov = 120
 local smoothing = 10
-local showFovCircle = true
 
 -- Below is the preset warehouse
 
@@ -391,19 +392,25 @@ local function getGloveRemote()
 end
 
 local function getClosestPlayer()
-    local closestDist = math.hugelocal cam = Camera
+    local closestDist = math.huge
     local target
     local localPlayer = game.Players.LocalPlayer
     local players = game.Players
-    local teamCount = 0
     local playerTeams = {}
+
     for _, p in pairs(players:GetPlayers()) do
-        if p.Team then 
+        if p.Team then
             playerTeams[p.Team] = true
         end
     end
-    for _ in pairs(playerTeams) do teamCount = teamCount + 1 end
+
+    local teamCount = 0
+    for _ in pairs(playerTeams) do
+        teamCount += 1
+    end
+
     local ffa = (teamCount <= 1)
+
     for _, plr in pairs(players:GetPlayers()) do
         if plr ~= localPlayer and plr.Character and plr.Character:FindFirstChild("Head") then
             local humanoid = plr.Character:FindFirstChild("Humanoid")
@@ -454,12 +461,13 @@ local function toggleAimbot(enable)
         aimbotConnection = game:GetService("RunService").RenderStepped:Connect(function()
             local UserInputService = game:GetService("UserInputService")
             local Camera = workspace.CurrentCamera
-            local LocalPlayer = game.Players.LocalPlayer
             local target = getClosestPlayer()
             local mousePos = UserInputService:GetMouseLocation()
-            fovCircle.Visible = fovCircleVisible and enable
-            fovCircle.Position = mousePos
-            fovCircle.Radius = 120
+            if fovCircle then
+                fovCircle.Visible = fovCircleVisible and enable
+                fovCircle.Position = mousePos
+                fovCircle.Radius = 120
+            end
             if aimbotRightClick and not UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then return end
             if target and target.Character and target.Character:FindFirstChild("Head") then
                 local cam = Camera
@@ -850,8 +858,8 @@ Movement:CreateToggle({
     end
 })
 
-local Cheats = Window:CreateTab("🎯 Cheats")
 Cheats:CreateSection("Aimbot")
+
 Cheats:CreateToggle({
     Name = "Aimbot [RIGHT CLICK]",
     CurrentValue = false,
