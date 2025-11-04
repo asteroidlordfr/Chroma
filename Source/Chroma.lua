@@ -14,6 +14,7 @@ local LocalPlayer = Players.LocalPlayer
 local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 local Humanoid = Character:WaitForChild("Humanoid")
 local RunService = game:GetService("RunService")
+local VirtualUser = game:GetService("VirtualUser")
 local UserInputService = game:GetService("UserInputService")
 local workspace = workspace
 local Camera = workspace.CurrentCamera
@@ -540,6 +541,98 @@ Cheats:CreateToggle({
     end
 })
 
+Cheats:CreateSection("Shooter")
+
+Cheats:CreateToggle({ -- This was GPT cause I couldn't get inputs working correctly
+    Name = "Triggerbot",
+    CurrentValue = false,
+    Callback = function(state)
+        if _G.triggerbotConnection then
+            _G.triggerbotConnection:Disconnect()
+            _G.triggerbotConnection = nil
+        end
+
+        if state then
+            _G.triggerbotConnection = RunService.RenderStepped:Connect(function()
+                local mouse = LocalPlayer:GetMouse()
+                local targetPart = mouse.Target
+                if not targetPart then return end
+                local targetPlayer = Players:GetPlayerFromCharacter(targetPart:FindFirstAncestorOfClass("Model"))
+                if not targetPlayer or targetPlayer == LocalPlayer then return end
+                local humanoid = targetPlayer.Character and targetPlayer.Character:FindFirstChildOfClass("Humanoid")
+                if not humanoid or humanoid.Health <= 0 then return end
+
+                local teams = {}
+                for _, p in pairs(Players:GetPlayers()) do
+                    if p.Team then teams[p.Team] = true end
+                end
+                local teamCount = 0
+                for _ in pairs(teams) do teamCount += 1 end
+                local ffa = (teamCount <= 1)
+                if not ffa and targetPlayer.Team == LocalPlayer.Team then return end
+
+                if type(mouse1click) == "function" then
+                    pcall(mouse1click)
+                else
+                    pcall(function()
+                        VirtualUser:Button1Down(Vector2.new(), workspace.CurrentCamera.CFrame)
+                        task.wait(0.03)
+                        VirtualUser:Button1Up(Vector2.new(), workspace.CurrentCamera.CFrame)
+                    end)
+                end
+            end)
+        end
+    end
+})
+
+Cheats:CreateToggle({
+    Name = "Aim Assist",
+    CurrentValue = false,
+    Callback = function(enabled)
+        if _G._aimAssistConn then
+            _G._aimAssistConn:Disconnect()
+            _G._aimAssistConn = nil
+        end
+        if enabled then
+            local strength = 0.08
+            local fov = 80
+            local maxPullDist = 40
+            local requireRightClick = false
+
+            local function getClosestToMouse()
+                local closest, closestDist = nil, fov
+                local mousePos = UserInputService:GetMouseLocation()
+                for _, plr in ipairs(Players:GetPlayers()) do
+                    if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("Head") then
+                        local head = plr.Character.Head
+                        local screenPos, onScreen = Camera:WorldToScreenPoint(head.Position)
+                        if onScreen then
+                            local dist = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
+                            if dist < closestDist then
+                                closestDist = dist
+                                closest = plr
+                            end
+                        end
+                    end
+                end
+                return closest, closestDist
+            end
+
+            _G._aimAssistConn = RunService.RenderStepped:Connect(function()
+                if requireRightClick and not UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then return end
+                local target, distance = getClosestToMouse()
+                if not target or not target.Character then return end
+                local head = target.Character:FindFirstChild("Head")
+                if not head then return end
+                if distance > maxPullDist then return end
+                local dir = (head.Position - Camera.CFrame.Position).Unit
+                local newLook = Camera.CFrame.LookVector:Lerp(dir, strength)
+                Camera.CFrame = CFrame.new(Camera.CFrame.Position, Camera.CFrame.Position + newLook)
+            end)
+        end
+    end
+})
+
 Cheats:CreateSection("FOV")
 
 Cheats:CreateSlider({
@@ -558,10 +651,93 @@ Cheats:CreateButton({
     end
 })
 
+Cheats:CreateSection("Misc")
+
+Cheats:CreateToggle({
+	Name = "Ultra Instincts",
+	CurrentValue = false,
+	Callback = function(state)
+		local ultra = state
+		local lteleport = 0
+		local cooldown = 1.5
+		local checkDist = 60
+		local look = 0.985
+		local conn
+		local function teleport(center, radius, tries, dumb)
+			for i = 1, tries do
+				local rx = (math.random() * 2 - 1) * radius
+				local rz = (math.random() * 2 - 1) * radius
+				local candidate = Vector3.new(center.X + rx, center.Y + 50, center.Z + rz)
+				local params = RaycastParams.new()
+				params.FilterDescendantsInstances = dumb
+				params.FilterType = Enum.RaycastFilterType.Blacklist
+				local r = workspace:Raycast(candidate, Vector3.new(0, -200, 0), params)
+				if r and r.Instance then
+					local y = r.Position.Y + 3
+					local final = Vector3.new(candidate.X, y, candidate.Z)
+					local smallParams = RaycastParams.new()
+					smallParams.FilterDescendantsInstances = dumb
+					smallParams.FilterType = Enum.RaycastFilterType.Blacklist
+					local check = workspace:Raycast(final, Vector3.new(0, -3, 0), smallParams)
+					if check and check.Instance then
+						return final
+					end
+				end
+			end
+			return nil
+		end
+
+		if state then
+			if conn then conn:Disconnect() end
+			conn = RunService.Heartbeat:Connect(function()
+				if not ultra then return end
+				local char = LocalPlayer.Character
+				if not char then return end
+				local hrp = char:FindFirstChild("HumanoidRootPart")
+				if not hrp then return end
+				local now = tick()
+				if now - lteleport < cooldown then return end
+				for _, pl in pairs(Players:GetPlayers()) do
+					if pl ~= LocalPlayer then
+						local c = pl.Character
+						if c then
+							local head = c:FindFirstChild("Head")
+							local hrp2 = c:FindFirstChild("HumanoidRootPart")
+							if head and hrp2 then
+								local toMe = hrp.Position - head.Position
+								local dist = toMe.Magnitude
+								if dist <= checkDist then
+									local dirToMe = toMe.Unit
+									local lookVec = head.CFrame.LookVector
+									local dot = lookVec:Dot(dirToMe)
+									if dot >= look then
+										local dumb = {char, c}
+										local dest = teleport(hrp.Position, 12, 10, dumb)
+										if dest then
+											hrp.CFrame = CFrame.new(dest)
+											lteleport = now
+											break
+										end
+									end
+								end
+							end
+						end
+					end
+				end
+			end)
+		else
+			if conn then
+				conn:Disconnect()
+				conn = nil
+			end
+		end
+	end
+})
+
 local Chat = Window:CreateTab("💬 Chat")
 
 Chat:CreateInput({
-    Name = "text input",
+    Name = "Text Input",
     PlaceholderText = "Hello fella",
     Callback = function(text)
         chatInput = text
@@ -569,7 +745,7 @@ Chat:CreateInput({
 })
 
 Chat:CreateButton({
-    Name = "send message",
+    Name = "Send Message",
     Callback = function()
         chatEnabled = true
         if chatConnection then
@@ -590,8 +766,76 @@ Chat:CreateButton({
     end,
 })
 
+Chat:CreateSection("Chat")
+
+Client:CreateButton({
+    Name = "Show Chat",
+    Callback = function()
+        local chat = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui"):FindFirstChild("Chat")
+        if chat then chat.Enabled = true end
+        local chatFrame = game:GetService("CoreGui"):FindFirstChild("Chat")
+        if chatFrame then chatFrame.Enabled = true end
+    end
+})
+
+Client:CreateButton({
+    Name = "Hide Chat",
+    Callback = function()
+        local chat = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui"):FindFirstChild("Chat")
+        if chat then chat.Enabled = false end
+        local chatFrame = game:GetService("CoreGui"):FindFirstChild("Chat")
+        if chatFrame then chatFrame.Enabled = false end
+    end
+})
+
+Client:CreateSection("Other")
+
+Client:CreateToggle({
+	Name = "Player Collision",
+	CurrentValue = false,
+	Callback = function(state)
+		local enabled = state
+		local function setCollision(c, collide)
+			for _, part in pairs(c:GetChildren()) do
+				if part:IsA("BasePart") then
+					part.CanCollide = collide
+				end
+			end
+		end
+
+		local conn
+		if enabled then
+			for _, pl in pairs(Players:GetPlayers()) do
+				if pl ~= LocalPlayer and pl.Character then
+					setCollision(pl.Character, false)
+				end
+			end
+			conn = Players.PlayerAdded:Connect(function(pl)
+				pl.CharacterAdded:Connect(function(c)
+					if enabled then
+						setCollision(c, false)
+					end
+				end)
+			end)
+		else
+			for _, pl in pairs(Players:GetPlayers()) do
+				if pl.Character then
+					setCollision(pl.Character, true)
+				end
+			end
+			if conn then
+				conn:Disconnect()
+				conn = nil
+			end
+		end
+	end
+})
+
 local Games = Window:CreateTab("🎲 Games")
 Games:CreateSection("Longest Answer Wins")
+
+Games:CreateButton({Name = "Answer", Info = "Sends all answers", Callback = function() submitAnswers() end})
+
 Games:CreateToggle({
     Name = "Auto Answer",
     CurrentValue = false,
@@ -600,7 +844,7 @@ Games:CreateToggle({
         task.spawn(function()
             while AnswersSent do
                 submitAnswers()
-                task.wait(0)
+                task.wait(0.5)
             end
         end)
     end
@@ -664,7 +908,108 @@ Games:CreateSlider({
     end
 })
 
-Games:CreateButton({Name = "Answer", Info = "Sends all answers", Callback = function() submitAnswers() end})
+Games:CreateSection("Da Hood")
+
+Games:CreateButton({
+    Name = "Show Chat",
+    Callback = function()
+        local chat = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui"):FindFirstChild("Chat")
+        if chat then chat.Enabled = true end
+        local chatFrame = game:GetService("CoreGui"):FindFirstChild("Chat")
+        if chatFrame then chatFrame.Enabled = true end
+    end
+})
+
+Games:CreateButton({
+    Name = "Hide Chat",
+    Callback = function()
+        local chat = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui"):FindFirstChild("Chat")
+        if chat then chat.Enabled = false end
+        local chatFrame = game:GetService("CoreGui"):FindFirstChild("Chat")
+        if chatFrame then chatFrame.Enabled = false end
+    end
+})
+
+Games:CreateToggle({
+	Name = "Ultra Instincts",
+	CurrentValue = false,
+	Callback = function(state)
+		local ultra = state
+		local lteleport = 0
+		local cooldown = 1.5
+		local checkDist = 60
+		local look = 0.985
+		local conn
+		local function teleport(center, radius, tries, dumb)
+			for i = 1, tries do
+				local rx = (math.random() * 2 - 1) * radius
+				local rz = (math.random() * 2 - 1) * radius
+				local candidate = Vector3.new(center.X + rx, center.Y + 50, center.Z + rz)
+				local params = RaycastParams.new()
+				params.FilterDescendantsInstances = dumb
+				params.FilterType = Enum.RaycastFilterType.Blacklist
+				local r = workspace:Raycast(candidate, Vector3.new(0, -200, 0), params)
+				if r and r.Instance then
+					local y = r.Position.Y + 3
+					local final = Vector3.new(candidate.X, y, candidate.Z)
+					local smallParams = RaycastParams.new()
+					smallParams.FilterDescendantsInstances = dumb
+					smallParams.FilterType = Enum.RaycastFilterType.Blacklist
+					local check = workspace:Raycast(final, Vector3.new(0, -3, 0), smallParams)
+					if check and check.Instance then
+						return final
+					end
+				end
+			end
+			return nil
+		end
+
+		if state then
+			if conn then conn:Disconnect() end
+			conn = RunService.Heartbeat:Connect(function()
+				if not ultra then return end
+				local char = LocalPlayer.Character
+				if not char then return end
+				local hrp = char:FindFirstChild("HumanoidRootPart")
+				if not hrp then return end
+				local now = tick()
+				if now - lteleport < cooldown then return end
+				for _, pl in pairs(Players:GetPlayers()) do
+					if pl ~= LocalPlayer then
+						local c = pl.Character
+						if c then
+							local head = c:FindFirstChild("Head")
+							local hrp2 = c:FindFirstChild("HumanoidRootPart")
+							if head and hrp2 then
+								local toMe = hrp.Position - head.Position
+								local dist = toMe.Magnitude
+								if dist <= checkDist then
+									local dirToMe = toMe.Unit
+									local lookVec = head.CFrame.LookVector
+									local dot = lookVec:Dot(dirToMe)
+									if dot >= look then
+										local dumb = {char, c}
+										local dest = teleport(hrp.Position, 12, 10, dumb)
+										if dest then
+											hrp.CFrame = CFrame.new(dest)
+											lteleport = now
+											break
+										end
+									end
+								end
+							end
+						end
+					end
+				end
+			end)
+		else
+			if conn then
+				conn:Disconnect()
+				conn = nil
+			end
+		end
+	end
+})
 
 local Visual = Window:CreateTab("👀 Visual")
 
@@ -1160,6 +1505,56 @@ OP:CreateSlider({
             end)
         end
     end
+})
+
+OP:CreateToggle({ -- No clue if this works , highly doubt it does. If it does then it'll only work in games with shit anticheat.
+	Name = "God Mode",
+	CurrentValue = false,
+	Callback = function(state)
+		local god = state
+		local conn
+		if state then
+			if conn then conn:Disconnect() end
+			conn = LocalPlayer.Character:FindFirstChildOfClass("Humanoid").HealthChanged:Connect(function()
+				if god then
+					local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+					if hum then
+						hum.Health = hum.MaxHealth
+					end
+				end
+			end)
+		else
+			if conn then
+				conn:Disconnect()
+				conn = nil
+			end
+		end
+	end
+})
+
+OP:CreateToggle({ -- No clue if this works , highly doubt it does. If it does then it'll only work in games with shit anticheat.
+	Name = "Auto Heal",
+	CurrentValue = false,
+	Callback = function(state)
+		local autoHeal = state
+		local conn
+		if state then
+			if conn then conn:Disconnect() end
+			conn = LocalPlayer.Character:FindFirstChildOfClass("Humanoid").HealthChanged:Connect(function()
+				if autoHeal then
+					local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+					if hum and hum.Health < 30 then
+						hum.Health = 100
+					end
+				end
+			end)
+		else
+			if conn then
+				conn:Disconnect()
+				conn = nil
+			end
+		end
+	end
 })
 
 OP:CreateSection("Misc")
