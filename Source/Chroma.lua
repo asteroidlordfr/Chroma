@@ -46,7 +46,7 @@ local activeThreads = {}
 local slapDelay = 3
 local currentTarget
 local farmConn, speedConn, slapConn, slapLoop
-local Reach = 5
+local Reach = 2
 
 gloveHits = {
     ["Default"] = game.ReplicatedStorage.b,
@@ -1576,42 +1576,30 @@ Games:CreateToggle({
 	Name = "Autofarm Slaps",
 	CurrentValue = false,
 	Callback = function(enabled)
-		if speedConn then speedConn:Disconnect() speedConn = nil end
 		if slapConn then slapConn:Disconnect() slapConn = nil end
 		currentTarget = nil
 
 		if enabled then
-			speedConn = RunService.Heartbeat:Connect(function()
-				local char = LocalPlayer.Character
-				if not char then return end
-				local root = char:FindFirstChild("HumanoidRootPart")
-				local hum = char:FindFirstChildWhichIsA("Humanoid")
-				if root and hum and currentTarget and currentTarget.Character and currentTarget.Character:FindFirstChild("HumanoidRootPart") then
-					local targetRoot = currentTarget.Character.HumanoidRootPart
-					local direction = (targetRoot.Position - root.Position)
-					direction = Vector3.new(direction.X, 0, direction.Z).Unit
-					root.CFrame = root.CFrame + direction * math.min((targetRoot.Position - root.Position).Magnitude, 1)
-				end
-			end)
-
-			slapConn = RunService.Heartbeat:Connect(function()
+			slapConn = game:GetService("RunService").Heartbeat:Connect(function()
 				local char = LocalPlayer.Character
 				if not char or not char:FindFirstChild("HumanoidRootPart") or char:FindFirstChildWhichIsA("Humanoid").Health <= 0 then
 					Games:Toggle("Autofarm Slaps", false)
 					return
 				end
 
-				currentTarget = getNextTarget()
-				if currentTarget and currentTarget.Character and currentTarget.Character:FindFirstChild("HumanoidRootPart") then
-					local root = char.HumanoidRootPart
-					local dist = (currentTarget.Character.HumanoidRootPart.Position - root.Position).Magnitude
-					if dist <= Reach then
-						local remote = getGloveRemote()
-						pcall(function()
-							remote:FireServer(currentTarget.Character.HumanoidRootPart, true)
-						end)
-						task.wait(slapDelay)
-					end
+				if not currentTarget or not currentTarget.Character or not currentTarget.Character:FindFirstChild("HumanoidRootPart") then
+					currentTarget = getNextTarget(currentTarget)
+				end
+
+				if currentTarget then
+					local remote = getGloveRemote()
+					pcall(function()
+						remote:FireServer(currentTarget.Character.HumanoidRootPart, true)
+					end)
+					currentTarget = nil
+					task.wait(slapDelay)
+				else
+					task.wait(0.8)
 				end
 			end)
 		end
