@@ -46,7 +46,7 @@ local activeThreads = {}
 local slapDelay = 5
 local currentTarget
 local farmConn, speedConn, slapConn, slapLoop
-local Reach = 3
+local Reach = 5
 
 gloveHits = {
     ["Default"] = game.ReplicatedStorage.b,
