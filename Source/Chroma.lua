@@ -445,7 +445,6 @@ local function getRandomTarget()
 	end
 end
 
-local aimbotConnection
 local function toggleAimbot(enable)
     if aimbotConnection then
         aimbotConnection:Disconnect()
