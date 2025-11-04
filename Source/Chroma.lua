@@ -43,10 +43,10 @@ local activeThreads = {}
 
 -- Below is some Slap Battles stuff
 
-local slapDelay = 6
+local slapDelay = 5
 local currentTarget
 local farmConn, speedConn, slapConn, slapLoop
-local Reach = 1
+local Reach = 2
 
 gloveHits = {
     ["Default"] = game.ReplicatedStorage.b,
@@ -1580,7 +1580,7 @@ Games:CreateToggle({
 		currentTarget = nil
 
 		if enabled then
-			slapConn = game:GetService("RunService").Heartbeat:Connect(function()
+			slapConn = RunService.Heartbeat:Connect(function()
 				local char = LocalPlayer.Character
 				if not char or not char:FindFirstChild("HumanoidRootPart") or char:FindFirstChildWhichIsA("Humanoid").Health <= 0 then
 					Games:Toggle("Autofarm Slaps", false)
@@ -1591,15 +1591,29 @@ Games:CreateToggle({
 					currentTarget = getNextTarget(currentTarget)
 				end
 
-				if currentTarget then
-					local remote = getGloveRemote()
-					pcall(function()
-						remote:FireServer(currentTarget.Character.HumanoidRootPart, true)
-					end)
-					currentTarget = nil
-					task.wait(slapDelay)
+				if currentTarget and currentTarget.Character and currentTarget.Character:FindFirstChild("HumanoidRootPart") then
+					local root = char.HumanoidRootPart
+					local targetRoot = currentTarget.Character.HumanoidRootPart
+					local dist = (targetRoot.Position - root.Position).Magnitude
+
+					-- minimal follow
+					if dist > 3 then
+						local direction = (targetRoot.Position - root.Position)
+						direction = Vector3.new(direction.X, 0, direction.Z).Unit
+						root.CFrame = root.CFrame + direction * math.min(dist, 2)
+					end
+
+					-- slap only if within reach
+					if dist <= Reach then
+						local remote = getGloveRemote()
+						pcall(function()
+							remote:FireServer(targetRoot, true)
+						end)
+						currentTarget = nil
+						task.wait(slapDelay)
+					end
 				else
-					task.wait(0.8)
+					task.wait(0.5)
 				end
 			end)
 		end
