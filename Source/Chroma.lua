@@ -875,6 +875,8 @@ Movement:CreateToggle({
     end
 })
 
+local Cheats = Window:CreateTab("🎯 Cheats")
+
 Cheats:CreateSection("Aimbot")
 
 Cheats:CreateToggle({
