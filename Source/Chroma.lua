@@ -1594,9 +1594,9 @@ Games:CreateToggle({
 			slapConn = task.spawn(function()
 				while enabled do
 					local char = LocalPlayer.Character
-					if not char or not char:FindFirstChild("HumanoidRootPart") or char:FindFirstChildWhichIsA("Humanoid").Health <= 0 then
-						Games:Toggle("Autofarm Slaps", false)
-						break
+					if not char or not char:FindFirstChild("HumanoidRootPart") then
+						task.wait(1)
+						continue
 					end
 
 					local target = getRandomTarget()
