@@ -1679,8 +1679,8 @@ function yogurtLibrary:CreateWindow(Settings)
 			while true do
 				task.wait(math.random(180, 600))
 				yogurtLibrary:Notify({
-					Title = "yogurt Interface",
-					Content = "Enjoying this UI library? Find it at sirius.menu/discord",
+					Title = "Chroma",
+					Content = "Enjoying this script? Star us at github.com/asteroidlordfr/Chroma",
 					Duration = 7,
 					Image = 4370033185,
 				})
