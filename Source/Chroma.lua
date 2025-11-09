@@ -44,247 +44,246 @@ local activeThreads = {}
 -- Below is some Slap Battles stuff
 
 if game.PlaceId == 6403373529 then
-local slapDelay = 0.2
-local currentTarget
-local running = false
-local farmConn, speedConn, slapConn, slapLoop
-local Reach = 13
-
-gloveHits = {
-    ["Default"] = game.ReplicatedStorage.b,
-    ["Extended"] = game.ReplicatedStorage.b,
-    ["T H I C K"] = game.ReplicatedStorage.GeneralHit,
-    ["Squid"] = game.ReplicatedStorage.GeneralHit,
-    ["Gummy"] = game.ReplicatedStorage.GeneralHit,
-    ["RNG"] = game.ReplicatedStorage.GeneralHit,
-    ["Tycoon"] = game.ReplicatedStorage.GeneralHit,
-    ["Charge"] = game.ReplicatedStorage.GeneralHit,
-    ["Baller"] = game.ReplicatedStorage.GeneralHit,
-    ["Tableflip"] = game.ReplicatedStorage.GeneralHit,
-    ["Booster"] = game.ReplicatedStorage.GeneralHit,
-    ["Shield"] = game.ReplicatedStorage.GeneralHit,
-    ["Track"] = game.ReplicatedStorage.GeneralHit,
-    ["Goofy"] = game.ReplicatedStorage.GeneralHit,
-    ["Confusion"] = game.ReplicatedStorage.GeneralHit,
-    ["Elude"] = game.ReplicatedStorage.GeneralHit,
-    ["Glitch"] = game.ReplicatedStorage.GeneralHit,
-    ["Snowball"] = game.ReplicatedStorage.GeneralHit,
-    ["fish"] = game.ReplicatedStorage.GeneralHit,
-    ["Killerfish"] = game.ReplicatedStorage.GeneralHit,
-    ["🗿"] = game.ReplicatedStorage.GeneralHit,
-    ["Obby"] = game.ReplicatedStorage.GeneralHit,
-    ["Voodoo"] = game.ReplicatedStorage.GeneralHit,
-    ["Leash"] = game.ReplicatedStorage.GeneralHit,
-    ["Flamarang"] = game.ReplicatedStorage.GeneralHit,
-    ["Berserk"] = game.ReplicatedStorage.GeneralHit,
-    ["Quake"] = game.ReplicatedStorage.GeneralHit,
-    ["Rattlebones"] = game.ReplicatedStorage.GeneralHit,
-    ["Chain"] = game.ReplicatedStorage.GeneralHit,
-    ["Ping Pong"] = game.ReplicatedStorage.GeneralHit,
-    ["Whirlwind"] = game.ReplicatedStorage.GeneralHit,
-    ["Slicer"] = game.ReplicatedStorage.GeneralHit,
-    ["Counter"] = game.ReplicatedStorage.GeneralHit,
-    ["Hammer"] = game.ReplicatedStorage.GeneralHit,
-    ["Excavator"] = game.ReplicatedStorage.GeneralHit,
-    ["Home Run"] = game.ReplicatedStorage.GeneralHit,
-    ["Psycho"] = game.ReplicatedStorage.GeneralHit,
-    ["Kraken"] = game.ReplicatedStorage.GeneralHit,
-    ["Gravity"] = game.ReplicatedStorage.GeneralHit,
-    ["Lure"] = game.ReplicatedStorage.GeneralHit,
-    ["Jebaited"] = game.ReplicatedStorage.GeneralHit,
-    ["Meteor"] = game.ReplicatedStorage.GeneralHit,
-    ["Tinkerer"] = game.ReplicatedStorage.GeneralHit,
-    ["Guardian Angel"] = game.ReplicatedStorage.GeneralHit,
-    ["Sun"] = game.ReplicatedStorage.GeneralHit,
-    ["Necromancer"] = game.ReplicatedStorage.GeneralHit,
-    ["Zombie"] = game.ReplicatedStorage.GeneralHit,
-    ["Dual"] = game.ReplicatedStorage.GeneralHit,
-    ["Alchemist"] = game.ReplicatedStorage.GeneralHit,
-    ["Parry"] = game.ReplicatedStorage.GeneralHit,
-    ["Druid"] = game.ReplicatedStorage.GeneralHit,
-    ["Oven"] = game.ReplicatedStorage.GeneralHit,
-    ["Jester"] = game.ReplicatedStorage.GeneralHit,
-    ["Ferryman"] = game.ReplicatedStorage.GeneralHit,
-    ["Scythe"] = game.ReplicatedStorage.GeneralHit,
-    ["Blackhole"] = game.ReplicatedStorage.GeneralHit,
-    ["Santa"] = game.ReplicatedStorage.GeneralHit,
-    ["Grapple"] = game.ReplicatedStorage.GeneralHit,
-    ["Iceskate"] = game.ReplicatedStorage.GeneralHit,
-    ["Pan"] = game.ReplicatedStorage.GeneralHit,
-    ["Blasphemy"] = game.ReplicatedStorage.GeneralHit,
-    ["Blink"] = game.ReplicatedStorage.GeneralHit,
-    ["Ultra Instinct"] = game.ReplicatedStorage.GeneralHit,
-    ["Admin"] = game.ReplicatedStorage.GeneralHit,
-    ["Prop"] = game.ReplicatedStorage.GeneralHit,
-    ["Joust"] = game.ReplicatedStorage.GeneralHit,
-    ["Slapstick"] = game.ReplicatedStorage.GeneralHit,
-    ["Firework"] = game.ReplicatedStorage.GeneralHit,
-    ["Run"] = game.ReplicatedStorage.GeneralHit,
-    ["Beatdown"] = game.ReplicatedStorage.GeneralHit,
-    ["L.O.L.B.O.M.B"] = game.ReplicatedStorage.GeneralHit,
-    ["Glovel"] = game.ReplicatedStorage.GeneralHit,
-    ["Chicken"] = game.ReplicatedStorage.GeneralHit,
-    ["Divebomb"] = game.ReplicatedStorage.GeneralHit,
-    ["Lamp"] = game.ReplicatedStorage.GeneralHit,
-    ["Pocket"] = game.ReplicatedStorage.GeneralHit,
-    ["BONK"] = game.ReplicatedStorage.GeneralHit,
-    ["Knockoff"] = game.ReplicatedStorage.GeneralHit,
-    ["Divert"] = game.ReplicatedStorage.GeneralHit,
-    ["Frostbite"] = game.ReplicatedStorage.GeneralHit,
-    ["Sbeve"] = game.ReplicatedStorage.GeneralHit,
-    ["Plank"] = game.ReplicatedStorage.GeneralHit,
-    ["Golem"] = game.ReplicatedStorage.GeneralHit,
-    ["Spoonful"] = game.ReplicatedStorage.GeneralHit,
-    ["Grab"] = game.ReplicatedStorage.GeneralHit,
-    ["the schlop"] = game.ReplicatedStorage.GeneralHit,
-    ["UFO"] = game.ReplicatedStorage.GeneralHit,
-    ["el gato"] = game.ReplicatedStorage.GeneralHit,
-    ["Siphon"] = game.ReplicatedStorage.GeneralHit,
-    ["Hive"] = game.ReplicatedStorage.GeneralHit,
-    ["Wrench"] = game.ReplicatedStorage.GeneralHit,
-    ["Hunter"] = game.ReplicatedStorage.GeneralHit,
-    ["Relude"] = game.ReplicatedStorage.GeneralHit,
-    ["Avatar"] = game.ReplicatedStorage.GeneralHit,
-    ["Demolition"] = game.ReplicatedStorage.GeneralHit,
-    ["Shotgun"] = game.ReplicatedStorage.GeneralHit,
-    ["Beachball"] = game.ReplicatedStorage.GeneralHit,
-    ["ZZZZZZZ"] = game.ReplicatedStorage.ZZZZZZZHit,
-    ["Brick"] = game.ReplicatedStorage.BrickHit,
-    ["Snow"] = game.ReplicatedStorage.SnowHit,
-    ["Pull"] = game.ReplicatedStorage.PullHit,
-    ["Flash"] = game.ReplicatedStorage.FlashHit,
-    ["Spring"] = game.ReplicatedStorage.springhit,
-    ["Swapper"] = game.ReplicatedStorage.HitSwapper,
-    ["Bull"] = game.ReplicatedStorage.BullHit,
-    ["Dice"] = game.ReplicatedStorage.DiceHit,
-    ["Ghost"] = game.ReplicatedStorage.GhostHit,
+	local slapDelay = 0.2
+	local currentTarget
+	local running = false
+	local farmConn, speedConn, slapConn, slapLoop
+	local Reach = 13
 	
-    ["Stun"] = game.ReplicatedStorage.HtStun,
-    ["Za Hando"] = game.ReplicatedStorage.zhramt,
-    ["Fort"] = game.ReplicatedStorage.Fort,
-    ["Magnet"] = game.ReplicatedStorage.MagnetHIT,
-    ["Pusher"] = game.ReplicatedStorage.PusherHit,
-    ["Anchor"] = game.ReplicatedStorage.hitAnchor,
-    ["Space"] = game.ReplicatedStorage.HtSpace,
-    ["Boomerang"] = game.ReplicatedStorage.BoomerangH,
-    ["Speedrun"] = game.ReplicatedStorage.Speedrunhit,
-    ["Mail"] = game.ReplicatedStorage.MailHit,
-    ["Golden"] = game.ReplicatedStorage.GoldenHit,
-    ["MR"] = game.ReplicatedStorage.MisterHit,
-    ["Reaper"] = game.ReplicatedStorage.ReaperHit,
-    ["Replica"] = game.ReplicatedStorage.ReplicaHit,
-    ["Defense"] = game.ReplicatedStorage.DefenseHit,
-    ["Killstreak"] = game.ReplicatedStorage.KSHit,
-    ["Reverse"] = game.ReplicatedStorage.ReverseHit,
-    ["Shukuchi"] = game.ReplicatedStorage.ShukuchiHit,
-    ["Duelist"] = game.ReplicatedStorage.DuelistHit,
-    ["woah"] = game.ReplicatedStorage.woahHit,
-    ["Ice"] = game.ReplicatedStorage.IceHit,
-    ["Adios"] = game.ReplicatedStorage.hitAdios,
-    ["Blocked"] = game.ReplicatedStorage.BlockedHit,
-    ["Engineer"] = game.ReplicatedStorage.engiehit,
-    ["Rocky"] = game.ReplicatedStorage.RockyHit,
-    ["Conveyor"] = game.ReplicatedStorage.ConvHit,
-    ["STOP"] = game.ReplicatedStorage.STOP,
-    ["Phantom"] = game.ReplicatedStorage.PhantomHit,
-    ["Wormhole"] = game.ReplicatedStorage.WormHit,
-    ["Acrobat"] = game.ReplicatedStorage.AcHit,
-    ["Plague"] = game.ReplicatedStorage.PlagueHit,
-    ["[REDACTED]"] = game.ReplicatedStorage.ReHit,
-    ["bus"] = game.ReplicatedStorage.hitbus,
-    ["Phase"] = game.ReplicatedStorage.PhaseH,
-    ["Warp"] = game.ReplicatedStorage.WarpHt,
-    ["Bomb"] = game.ReplicatedStorage.BombHit,
-    ["Bubble"] = game.ReplicatedStorage.BubbleHit,
-    ["Jet"] = game.ReplicatedStorage.JetHit,
-    ["Shard"] = game.ReplicatedStorage.ShardHIT,
-    ["potato"] = game.ReplicatedStorage.potatohit,
-    ["CULT"] = game.ReplicatedStorage.CULTHit,
-    ["bob"] = game.ReplicatedStorage.bobhit,
-    ["Buddies"] = game.ReplicatedStorage.buddiesHIT,
-    ["Spy"] = game.ReplicatedStorage.SpyHit,
-    ["Detonator"] = game.ReplicatedStorage.DetonatorHit,
-    ["Rage"] = game.ReplicatedStorage.GRRRR,
-    ["Trap"] = game.ReplicatedStorage.traphi,
-    ["Orbit"] = game.ReplicatedStorage.Orbihit,
-    ["Hybrid"] = game.ReplicatedStorage.HybridCLAP,
-    ["Slapple"] = game.ReplicatedStorage.SlappleHit,
-    ["Disarm"] = game.ReplicatedStorage.DisarmH,
-    ["Dominance"] = game.ReplicatedStorage.DominanceHit,
-    ["Link"] = game.ReplicatedStorage.LinkHit,
-    ["Rojo"] = game.ReplicatedStorage.RojoHit,
-    ["rob"] = game.ReplicatedStorage.robhit,
-    ["Rhythm"] = game.ReplicatedStorage.rhythmhit,
-    ["Nightmare"] = game.ReplicatedStorage.nightmarehit,
-    ["Hitman"] = game.ReplicatedStorage.HitmanHit,
-    ["Thor"] = game.ReplicatedStorage.ThorHit,
-    ["Retro"] = game.ReplicatedStorage.RetroHit,
-    ["Cloud"] = game.ReplicatedStorage.CloudHit,
-    ["Null"] = game.ReplicatedStorage.NullHit,
-    ["spin"] = game.ReplicatedStorage.spinhit,
-    ["Kinetic"] = game.ReplicatedStorage.HtStun,
-    ["Recall"] = game.ReplicatedStorage.HtStun,
-    ["Balloony"] = game.ReplicatedStorage.HtStun,
-    ["Sparky"] = game.ReplicatedStorage.HtStun,
-    ["Boogie"] = game.ReplicatedStorage.HtStun,
-    ["Coil"] = game.ReplicatedStorage.HtStun,
-    ["Diamond"] = game.ReplicatedStorage.DiamondHit,
-    ["Megarock"] = game.ReplicatedStorage.DiamondHit,
-    ["Moon"] = game.ReplicatedStorage.CelestialHit,
-    ["Jupiter"] = game.ReplicatedStorage.CelestialHit,
-    ["Mitten"] = game.ReplicatedStorage.MittenHit,
-    ["Hallow Jack"] = game.ReplicatedStorage.HallowHIT,
-    ["OVERKILL"] = game.ReplicatedStorage.Overkillhit,
-    ["The Flex"] = game.ReplicatedStorage.FlexHit,
-    ["Custom"] = game.ReplicatedStorage.CustomHit,
-    ["God's Hand"] = game.ReplicatedStorage.Godshand,
-    ["Error"] = game.ReplicatedStorage.Errorhit
-}
-
-local function getNextTarget(prev)
-	local char = LocalPlayer.Character
-	if not char or not char:FindFirstChild("HumanoidRootPart") then return nil end
-	local root = char.HumanoidRootPart
-	local closestDist = math.huge
-	local target = nil
-
-	for _, p in pairs(Players:GetPlayers()) do
-		if p ~= LocalPlayer and p ~= prev and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and p.Character:FindFirstChild("Humanoid") and p.Character:FindFirstChild("entered") then
-			local hum = p.Character.Humanoid
-			if hum.Health > 0 then
-				local dist = (p.Character.HumanoidRootPart.Position - root.Position).Magnitude
-				if dist < closestDist and dist <= Reach then
-					closestDist = dist
-					target = p
+	gloveHits = {
+	    ["Default"] = game.ReplicatedStorage.b,
+	    ["Extended"] = game.ReplicatedStorage.b,
+	    ["T H I C K"] = game.ReplicatedStorage.GeneralHit,
+	    ["Squid"] = game.ReplicatedStorage.GeneralHit,
+	    ["Gummy"] = game.ReplicatedStorage.GeneralHit,
+	    ["RNG"] = game.ReplicatedStorage.GeneralHit,
+	    ["Tycoon"] = game.ReplicatedStorage.GeneralHit,
+	    ["Charge"] = game.ReplicatedStorage.GeneralHit,
+	    ["Baller"] = game.ReplicatedStorage.GeneralHit,
+	    ["Tableflip"] = game.ReplicatedStorage.GeneralHit,
+	    ["Booster"] = game.ReplicatedStorage.GeneralHit,
+	    ["Shield"] = game.ReplicatedStorage.GeneralHit,
+	    ["Track"] = game.ReplicatedStorage.GeneralHit,
+	    ["Goofy"] = game.ReplicatedStorage.GeneralHit,
+	    ["Confusion"] = game.ReplicatedStorage.GeneralHit,
+	    ["Elude"] = game.ReplicatedStorage.GeneralHit,
+	    ["Glitch"] = game.ReplicatedStorage.GeneralHit,
+	    ["Snowball"] = game.ReplicatedStorage.GeneralHit,
+	    ["fish"] = game.ReplicatedStorage.GeneralHit,
+	    ["Killerfish"] = game.ReplicatedStorage.GeneralHit,
+	    ["🗿"] = game.ReplicatedStorage.GeneralHit,
+	    ["Obby"] = game.ReplicatedStorage.GeneralHit,
+	    ["Voodoo"] = game.ReplicatedStorage.GeneralHit,
+	    ["Leash"] = game.ReplicatedStorage.GeneralHit,
+	    ["Flamarang"] = game.ReplicatedStorage.GeneralHit,
+	    ["Berserk"] = game.ReplicatedStorage.GeneralHit,
+	    ["Quake"] = game.ReplicatedStorage.GeneralHit,
+	    ["Rattlebones"] = game.ReplicatedStorage.GeneralHit,
+	    ["Chain"] = game.ReplicatedStorage.GeneralHit,
+	    ["Ping Pong"] = game.ReplicatedStorage.GeneralHit,
+	    ["Whirlwind"] = game.ReplicatedStorage.GeneralHit,
+	    ["Slicer"] = game.ReplicatedStorage.GeneralHit,
+	    ["Counter"] = game.ReplicatedStorage.GeneralHit,
+	    ["Hammer"] = game.ReplicatedStorage.GeneralHit,
+	    ["Excavator"] = game.ReplicatedStorage.GeneralHit,
+	    ["Home Run"] = game.ReplicatedStorage.GeneralHit,
+	    ["Psycho"] = game.ReplicatedStorage.GeneralHit,
+	    ["Kraken"] = game.ReplicatedStorage.GeneralHit,
+	    ["Gravity"] = game.ReplicatedStorage.GeneralHit,
+	    ["Lure"] = game.ReplicatedStorage.GeneralHit,
+	    ["Jebaited"] = game.ReplicatedStorage.GeneralHit,
+	    ["Meteor"] = game.ReplicatedStorage.GeneralHit,
+	    ["Tinkerer"] = game.ReplicatedStorage.GeneralHit,
+	    ["Guardian Angel"] = game.ReplicatedStorage.GeneralHit,
+	    ["Sun"] = game.ReplicatedStorage.GeneralHit,
+	    ["Necromancer"] = game.ReplicatedStorage.GeneralHit,
+	    ["Zombie"] = game.ReplicatedStorage.GeneralHit,
+	    ["Dual"] = game.ReplicatedStorage.GeneralHit,
+	    ["Alchemist"] = game.ReplicatedStorage.GeneralHit,
+	    ["Parry"] = game.ReplicatedStorage.GeneralHit,
+	    ["Druid"] = game.ReplicatedStorage.GeneralHit,
+	    ["Oven"] = game.ReplicatedStorage.GeneralHit,
+	    ["Jester"] = game.ReplicatedStorage.GeneralHit,
+	    ["Ferryman"] = game.ReplicatedStorage.GeneralHit,
+	    ["Scythe"] = game.ReplicatedStorage.GeneralHit,
+	    ["Blackhole"] = game.ReplicatedStorage.GeneralHit,
+	    ["Santa"] = game.ReplicatedStorage.GeneralHit,
+	    ["Grapple"] = game.ReplicatedStorage.GeneralHit,
+	    ["Iceskate"] = game.ReplicatedStorage.GeneralHit,
+	    ["Pan"] = game.ReplicatedStorage.GeneralHit,
+	    ["Blasphemy"] = game.ReplicatedStorage.GeneralHit,
+	    ["Blink"] = game.ReplicatedStorage.GeneralHit,
+	    ["Ultra Instinct"] = game.ReplicatedStorage.GeneralHit,
+	    ["Admin"] = game.ReplicatedStorage.GeneralHit,
+	    ["Prop"] = game.ReplicatedStorage.GeneralHit,
+	    ["Joust"] = game.ReplicatedStorage.GeneralHit,
+	    ["Slapstick"] = game.ReplicatedStorage.GeneralHit,
+	    ["Firework"] = game.ReplicatedStorage.GeneralHit,
+	    ["Run"] = game.ReplicatedStorage.GeneralHit,
+	    ["Beatdown"] = game.ReplicatedStorage.GeneralHit,
+	    ["L.O.L.B.O.M.B"] = game.ReplicatedStorage.GeneralHit,
+	    ["Glovel"] = game.ReplicatedStorage.GeneralHit,
+	    ["Chicken"] = game.ReplicatedStorage.GeneralHit,
+	    ["Divebomb"] = game.ReplicatedStorage.GeneralHit,
+	    ["Lamp"] = game.ReplicatedStorage.GeneralHit,
+	    ["Pocket"] = game.ReplicatedStorage.GeneralHit,
+	    ["BONK"] = game.ReplicatedStorage.GeneralHit,
+	    ["Knockoff"] = game.ReplicatedStorage.GeneralHit,
+	    ["Divert"] = game.ReplicatedStorage.GeneralHit,
+	    ["Frostbite"] = game.ReplicatedStorage.GeneralHit,
+	    ["Sbeve"] = game.ReplicatedStorage.GeneralHit,
+	    ["Plank"] = game.ReplicatedStorage.GeneralHit,
+	    ["Golem"] = game.ReplicatedStorage.GeneralHit,
+	    ["Spoonful"] = game.ReplicatedStorage.GeneralHit,
+	    ["Grab"] = game.ReplicatedStorage.GeneralHit,
+	    ["the schlop"] = game.ReplicatedStorage.GeneralHit,
+	    ["UFO"] = game.ReplicatedStorage.GeneralHit,
+	    ["el gato"] = game.ReplicatedStorage.GeneralHit,
+	    ["Siphon"] = game.ReplicatedStorage.GeneralHit,
+	    ["Hive"] = game.ReplicatedStorage.GeneralHit,
+	    ["Wrench"] = game.ReplicatedStorage.GeneralHit,
+	    ["Hunter"] = game.ReplicatedStorage.GeneralHit,
+	    ["Relude"] = game.ReplicatedStorage.GeneralHit,
+	    ["Avatar"] = game.ReplicatedStorage.GeneralHit,
+	    ["Demolition"] = game.ReplicatedStorage.GeneralHit,
+	    ["Shotgun"] = game.ReplicatedStorage.GeneralHit,
+	    ["Beachball"] = game.ReplicatedStorage.GeneralHit,
+	    ["ZZZZZZZ"] = game.ReplicatedStorage.ZZZZZZZHit,
+	    ["Brick"] = game.ReplicatedStorage.BrickHit,
+	    ["Snow"] = game.ReplicatedStorage.SnowHit,
+	    ["Pull"] = game.ReplicatedStorage.PullHit,
+	    ["Flash"] = game.ReplicatedStorage.FlashHit,
+	    ["Spring"] = game.ReplicatedStorage.springhit,
+	    ["Swapper"] = game.ReplicatedStorage.HitSwapper,
+	    ["Bull"] = game.ReplicatedStorage.BullHit,
+	    ["Dice"] = game.ReplicatedStorage.DiceHit,
+	    ["Ghost"] = game.ReplicatedStorage.GhostHit,
+		
+	    ["Stun"] = game.ReplicatedStorage.HtStun,
+	    ["Za Hando"] = game.ReplicatedStorage.zhramt,
+	    ["Fort"] = game.ReplicatedStorage.Fort,
+	    ["Magnet"] = game.ReplicatedStorage.MagnetHIT,
+	    ["Pusher"] = game.ReplicatedStorage.PusherHit,
+	    ["Anchor"] = game.ReplicatedStorage.hitAnchor,
+	    ["Space"] = game.ReplicatedStorage.HtSpace,
+	    ["Boomerang"] = game.ReplicatedStorage.BoomerangH,
+	    ["Speedrun"] = game.ReplicatedStorage.Speedrunhit,
+	    ["Mail"] = game.ReplicatedStorage.MailHit,
+	    ["Golden"] = game.ReplicatedStorage.GoldenHit,
+	    ["MR"] = game.ReplicatedStorage.MisterHit,
+	    ["Reaper"] = game.ReplicatedStorage.ReaperHit,
+	    ["Replica"] = game.ReplicatedStorage.ReplicaHit,
+	    ["Defense"] = game.ReplicatedStorage.DefenseHit,
+	    ["Killstreak"] = game.ReplicatedStorage.KSHit,
+	    ["Reverse"] = game.ReplicatedStorage.ReverseHit,
+	    ["Shukuchi"] = game.ReplicatedStorage.ShukuchiHit,
+	    ["Duelist"] = game.ReplicatedStorage.DuelistHit,
+	    ["woah"] = game.ReplicatedStorage.woahHit,
+	    ["Ice"] = game.ReplicatedStorage.IceHit,
+	    ["Adios"] = game.ReplicatedStorage.hitAdios,
+	    ["Blocked"] = game.ReplicatedStorage.BlockedHit,
+	    ["Engineer"] = game.ReplicatedStorage.engiehit,
+	    ["Rocky"] = game.ReplicatedStorage.RockyHit,
+	    ["Conveyor"] = game.ReplicatedStorage.ConvHit,
+	    ["STOP"] = game.ReplicatedStorage.STOP,
+	    ["Phantom"] = game.ReplicatedStorage.PhantomHit,
+	    ["Wormhole"] = game.ReplicatedStorage.WormHit,
+	    ["Acrobat"] = game.ReplicatedStorage.AcHit,
+	    ["Plague"] = game.ReplicatedStorage.PlagueHit,
+	    ["[REDACTED]"] = game.ReplicatedStorage.ReHit,
+	    ["bus"] = game.ReplicatedStorage.hitbus,
+	    ["Phase"] = game.ReplicatedStorage.PhaseH,
+	    ["Warp"] = game.ReplicatedStorage.WarpHt,
+	    ["Bomb"] = game.ReplicatedStorage.BombHit,
+	    ["Bubble"] = game.ReplicatedStorage.BubbleHit,
+	    ["Jet"] = game.ReplicatedStorage.JetHit,
+	    ["Shard"] = game.ReplicatedStorage.ShardHIT,
+	    ["potato"] = game.ReplicatedStorage.potatohit,
+	    ["CULT"] = game.ReplicatedStorage.CULTHit,
+	    ["bob"] = game.ReplicatedStorage.bobhit,
+	    ["Buddies"] = game.ReplicatedStorage.buddiesHIT,
+	    ["Spy"] = game.ReplicatedStorage.SpyHit,
+	    ["Detonator"] = game.ReplicatedStorage.DetonatorHit,
+	    ["Rage"] = game.ReplicatedStorage.GRRRR,
+	    ["Trap"] = game.ReplicatedStorage.traphi,
+	    ["Orbit"] = game.ReplicatedStorage.Orbihit,
+	    ["Hybrid"] = game.ReplicatedStorage.HybridCLAP,
+	    ["Slapple"] = game.ReplicatedStorage.SlappleHit,
+	    ["Disarm"] = game.ReplicatedStorage.DisarmH,
+	    ["Dominance"] = game.ReplicatedStorage.DominanceHit,
+	    ["Link"] = game.ReplicatedStorage.LinkHit,
+	    ["Rojo"] = game.ReplicatedStorage.RojoHit,
+	    ["rob"] = game.ReplicatedStorage.robhit,
+	    ["Rhythm"] = game.ReplicatedStorage.rhythmhit,
+	    ["Nightmare"] = game.ReplicatedStorage.nightmarehit,
+	    ["Hitman"] = game.ReplicatedStorage.HitmanHit,
+	    ["Thor"] = game.ReplicatedStorage.ThorHit,
+	    ["Retro"] = game.ReplicatedStorage.RetroHit,
+	    ["Cloud"] = game.ReplicatedStorage.CloudHit,
+	    ["Null"] = game.ReplicatedStorage.NullHit,
+	    ["spin"] = game.ReplicatedStorage.spinhit,
+	    ["Kinetic"] = game.ReplicatedStorage.HtStun,
+	    ["Recall"] = game.ReplicatedStorage.HtStun,
+	    ["Balloony"] = game.ReplicatedStorage.HtStun,
+	    ["Sparky"] = game.ReplicatedStorage.HtStun,
+	    ["Boogie"] = game.ReplicatedStorage.HtStun,
+	    ["Coil"] = game.ReplicatedStorage.HtStun,
+	    ["Diamond"] = game.ReplicatedStorage.DiamondHit,
+	    ["Megarock"] = game.ReplicatedStorage.DiamondHit,
+	    ["Moon"] = game.ReplicatedStorage.CelestialHit,
+	    ["Jupiter"] = game.ReplicatedStorage.CelestialHit,
+	    ["Mitten"] = game.ReplicatedStorage.MittenHit,
+	    ["Hallow Jack"] = game.ReplicatedStorage.HallowHIT,
+	    ["OVERKILL"] = game.ReplicatedStorage.Overkillhit,
+	    ["The Flex"] = game.ReplicatedStorage.FlexHit,
+	    ["Custom"] = game.ReplicatedStorage.CustomHit,
+	    ["God's Hand"] = game.ReplicatedStorage.Godshand,
+	    ["Error"] = game.ReplicatedStorage.Errorhit
+	}
+	
+	local function getNextTarget(prev)
+		local char = LocalPlayer.Character
+		if not char or not char:FindFirstChild("HumanoidRootPart") then return nil end
+		local root = char.HumanoidRootPart
+		local closestDist = math.huge
+		local target = nil
+	
+		for _, p in pairs(Players:GetPlayers()) do
+			if p ~= LocalPlayer and p ~= prev and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and p.Character:FindFirstChild("Humanoid") and p.Character:FindFirstChild("entered") then
+				local hum = p.Character.Humanoid
+				if hum.Health > 0 then
+					local dist = (p.Character.HumanoidRootPart.Position - root.Position).Magnitude
+					if dist < closestDist and dist <= Reach then
+						closestDist = dist
+						target = p
+					end
 				end
 			end
 		end
+		return target
 	end
-	return target
-end
-
-local function slapTarget()
-	local closestDist = math.huge
-	local target = nil
-	local char = LocalPlayer.Character
-	if not char or not char:FindFirstChild("HumanoidRootPart") then return nil end
-	local root = char.HumanoidRootPart
-
-	for _, p in pairs(Players:GetPlayers()) do
-		if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and p.Character:FindFirstChild("Humanoid") and p.Character:FindFirstChild("entered") then
-			local hum = p.Character.Humanoid
-			if hum.Health > 0 then
-				local dist = (p.Character.HumanoidRootPart.Position - root.Position).Magnitude
-				if dist < closestDist then
-					closestDist = dist
-					target = p
+	
+	local function slapTarget()
+		local closestDist = math.huge
+		local target = nil
+		local char = LocalPlayer.Character
+		if not char or not char:FindFirstChild("HumanoidRootPart") then return nil end
+		local root = char.HumanoidRootPart
+	
+		for _, p in pairs(Players:GetPlayers()) do
+			if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and p.Character:FindFirstChild("Humanoid") and p.Character:FindFirstChild("entered") then
+				local hum = p.Character.Humanoid
+				if hum.Health > 0 then
+					local dist = (p.Character.HumanoidRootPart.Position - root.Position).Magnitude
+					if dist < closestDist then
+						closestDist = dist
+						target = p
+					end
 				end
 			end
 		end
+		return target
 	end
-	return target
-end
-
 end
 
 -- Below is Plants vs Brainrots references (Kill me)
@@ -336,9 +335,6 @@ local cycleTimes = {6, 12, 18, 0}
 local currentIndex = 1
 local aimbotConnection
 local fovCircle = Drawing.new("Circle")
-local thirdPersonEnabled = false
-local thirdPersonKey = Enum.KeyCode.E
-local thirdPersonConnection
 local fov = 120
 local smoothing = 10
 
@@ -351,30 +347,6 @@ fovCircle.NumSides = 64
 fovCircle.Filled = false
 
 -- Below is the function warehouse
-
-local function enableThirdPerson()
-    local player = game.Players.LocalPlayer
-    local char = player.Character or player.CharacterAdded:Wait()
-    local hrp = char:WaitForChild("HumanoidRootPart")
-    local cam = workspace.CurrentCamera
-    cam.CameraType = Enum.CameraType.Scriptable
-    cameraConnection = game:GetService("RunService").RenderStepped:Connect(function()
-        if not thirdPersonEnabled or not hrp then return end
-        local rootCF = hrp.CFrame
-        local camPos = rootCF.Position - rootCF.LookVector * cameraOffset.Z + Vector3.new(0, cameraOffset.Y, 0)
-        cam.CFrame = CFrame.new(camPos, hrp.Position + Vector3.new(0, 2, 0))
-    end)
-end
-
-local function disableThirdPerson()
-    if cameraConnection then
-        cameraConnection:Disconnect()
-        cameraConnection = nil
-    end
-    local cam = workspace.CurrentCamera
-    cam.CameraType = Enum.CameraType.Custom
-    cam.CameraSubject = game.Players.LocalPlayer.Character:FindFirstChildWhichIsA("Humanoid")
-end
 
 local function pos()
 	local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
@@ -1436,108 +1408,108 @@ Games:CreateToggle({
 })
 
 if game.PlaceId == 6403373529 then
-Games:CreateSection("Slap Battles")
-
-Games:CreateToggle({
-	Name = "Autofarm Slapples",
-	CurrentValue = false,
-	Callback = function(enabled)
-		if farmConn then
-			farmConn:Disconnect()
-			farmConn = nil
-		end
-
-		if enabled then
-			farmConn = RunService.Heartbeat:Connect(function()
-				local char = LocalPlayer.Character
-				if not char or not char:FindFirstChild("entered") or not char:FindFirstChild("HumanoidRootPart") then return end
-
-				for _, v in pairs(workspace.Arena.island5.Slapples:GetChildren()) do
-					if v:FindFirstChild("Glove") and v.Glove:FindFirstChildWhichIsA("TouchTransmitter") then
-						if v.Name == "Slapple" or v.Name == "GoldenSlapple" then
-							firetouchinterest(char.HumanoidRootPart, v.Glove, 0)
-							firetouchinterest(char.HumanoidRootPart, v.Glove, 1)
-						end
-					end
-				end
-			end)
-		end
-	end
-})
-
-Games:CreateToggle({
-	Name = "Autofarm Slaps",
-	CurrentValue = false,
-	Callback = function(enabled)
-		if slapConnTask then
-			pcall(function() task.cancel(slapConnTask) end)
-			slapConnTask = nil
-		end
-
-		running = enabled
-
-		if running then
-			slapConnTask = task.spawn(function()
-				while running do
+	Games:CreateSection("Slap Battles")
+	
+	Games:CreateToggle({
+		Name = "Autofarm Slapples",
+		CurrentValue = false,
+		Callback = function(enabled)
+			if farmConn then
+				farmConn:Disconnect()
+				farmConn = nil
+			end
+	
+			if enabled then
+				farmConn = RunService.Heartbeat:Connect(function()
 					local char = LocalPlayer.Character
-					if not char or not char:FindFirstChild("HumanoidRootPart") then
-						task.wait(1)
-						continue
-					end
-
-					local target = getRandomTarget()
-					if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-						-- place yourself directly inside target (tiny random offset)
-						char.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame * CFrame.new(math.random(-1,1), 0, math.random(-1,1))
-
-						local dist = (char.HumanoidRootPart.Position - target.Character.HumanoidRootPart.Position).Magnitude
-						if dist <= Reach then
-							local remote = getGloveRemote()
-							if remote then
-								pcall(function()
-									remote:FireServer(target.Character.HumanoidRootPart, true)
-								end)
+					if not char or not char:FindFirstChild("entered") or not char:FindFirstChild("HumanoidRootPart") then return end
+	
+					for _, v in pairs(workspace.Arena.island5.Slapples:GetChildren()) do
+						if v:FindFirstChild("Glove") and v.Glove:FindFirstChildWhichIsA("TouchTransmitter") then
+							if v.Name == "Slapple" or v.Name == "GoldenSlapple" then
+								firetouchinterest(char.HumanoidRootPart, v.Glove, 0)
+								firetouchinterest(char.HumanoidRootPart, v.Glove, 1)
 							end
 						end
 					end
-
-					task.wait(slapDelay)
-				end
-			end)
-		end
-	end
-})
-
-Games:CreateButton({
-	Name = "Get Badge Gloves [TRICKHUB]",
-	Callback = function()
-		local lobby = workspace:FindFirstChild("Lobby")
-		if lobby then
-			for _, part in ipairs(lobby:GetChildren()) do
-				if part:IsA("BasePart") then
-					print("Lobby object Z position:", part.CFrame.Z)
-				end
+				end)
 			end
-		else
-			warn("Lobby not found in Workspace")
 		end
-
-		local networkFolder = game:GetService("ReplicatedStorage"):FindFirstChild("_NETWORK")
-		if networkFolder and lobby then
-			for _, obj in ipairs(networkFolder:GetChildren()) do
-				for _, v in pairs(lobby:GetChildren()) do
-					if obj:IsA("RemoteEvent") and v:IsA("MeshPart") then
-						obj:FireServer(v.Name)
-					else
-						warn(obj.Name .. " is not a RemoteEvent or " .. v.Name .. " is not a MeshPart, skipping.")
+	})
+	
+	Games:CreateToggle({
+		Name = "Autofarm Slaps",
+		CurrentValue = false,
+		Callback = function(enabled)
+			if slapConnTask then
+				pcall(function() task.cancel(slapConnTask) end)
+				slapConnTask = nil
+			end
+	
+			running = enabled
+	
+			if running then
+				slapConnTask = task.spawn(function()
+					while running do
+						local char = LocalPlayer.Character
+						if not char or not char:FindFirstChild("HumanoidRootPart") then
+							task.wait(1)
+							continue
+						end
+	
+						local target = getRandomTarget()
+						if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+							-- place yourself directly inside target (tiny random offset)
+							char.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame * CFrame.new(math.random(-1,1), 0, math.random(-1,1))
+	
+							local dist = (char.HumanoidRootPart.Position - target.Character.HumanoidRootPart.Position).Magnitude
+							if dist <= Reach then
+								local remote = getGloveRemote()
+								if remote then
+									pcall(function()
+										remote:FireServer(target.Character.HumanoidRootPart, true)
+									end)
+								end
+							end
+						end
+	
+						task.wait(slapDelay)
+					end
+				end)
+			end
+		end
+	})
+	
+	Games:CreateButton({
+		Name = "Get Badge Gloves [TRICKHUB]",
+		Callback = function()
+			local lobby = workspace:FindFirstChild("Lobby")
+			if lobby then
+				for _, part in ipairs(lobby:GetChildren()) do
+					if part:IsA("BasePart") then
+						print("Lobby object Z position:", part.CFrame.Z)
 					end
 				end
+			else
+				warn("Lobby not found in Workspace")
 			end
-		else
-			warn("_NETWORK folder not found in ReplicatedStorage or Lobby missing")
+	
+			local networkFolder = game:GetService("ReplicatedStorage"):FindFirstChild("_NETWORK")
+			if networkFolder and lobby then
+				for _, obj in ipairs(networkFolder:GetChildren()) do
+					for _, v in pairs(lobby:GetChildren()) do
+						if obj:IsA("RemoteEvent") and v:IsA("MeshPart") then
+							obj:FireServer(v.Name)
+						else
+							warn(obj.Name .. " is not a RemoteEvent or " .. v.Name .. " is not a MeshPart, skipping.")
+						end
+					end
+				end
+			else
+				warn("_NETWORK folder not found in ReplicatedStorage or Lobby missing")
+			end
 		end
-	end
-})
+	})
 end
 
 Games:CreateSection("a literal baseplate")
@@ -2087,49 +2059,6 @@ Visual:CreateToggle({
             end
         end
     end,
-})
-
-Visual:CreateSection("Third Person")
-
-Visual:CreateToggle({
-    Name = "Third Person",
-    CurrentValue = false,
-    Callback = function(state)
-        thirdPersonEnabled = state
-        if keyConnection then
-            keyConnection:Disconnect()
-            keyConnection = nil
-        end
-        if state then
-            enableThirdPerson()
-            keyConnection = game:GetService("UserInputService").InputBegan:Connect(function(input, gpe)
-                if gpe then return end
-                if input.KeyCode == thirdPersonKey then
-                    thirdPersonEnabled = not thirdPersonEnabled
-                    if thirdPersonEnabled then
-                        enableThirdPerson()
-                    else
-                        disableThirdPerson()
-                    end
-                end
-            end)
-        else
-            disableThirdPerson()
-        end
-    end
-})
-
-Visual:CreateInput({
-    Name = "Keybind",
-    CurrentValue = "E",
-    PlaceholderText = "Key (e.g. E)",
-    RemoveTextAfterFocusLost = false,
-    Callback = function(Text)
-        local key = Enum.KeyCode[string.upper(Text)]
-        if key then
-            thirdPersonKey = key
-        end
-    end
 })
 
 local Client = Window:CreateTab("💻 Client")
