@@ -307,6 +307,7 @@ local defaultJumpPower = 50
 local followConn
 local cameraOffset = Vector3.new(0, 3, 8)
 local AnswersSent = false
+local keyConnection
 local aimbotConnection
 local aimbotEnabled = false
 local aimbotRightClick = false
@@ -357,21 +358,22 @@ local function enableThirdPerson()
     local hrp = char:WaitForChild("HumanoidRootPart")
     local cam = workspace.CurrentCamera
     cam.CameraType = Enum.CameraType.Scriptable
-    followConn = game:GetService("RunService").RenderStepped:Connect(function()
-        if not thirdPersonEnabled then return end
-        if not hrp then return end
-        local targetPos = hrp.Position - hrp.CFrame.LookVector * cameraOffset.Z + Vector3.new(0, cameraOffset.Y, 0)
-        cam.CFrame = CFrame.new(targetPos, hrp.Position)
+    cameraConnection = game:GetService("RunService").RenderStepped:Connect(function()
+        if not thirdPersonEnabled or not hrp then return end
+        local rootCF = hrp.CFrame
+        local camPos = rootCF.Position - rootCF.LookVector * cameraOffset.Z + Vector3.new(0, cameraOffset.Y, 0)
+        cam.CFrame = CFrame.new(camPos, hrp.Position + Vector3.new(0, 2, 0))
     end)
 end
 
 local function disableThirdPerson()
-    if followConn then
-        followConn:Disconnect()
-        followConn = nil
+    if cameraConnection then
+        cameraConnection:Disconnect()
+        cameraConnection = nil
     end
-    workspace.CurrentCamera.CameraSubject = game.Players.LocalPlayer.Character:FindFirstChildWhichIsA("Humanoid")
-    workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
+    local cam = workspace.CurrentCamera
+    cam.CameraType = Enum.CameraType.Custom
+    cam.CameraSubject = game.Players.LocalPlayer.Character:FindFirstChildWhichIsA("Humanoid")
 end
 
 local function pos()
@@ -2094,13 +2096,13 @@ Visual:CreateToggle({
     CurrentValue = false,
     Callback = function(state)
         thirdPersonEnabled = state
-        if thirdPersonConn then
-            thirdPersonConn:Disconnect()
-            thirdPersonConn = nil
+        if keyConnection then
+            keyConnection:Disconnect()
+            keyConnection = nil
         end
         if state then
             enableThirdPerson()
-            thirdPersonConn = game:GetService("UserInputService").InputBegan:Connect(function(input, gpe)
+            keyConnection = game:GetService("UserInputService").InputBegan:Connect(function(input, gpe)
                 if gpe then return end
                 if input.KeyCode == thirdPersonKey then
                     thirdPersonEnabled = not thirdPersonEnabled
