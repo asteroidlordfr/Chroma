@@ -46,123 +46,17 @@ local function safeGet(name)
 end
 
 -- Below is some Slap Battles stuff
-
+--[[
 	local slapDelay = 0.2
 	local currentTarget
 	local running = false
 	local farmConn, speedConn, slapConn, slapLoop
 	local Reach = 13
 	
-gloveHits = {
-    ["Default"] = safeGet("b"),
-    ["Extended"] = safeGet("b"),
-    ["T H I C K"] = safeGet("GeneralHit"),
-    ["Squid"] = safeGet("GeneralHit"),
-    ["Gummy"] = safeGet("GeneralHit"),
-    ["RNG"] = safeGet("GeneralHit"),
-    ["Tycoon"] = safeGet("GeneralHit"),
-    ["Charge"] = safeGet("GeneralHit"),
-    ["Baller"] = safeGet("GeneralHit"),
-    ["Tableflip"] = safeGet("GeneralHit"),
-    ["Booster"] = safeGet("GeneralHit"),
-    ["Shield"] = safeGet("GeneralHit"),
-    ["Track"] = safeGet("GeneralHit"),
-    ["Goofy"] = safeGet("GeneralHit"),
-    ["Confusion"] = safeGet("GeneralHit"),
-    ["Elude"] = safeGet("GeneralHit"),
-    ["Glitch"] = safeGet("GeneralHit"),
-    ["Snowball"] = safeGet("GeneralHit"),
-    ["fish"] = safeGet("GeneralHit"),
-    ["Killerfish"] = safeGet("GeneralHit"),
-    ["🗿"] = safeGet("GeneralHit"),
-    ["Obby"] = safeGet("GeneralHit"),
-    ["Voodoo"] = safeGet("GeneralHit"),
-    ["Leash"] = safeGet("GeneralHit"),
-    ["Flamarang"] = safeGet("GeneralHit"),
-    ["Berserk"] = safeGet("GeneralHit"),
-    ["Quake"] = safeGet("GeneralHit"),
-    ["Rattlebones"] = safeGet("GeneralHit"),
-    ["Chain"] = safeGet("GeneralHit"),
-    ["Ping Pong"] = safeGet("GeneralHit"),
-    ["Whirlwind"] = safeGet("GeneralHit"),
-    ["Slicer"] = safeGet("GeneralHit"),
-    ["Counter"] = safeGet("GeneralHit"),
-    ["Hammer"] = safeGet("GeneralHit"),
-    ["Excavator"] = safeGet("GeneralHit"),
-    ["Home Run"] = safeGet("GeneralHit"),
-    ["Psycho"] = safeGet("GeneralHit"),
-    ["Kraken"] = safeGet("GeneralHit"),
-    ["Gravity"] = safeGet("GeneralHit"),
-    ["Lure"] = safeGet("GeneralHit"),
-    ["Jebaited"] = safeGet("GeneralHit"),
-    ["Meteor"] = safeGet("GeneralHit"),
-    ["Tinkerer"] = safeGet("GeneralHit"),
-    ["Guardian Angel"] = safeGet("GeneralHit"),
-    ["Sun"] = safeGet("GeneralHit"),
-    ["Necromancer"] = safeGet("GeneralHit"),
-    ["Zombie"] = safeGet("GeneralHit"),
-    ["Dual"] = safeGet("GeneralHit"),
-    ["Alchemist"] = safeGet("GeneralHit"),
-    ["Parry"] = safeGet("GeneralHit"),
-    ["Druid"] = safeGet("GeneralHit"),
-    ["Oven"] = safeGet("GeneralHit"),
-    ["Jester"] = safeGet("GeneralHit"),
-    ["Ferryman"] = safeGet("GeneralHit"),
-    ["Scythe"] = safeGet("GeneralHit"),
-    ["Blackhole"] = safeGet("GeneralHit"),
-    ["Santa"] = safeGet("GeneralHit"),
-    ["Grapple"] = safeGet("GeneralHit"),
-    ["Iceskate"] = safeGet("GeneralHit"),
-    ["Pan"] = safeGet("GeneralHit"),
-    ["Blasphemy"] = safeGet("GeneralHit"),
-    ["Blink"] = safeGet("GeneralHit"),
-    ["Ultra Instinct"] = safeGet("GeneralHit"),
-    ["Admin"] = safeGet("GeneralHit"),
-    ["Prop"] = safeGet("GeneralHit"),
-    ["Joust"] = safeGet("GeneralHit"),
-    ["Slapstick"] = safeGet("GeneralHit"),
-    ["Firework"] = safeGet("GeneralHit"),
-    ["Run"] = safeGet("GeneralHit"),
-    ["Beatdown"] = safeGet("GeneralHit"),
-    ["L.O.L.B.O.M.B"] = safeGet("GeneralHit"),
-    ["Glovel"] = safeGet("GeneralHit"),
-    ["Chicken"] = safeGet("GeneralHit"),
-    ["Divebomb"] = safeGet("GeneralHit"),
-    ["Lamp"] = safeGet("GeneralHit"),
-    ["Pocket"] = safeGet("GeneralHit"),
-    ["BONK"] = safeGet("GeneralHit"),
-    ["Knockoff"] = safeGet("GeneralHit"),
-    ["Divert"] = safeGet("GeneralHit"),
-    ["Frostbite"] = safeGet("GeneralHit"),
-    ["Sbeve"] = safeGet("GeneralHit"),
-    ["Plank"] = safeGet("GeneralHit"),
-    ["Golem"] = safeGet("GeneralHit"),
-    ["Spoonful"] = safeGet("GeneralHit"),
-    ["Grab"] = safeGet("GeneralHit"),
-    ["the schlop"] = safeGet("GeneralHit"),
-    ["UFO"] = safeGet("GeneralHit"),
-    ["el gato"] = safeGet("GeneralHit"),
-    ["Siphon"] = safeGet("GeneralHit"),
-    ["Hive"] = safeGet("GeneralHit"),
-    ["Wrench"] = safeGet("GeneralHit"),
-    ["Hunter"] = safeGet("GeneralHit"),
-    ["Relude"] = safeGet("GeneralHit"),
-    ["Avatar"] = safeGet("GeneralHit"),
-    ["Demolition"] = safeGet("GeneralHit"),
-    ["Shotgun"] = safeGet("GeneralHit"),
-    ["Beachball"] = safeGet("GeneralHit"),
-    ["ZZZZZZZ"] = safeGet("ZZZZZZZHit"),
-    ["Brick"] = safeGet("BrickHit"),
-    ["Snow"] = safeGet("SnowHit"),
-    ["Pull"] = safeGet("PullHit"),
-    ["Flash"] = safeGet("FlashHit"),
-    ["Spring"] = safeGet("springhit"),
-    ["Swapper"] = safeGet("HitSwapper"),
-    ["Bull"] = safeGet("BullHit"),
-    ["Dice"] = safeGet("DiceHit"),
-    ["Ghost"] = safeGet("GhostHit"),
-}
-	
+	gloveHits = {
+	    ["Default"] = safeGet("b"),
+	}
+		
 	local function getNextTarget(prev)
 		local char = LocalPlayer.Character
 		if not char or not char:FindFirstChild("HumanoidRootPart") then return nil end
@@ -207,7 +101,7 @@ gloveHits = {
 		return target
 	end
 end
-
+--]]
 -- Below is Plants vs Brainrots references (Kill me)
 
 if game.PlaceId == 127742093697776 then	
@@ -1328,7 +1222,7 @@ Games:CreateToggle({
 		end)
 	end
 })
-
+--[[
 	Games:CreateSection("Slap Battles")
 	
 	Games:CreateToggle({
@@ -1431,7 +1325,7 @@ Games:CreateToggle({
 			end
 		end
 	})
-
+--]]
 Games:CreateSection("a literal baseplate")
 
 Games:CreateToggle({
