@@ -304,6 +304,8 @@ end
 
 local defaultWalkSpeed = 16
 local defaultJumpPower = 50
+local followConn
+local cameraOffset = Vector3.new(0, 3, 8)
 local AnswersSent = false
 local aimbotConnection
 local aimbotEnabled = false
@@ -348,6 +350,29 @@ fovCircle.NumSides = 64
 fovCircle.Filled = false
 
 -- Below is the function warehouse
+
+local function enableThirdPerson()
+    local player = game.Players.LocalPlayer
+    local char = player.Character or player.CharacterAdded:Wait()
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    local cam = workspace.CurrentCamera
+    cam.CameraType = Enum.CameraType.Scriptable
+    followConn = game:GetService("RunService").RenderStepped:Connect(function()
+        if not thirdPersonEnabled then return end
+        if not hrp then return end
+        local targetPos = hrp.Position - hrp.CFrame.LookVector * cameraOffset.Z + Vector3.new(0, cameraOffset.Y, 0)
+        cam.CFrame = CFrame.new(targetPos, hrp.Position)
+    end)
+end
+
+local function disableThirdPerson()
+    if followConn then
+        followConn:Disconnect()
+        followConn = nil
+    end
+    workspace.CurrentCamera.CameraSubject = game.Players.LocalPlayer.Character:FindFirstChildWhichIsA("Humanoid")
+    workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
+end
 
 local function pos()
 	local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
@@ -2069,23 +2094,25 @@ Visual:CreateToggle({
     CurrentValue = false,
     Callback = function(state)
         thirdPersonEnabled = state
-        if thirdPersonConnection then
-            thirdPersonConnection:Disconnect()
-            thirdPersonConnection = nil
+        if thirdPersonConn then
+            thirdPersonConn:Disconnect()
+            thirdPersonConn = nil
         end
         if state then
-            thirdPersonConnection = game:GetService("UserInputService").InputBegan:Connect(function(input, gpe)
+            enableThirdPerson()
+            thirdPersonConn = game:GetService("UserInputService").InputBegan:Connect(function(input, gpe)
                 if gpe then return end
                 if input.KeyCode == thirdPersonKey then
-                    local Camera = workspace.CurrentCamera
-                    if Camera.CameraType == Enum.CameraType.Custom then
-                        Camera.CameraType = Enum.CameraType.Scriptable
-                        Camera.CFrame = Camera.CFrame * CFrame.new(0, 0, 10)
+                    thirdPersonEnabled = not thirdPersonEnabled
+                    if thirdPersonEnabled then
+                        enableThirdPerson()
                     else
-                        Camera.CameraType = Enum.CameraType.Custom
+                        disableThirdPerson()
                     end
                 end
             end)
+        else
+            disableThirdPerson()
         end
     end
 })
