@@ -32,6 +32,7 @@ end
 
 local PlaceBlock = (ReplicatedStorage:FindFirstChild("Remotes") and ReplicatedStorage.Remotes:FindFirstChild("PlaceBlock")) -- this is for Voxels
 local voxels = {}
+local ChatSpyEnabled = false
 
 local blockTypes = {"Oak Planks", "Bricks", "Dirt", "Cobblestone", "Oak Log", "Oak Leaves", "Glass", "Stone", "Yellow Wool"}
 local spawnedBlocks = {
@@ -44,6 +45,48 @@ local activeThreads = {}
 local function safeGet(name)
     return ReplicatedStorage:FindFirstChild(name)
 end
+
+
+local ignoreList = {
+    ":part/1/1/1",
+    ":part/10/10/10",
+    ":colorshifttop 10000 0 0",
+    ":colorshiftbottom 10000 0 0",
+    ":colorshifttop 0 10000 0",
+    ":colorshiftbottom 0 10000 0",
+    ":colorshifttop 0 0 10000",
+    ":colorshiftbottom 0 0 10000"
+}
+
+local function checkIgnored(msg)
+    for i = 1, #ignoreList do
+        if msg == ignoreList[i] then
+            return true
+        end
+    end
+    return false
+end
+
+local function onChatted(player, message)
+    if not ChatSpyEnabled then return end
+    if player == LocalPlayer then return end
+    if checkIgnored(message) then return end
+    Library:Notify({
+        Title = "[SPY] - "..player.Name,
+        Content = message,
+        Duration = 5
+    })
+end
+
+for _, player in ipairs(Players:GetPlayers()) do
+    player.Chatted:Connect(function(msg) onChatted(player, msg) end)
+end
+
+Players.PlayerAdded:Connect(function(player)
+    player.Chatted:Connect(function(msg) onChatted(player, msg) end)
+end)
+
+local ChatSpyEnabled = false
 
 -- Below is some Slap Battles stuff
 
@@ -1355,23 +1398,16 @@ Chat:CreateButton({
 
 Chat:CreateSection("Chat")
 
-Chat:CreateButton({
-    Name = "Show Chat",
-    Callback = function()
-        local chat = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui"):FindFirstChild("Chat")
-        if chat then chat.Enabled = true end
-        local chatFrame = game:GetService("CoreGui"):FindFirstChild("Chat")
-        if chatFrame then chatFrame.Enabled = true end
-    end
-})
-
-Chat:CreateButton({
-    Name = "Hide Chat",
-    Callback = function()
-        local chat = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui"):FindFirstChild("Chat")
-        if chat then chat.Enabled = false end
-        local chatFrame = game:GetService("CoreGui"):FindFirstChild("Chat")
-        if chatFrame then chatFrame.Enabled = false end
+Chat:CreateToggle({
+    Name = "Chat Spy",
+    CurrentValue = false,
+    Callback = function(val)
+        ChatSpyEnabled = val
+        Library:Notify({
+            Title = "Chat Spy",
+            Content = "Chat Spy " .. (ChatSpyEnabled and "Enabled" or "Disabled"),
+            Duration = 3
+        })
     end
 })
 
@@ -1909,105 +1945,17 @@ Games:CreateToggle({
 
 Games:CreateSection("Da Hood")
 
-Games:CreateButton({
-    Name = "Show Chat",
-    Callback = function()
-        local chat = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui"):FindFirstChild("Chat")
-        if chat then chat.Enabled = true end
-        local chatFrame = game:GetService("CoreGui"):FindFirstChild("Chat")
-        if chatFrame then chatFrame.Enabled = true end
-    end
-})
-
-Games:CreateButton({
-    Name = "Hide Chat",
-    Callback = function()
-        local chat = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui"):FindFirstChild("Chat")
-        if chat then chat.Enabled = false end
-        local chatFrame = game:GetService("CoreGui"):FindFirstChild("Chat")
-        if chatFrame then chatFrame.Enabled = false end
-    end
-})
-
 Games:CreateToggle({
-	Name = "Ultra Instincts",
-	CurrentValue = false,
-	Callback = function(state)
-		local ultra = state
-		local lteleport = 0
-		local cooldown = 1.5
-		local checkDist = 60
-		local look = 0.985
-		local conn
-		local function teleport(center, radius, tries, dumb)
-			for i = 1, tries do
-				local rx = (math.random() * 2 - 1) * radius
-				local rz = (math.random() * 2 - 1) * radius
-				local candidate = Vector3.new(center.X + rx, center.Y + 50, center.Z + rz)
-				local params = RaycastParams.new()
-				params.FilterDescendantsInstances = dumb
-				params.FilterType = Enum.RaycastFilterType.Blacklist
-				local r = workspace:Raycast(candidate, Vector3.new(0, -200, 0), params)
-				if r and r.Instance then
-					local y = r.Position.Y + 3
-					local final = Vector3.new(candidate.X, y, candidate.Z)
-					local smallParams = RaycastParams.new()
-					smallParams.FilterDescendantsInstances = dumb
-					smallParams.FilterType = Enum.RaycastFilterType.Blacklist
-					local check = workspace:Raycast(final, Vector3.new(0, -3, 0), smallParams)
-					if check and check.Instance then
-						return final
-					end
-				end
-			end
-			return nil
-		end
-
-		if state then
-			if conn then conn:Disconnect() end
-			conn = RunService.Heartbeat:Connect(function()
-				if not ultra then return end
-				local char = LocalPlayer.Character
-				if not char then return end
-				local hrp = char:FindFirstChild("HumanoidRootPart")
-				if not hrp then return end
-				local now = tick()
-				if now - lteleport < cooldown then return end
-				for _, pl in pairs(Players:GetPlayers()) do
-					if pl ~= LocalPlayer then
-						local c = pl.Character
-						if c then
-							local head = c:FindFirstChild("Head")
-							local hrp2 = c:FindFirstChild("HumanoidRootPart")
-							if head and hrp2 then
-								local toMe = hrp.Position - head.Position
-								local dist = toMe.Magnitude
-								if dist <= checkDist then
-									local dirToMe = toMe.Unit
-									local lookVec = head.CFrame.LookVector
-									local dot = lookVec:Dot(dirToMe)
-									if dot >= look then
-										local dumb = {char, c}
-										local dest = teleport(hrp.Position, 12, 10, dumb)
-										if dest then
-											hrp.CFrame = CFrame.new(dest)
-											lteleport = now
-											break
-										end
-									end
-								end
-							end
-						end
-					end
-				end
-			end)
-		else
-			if conn then
-				conn:Disconnect()
-				conn = nil
-			end
-		end
-	end
+    Name = "Chat Spy",
+    CurrentValue = false,
+    Callback = function(val)
+        ChatSpyEnabled = val
+        Library:Notify({
+            Title = "Chat Spy",
+            Content = "Chat Spy " .. (ChatSpyEnabled and "Enabled" or "Disabled"),
+            Duration = 3
+        })
+    end
 })
 
 local Visual = Window:CreateTab("👀 Visual")
@@ -2639,3 +2587,4 @@ local Scripts = Window:CreateTab("📎 Scripts")
 
 Scripts:CreateButton({Name = "Update Chroma", Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/asteroidlordfr/Chroma/main/Source/Chroma.lua"))() end})
 Scripts:CreateButton({Name = "Infinite Yield", Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))() end})
+Scripts:CreateButton({Name = "Dex Explorer", Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/LorekeeperZinnia/Dex/master/main.lua"))() end})
