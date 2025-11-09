@@ -333,6 +333,9 @@ local cycleTimes = {6, 12, 18, 0}
 local currentIndex = 1
 local aimbotConnection
 local fovCircle = Drawing.new("Circle")
+local thirdPersonEnabled = false
+local thirdPersonKey = Enum.KeyCode.E
+local thirdPersonConnection
 local fov = 120
 local smoothing = 10
 
@@ -2057,6 +2060,47 @@ Visual:CreateToggle({
             end
         end
     end,
+})
+
+Visual:CreateSection("Third Person")
+
+Visual:CreateToggle({
+    Name = "Third Person",
+    CurrentValue = false,
+    Callback = function(state)
+        thirdPersonEnabled = state
+        if thirdPersonConnection then
+            thirdPersonConnection:Disconnect()
+            thirdPersonConnection = nil
+        end
+        if state then
+            thirdPersonConnection = game:GetService("UserInputService").InputBegan:Connect(function(input, gpe)
+                if gpe then return end
+                if input.KeyCode == thirdPersonKey then
+                    local Camera = workspace.CurrentCamera
+                    if Camera.CameraType == Enum.CameraType.Custom then
+                        Camera.CameraType = Enum.CameraType.Scriptable
+                        Camera.CFrame = Camera.CFrame * CFrame.new(0, 0, 10)
+                    else
+                        Camera.CameraType = Enum.CameraType.Custom
+                    end
+                end
+            end)
+        end
+    end
+})
+
+Visual:CreateInput({
+    Name = "Keybind",
+    CurrentValue = "E",
+    PlaceholderText = "Key (e.g. E)",
+    RemoveTextAfterFocusLost = false,
+    Callback = function(Text)
+        local key = Enum.KeyCode[string.upper(Text)]
+        if key then
+            thirdPersonKey = key
+        end
+    end
 })
 
 local Client = Window:CreateTab("💻 Client")
