@@ -22,6 +22,7 @@ local RunService = game:GetService("RunService")
 local VirtualUser = game:GetService("VirtualUser")
 local UserInputService = game:GetService("UserInputService")
 local workspace = workspace
+local StarterPlayer = game:GetService("StarterPlayer")
 local Camera = workspace.CurrentCamera
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Networking = ReplicatedStorage
@@ -2514,6 +2515,32 @@ Visual:CreateToggle({
 })
 
 local Rig = Window:CreateTab("⚡ Rig")
+
+Rig:CreateSection("Humanoid")
+
+local StarterPlayer = game:GetService("StarterPlayer")
+
+Rig:CreateButton({
+	Name = "Turn R6",
+	Callback = function()
+		StarterPlayer.CharacterRig = Enum.HumanoidRigType.R6
+		if Player.Character then
+			Player.Character:BreakJoints()
+		end
+	end
+})
+
+Rig:CreateButton({
+	Name = "Turn R15",
+	Callback = function()
+		StarterPlayer.CharacterRig = Enum.HumanoidRigType.R15
+		if Player.Character then
+			Player.Character:BreakJoints()
+		end
+	end
+})
+
+Rig:CreateSection("Rig")
 
 Rig:CreateToggle({
 	Name = "Lay [R6] [R15]",
