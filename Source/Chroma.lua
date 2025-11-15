@@ -46,18 +46,6 @@ local currentveh = nil
 local seatconn = nil
 local activeThreads = {}
 
-local function getHumanoid(char)
-	if char and char:FindFirstChild("Humanoid") then
-		return char:FindFirstChild("Humanoid")
-	end
-end
-
-local function getRoot(char)
-	if char and char:FindFirstChild("HumanoidRootPart") then
-		return char:FindFirstChild("HumanoidRootPart")
-	end
-end
-
 local function safeGet(name)
     return ReplicatedStorage:FindFirstChild(name)
 end
@@ -2514,11 +2502,7 @@ Visual:CreateToggle({
     end,
 })
 
-local Rig = Window:CreateTab("⚡ Rig")
-
 Rig:CreateSection("Humanoid")
-
-local StarterPlayer = game:GetService("StarterPlayer")
 
 Rig:CreateButton({
 	Name = "Turn R6",
@@ -2557,7 +2541,9 @@ Rig:CreateToggle({
 			if humanoid.RootPart then
 				humanoid.RootPart.CFrame = humanoid.RootPart.CFrame * CFrame.Angles(math.pi * 0.5, 0, 0)
 			end
-			for _, v in ipairs(humanoid:GetPlayingAnimationTracks()) do v:Stop() end
+			for _, v in ipairs(humanoid:GetPlayingAnimationTracks()) do
+				v:Stop()
+			end
 		end
 
 		local function restore(char)
@@ -2569,6 +2555,7 @@ Rig:CreateToggle({
 
 		if enabled then
 			lay()
+			if layState.Connection then layState.Connection:Disconnect() end
 			layState.Connection = Player.CharacterAdded:Connect(lay)
 		else
 			restore()
@@ -2585,7 +2572,7 @@ Rig:CreateButton({
 	Callback = function()
 		local char = Player.Character
 		if char then
-			local humanoid = char:FindFirstChildOfClass("Humanoid")
+			local humanoid = char:FindFirstChildWhichIsA("Humanoid")
 			if humanoid then humanoid.Sit = true end
 		end
 	end
@@ -2594,261 +2581,31 @@ Rig:CreateButton({
 Rig:CreateSection("Animations")
 
 Rig:CreateToggle({
-	Name = "Toggle Animations [R6] [R15]",
-	CurrentValue = false,
-	Flag = "PlayerAnims",
-	Callback = function(enabled)
-		local function disableAnimate(char)
-			local animate = char:FindFirstChild("Animate")
-			if animate then
-				animate.Disabled = true
-				animateState.Animate = animate
-			end
-		end
-
-		local function enableAnimate()
-			if animateState.Animate then
-				animateState.Animate.Disabled = false
-				animateState.Animate = nil
-			end
-		end
-
-		if enabled then
-			if Player.Character then disableAnimate(Player.Character) end
-			animateState.Connection = Player.CharacterAdded:Connect(function(char)
-				if enabled then disableAnimate(char) end
-			end)
-		else
-			enableAnimate()
-			if animateState.Connection then
-				animateState.Connection:Disconnect()
-				animateState.Connection = nil
-			end
-		end
-	end
-})
-
-Rig:CreateToggle({
-	Name = "Spaz [R6]",
-	CurrentValue = false,
-	Flag = "Spaz",
-	Callback = function(enabled)
-		if not spasmState.Animation then spasmState.Animation = {} end
-
-		local function playSpasm(char)
-			if not char then return end
-			local humanoid = char:FindFirstChildOfClass("Humanoid")
-			if humanoid and humanoid.RigType == Enum.HumanoidRigType.R6 and not spasmState.Animation.Track then
-				local anim = Instance.new("Animation")
-				anim.AnimationId = "rbxassetid://33796059"
-				local track = humanoid:LoadAnimation(anim)
-				track:Play()
-				track:AdjustSpeed(99)
-				spasmState.Animation.Track = track
-				spasmState.Animation.Instance = anim
-			end
-		end
-
-		local function stopSpasm()
-			if spasmState.Animation.Track then
-				spasmState.Animation.Track:Stop()
-				spasmState.Animation.Instance:Destroy()
-				spasmState.Animation.Track = nil
-				spasmState.Animation.Instance = nil
-			end
-		end
-
-		if enabled then
-			playSpasm(Player.Character)
-			spasmState.Connection = Player.CharacterAdded:Connect(playSpasm)
-		else
-			stopSpasm()
-			if spasmState.Connection then
-				spasmState.Connection:Disconnect()
-				spasmState.Connection = nil
-			end
-		end
-	end
-})
-
-Rig:CreateToggle({
-	Name = "Juggle Head [R6]",
-	CurrentValue = false,
-	Flag = "WooyaHead",
-	Callback = function(enabled)
-		if not headthrowState.Animation then headthrowState.Animation = {} end
-
-		local function playHeadThrow(char)
-			if not char then return end
-			local humanoid = char:FindFirstChildOfClass("Humanoid")
-			if humanoid and humanoid.RigType == Enum.HumanoidRigType.R6 and not headthrowState.Animation.Track then
-				local anim = Instance.new("Animation")
-				anim.AnimationId = "rbxassetid://35154961"
-				local track = humanoid:LoadAnimation(anim)
-				track:Play(0)
-				track:AdjustSpeed(1)
-				headthrowState.Animation.Track = track
-				headthrowState.Animation.Instance = anim
-			end
-		end
-
-		local function stopHeadThrow()
-			if headthrowState.Animation.Track then
-				headthrowState.Animation.Track:Stop()
-				headthrowState.Animation.Instance:Destroy()
-				headthrowState.Animation.Track = nil
-				headthrowState.Animation.Instance = nil
-			end
-		end
-
-		if enabled then
-			playHeadThrow(Player.Character)
-			headthrowState.Connection = Player.CharacterAdded:Connect(playHeadThrow)
-		else
-			stopHeadThrow()
-			if headthrowState.Connection then
-				headthrowState.Connection:Disconnect()
-				headthrowState.Connection = nil
-			end
-		end
-	end
-})
-
-Rig:CreateToggle({
-	Name = "Carpet [R6] [R15]",
-	CurrentValue = false,
-	Flag = "Carpet",
-	Callback = function(enabled)
-		if not carpetState then carpetState = {} end
-
-		local function stopCarpet()
-			if carpetState.Track then
-				carpetState.Track:Stop()
-				carpetState.Anim:Destroy()
-				carpetState.Track = nil
-				carpetState.Anim = nil
-			end
-			if carpetState.Died then
-				carpetState.Died:Disconnect()
-				carpetState.Died = nil
-			end
-		end
-
-		local function playCarpet(char)
-			char = char or Player.Character
-			if not char then return end
-			local humanoid = char:FindFirstChildOfClass("Humanoid")
-			if not humanoid then return end
-			if humanoid.RigType ~= Enum.HumanoidRigType.R6 then
-				Rayfield:Notify({Title="R6 Required", Content="This toggle requires R6 rig type", Duration=3})
-				return
-			end
-			stopCarpet()
-			local anim = Instance.new("Animation")
-			anim.AnimationId = "rbxassetid://282574440"
-			local track = humanoid:LoadAnimation(anim)
-			track:Play(.1, 1, 1)
-			carpetState.Anim = anim
-			carpetState.Track = track
-			carpetState.Died = humanoid.Died:Connect(stopCarpet)
-		end
-
-		if enabled then
-			playCarpet()
-			carpetState.Connection = Player.CharacterAdded:Connect(playCarpet)
-		else
-			stopCarpet()
-			if carpetState.Connection then
-				carpetState.Connection:Disconnect()
-				carpetState.Connection = nil
-			end
-		end
-	end
-})
-
-Rig:CreateToggle({
-	Name = "Cat Animations [R15]",
-	CurrentValue = false,
-	Flag = "CatAnimations",
-	Callback = function(enabled)
-		local catAnim = {}
-		function catAnim:Cleanup()
-			if self.idleTrack then self.idleTrack:Stop() end
-			if self.walkTrack then self.walkTrack:Stop() end
-			if self.runTrack then self.runTrack:Stop() end
-			for _, con in ipairs(self.Connections or {}) do con:Disconnect() end
-			self.Connections = {}
-			if self.humanoid then self.humanoid.WalkSpeed = 16 end
-		end
-
-		function catAnim:SetupCharacter(char)
-			self:Cleanup()
-			self.humanoid = char:WaitForChild("Humanoid")
-			self.head = char:WaitForChild("Head")
-			self.root = char:WaitForChild("HumanoidRootPart")
-			local animate = char:FindFirstChild("Animate")
-			if animate then animate:Destroy() end
-			local idleAnim = Instance.new("Animation"); idleAnim.AnimationId = "rbxassetid://103939297784308"
-			local walkAnim = Instance.new("Animation"); walkAnim.AnimationId = "rbxassetid://136103532014102"
-			local runAnim = Instance.new("Animation"); runAnim.AnimationId = "rbxassetid://123416403401179"
-			self.idleTrack = self.humanoid:LoadAnimation(idleAnim)
-			self.walkTrack = self.humanoid:LoadAnimation(walkAnim)
-			self.runTrack = self.humanoid:LoadAnimation(runAnim)
-			self.idleTrack.Looped = true
-			self.walkTrack.Looped = true
-			self.runTrack.Looped = true
-			self.idleTrack:Play()
-			self.humanoid.WalkSpeed = 16
-			self.isRunning = false
-			self.Connections = {}
-			table.insert(self.Connections, self.humanoid.Running:Connect(function(speed)
-				if speed > 1 then
-					if not self.walkTrack.IsPlaying then self.idleTrack:Stop(); self.walkTrack:Play() end
-				else
-					if not self.idleTrack.IsPlaying then self.walkTrack:Stop(); self.idleTrack:Play() end
-				end
-			end))
-			table.insert(self.Connections, RunService.RenderStepped:Connect(function()
-				if self.head and self.root then
-					local relative = self.root.CFrame:PointToObjectSpace(self.head.Position)
-					self.humanoid.CameraOffset = Vector3.new(0, relative.Y - 1.5, relative.Z)
-				end
-			end))
-		end
-
-		if enabled then
-			if Player.Character then catAnim:SetupCharacter(Player.Character) end
-			Player.CharacterAdded:Connect(function(char) if enabled then catAnim:SetupCharacter(char) end end)
-		else
-			catAnim:Cleanup()
-		end
-	end
-})
-
-Rig:CreateToggle({
 	Name = "Jerk Off",
 	CurrentValue = false,
 	Flag = "Strokeit",
 	Callback = function(state)
-		local char = Player.Character
+		local player = game.Players.LocalPlayer
+		local char = player.Character
 		local humanoid = char and char:FindFirstChildWhichIsA("Humanoid")
-		local backpack = Player:FindFirstChildWhichIsA("Backpack")
+		local backpack = player:FindFirstChildWhichIsA("Backpack")
 		if not humanoid or not backpack then return end
+
 		local jerkRunning = false
 		local jerkTrack
 		local jerkTool
 
-		local function r15()
-			local c = Player.Character
-			if not c then return false end
-			local h = c:FindFirstChild("Humanoid")
-			if not h then return false end
-			return h.RigType == Enum.HumanoidRigType.R15
+		local function isR15(plr)
+			local c = plr.Character
+			return c and c:FindFirstChild("Humanoid") and c.Humanoid.RigType == Enum.HumanoidRigType.R15
 		end
 
 		local function stopJerk()
 			jerkRunning = false
-			if jerkTrack then jerkTrack:Stop(); jerkTrack = nil end
+			if jerkTrack then
+				jerkTrack:Stop()
+				jerkTrack = nil
+			end
 		end
 
 		if state then
@@ -2859,31 +2616,34 @@ Rig:CreateToggle({
 			jerkTool.RequiresHandle = false
 			jerkTool.Parent = backpack
 
-			jerkTool.Equipped:Connect(function()
-				jerkRunning = true
-				task.spawn(function()
-					while jerkRunning do
-						if not jerkTrack then
-							local anim = Instance.new("Animation")
-							anim.AnimationId = not r15() and "rbxassetid://72042024" or "rbxassetid://698251653"
-							jerkTrack = humanoid:LoadAnimation(anim)
-						end
-						jerkTrack:Play()
-						jerkTrack:AdjustSpeed(r15() and 0.7 or 0.65)
-						jerkTrack.TimePosition = 0.6
-						task.wait(0.1)
-						while jerkTrack and jerkTrack.TimePosition < (r15() and 0.7 or 0.65) do task.wait(0.1) end
-						if jerkTrack then jerkTrack:Stop(); jerkTrack = nil end
+			local function playAnimation()
+				while jerkRunning do
+					if not jerkTrack then
+						local anim = Instance.new("Animation")
+						anim.AnimationId = isR15(player) and "rbxassetid://698251653" or "rbxassetid://72042024"
+						jerkTrack = humanoid:LoadAnimation(anim)
 					end
-				end)
-			end)
+					jerkTrack:Play()
+					jerkTrack.AdjustSpeed = isR15(player) and 0.7 or 0.65
+					jerkTrack.TimePosition = 0.6
+					task.wait(0.1)
+					if jerkTrack then
+						jerkTrack:Stop()
+						jerkTrack = nil
+					end
+				end
+			end
 
+			jerkTool.Equipped:Connect(function() task.spawn(playAnimation) end)
 			jerkTool.Unequipped:Connect(stopJerk)
 			humanoid.Died:Connect(stopJerk)
 			jerkTool:Equip()
 		else
 			stopJerk()
-			if jerkTool then jerkTool:Destroy(); jerkTool = nil end
+			if jerkTool then
+				jerkTool:Destroy()
+				jerkTool = nil
+			end
 		end
 	end
 })
