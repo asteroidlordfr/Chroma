@@ -1,4 +1,4 @@
-x--[[
+--[[
 -- Chroma
 --
 -- A open-source Roblox Universal tool to tweak your gameplay to the max.
