@@ -2502,6 +2502,8 @@ Visual:CreateToggle({
     end,
 })
 
+local Rig = Window:CreateTab("⚡ Rig")
+
 Rig:CreateSection("Humanoid")
 
 Rig:CreateButton({
