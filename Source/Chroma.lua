@@ -1,4 +1,4 @@
---[[
+x--[[
 -- Chroma
 --
 -- A open-source Roblox Universal tool to tweak your gameplay to the max.
@@ -1159,6 +1159,91 @@ Movement:CreateToggle({
         end
     end
 })
+
+local Animations = Window:CreateTab("⚡ Animations")
+
+Animations:CreateToggle( -- Credits to EdgeIY
+    {
+        Name = "Jerk Off",
+        CurrentValue = false,
+        Flag = "Strokeit",
+        Callback = function(state)
+            local player = game.Players.LocalPlayer
+            local char = player.Character
+            local humanoid = char and char:FindFirstChildWhichIsA("Humanoid")
+            local backpack = player:FindFirstChildWhichIsA("Backpack")
+            if not humanoid or not backpack then
+                return
+            end
+            local jerkRunning = false
+            local jerkTrack
+            local jerkTool
+            local function r15(plr)
+                local c = plr.Character
+                if not c then
+                    return false
+                end
+                local h = c:FindFirstChild("Humanoid")
+                if not h then
+                    return false
+                end
+                return h.RigType == Enum.HumanoidRigType.R15
+            end
+            local function stopJerk()
+                jerkRunning = false
+                if jerkTrack then
+                    jerkTrack:Stop()
+                    jerkTrack = nil
+                end
+            end
+            if state then
+                jerkRunning = true
+                jerkTool = Instance.new("Tool")
+                jerkTool.Name = "my willy"
+                jerkTool.ToolTip = "stop playing with your sausage"
+                jerkTool.RequiresHandle = false
+                jerkTool.Parent = backpack
+                jerkTool.Equipped:Connect(
+                    function()
+                        jerkRunning = true
+                        task.spawn(
+                            function()
+                                while jerkRunning do
+                                    if not jerkTrack then
+                                        local anim = Instance.new("Animation")
+                                        anim.AnimationId =
+                                            not r15(player) and "rbxassetid://72042024" or "rbxassetid://698251653"
+                                        jerkTrack = humanoid:LoadAnimation(anim)
+                                    end
+                                    jerkTrack:Play()
+                                    jerkTrack:AdjustSpeed(r15(player) and 0.7 or 0.65)
+                                    jerkTrack.TimePosition = 0.6
+                                    task.wait(0.1)
+                                    while jerkTrack and jerkTrack.TimePosition < (r15(player) and 0.7 or 0.65) do
+                                        task.wait(0.1)
+                                    end
+                                    if jerkTrack then
+                                        jerkTrack:Stop()
+                                        jerkTrack = nil
+                                    end
+                                end
+                            end
+                        )
+                    end
+                )
+                jerkTool.Unequipped:Connect(stopJerk)
+                humanoid.Died:Connect(stopJerk)
+                jerkTool:Equip()
+            else
+                stopJerk()
+                if jerkTool then
+                    jerkTool:Destroy()
+                    jerkTool = nil
+                end
+            end
+        end
+    }
+)
 
 local Cheats = Window:CreateTab("🎯 Cheats")
 
