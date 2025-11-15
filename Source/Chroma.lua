@@ -91,6 +91,37 @@ end)
 
 local ChatSpyEnabled = false
 
+-- Attempted fix for VC stuff on executors like Xeno
+
+local TextChatService = game:GetService("TextChatService")
+local VoiceChatService = game:GetService("VoiceChatService")
+local VoiceChatInternal = (rawget(_G, "Services") and rawget(_G, "Services").VoiceChatInternal) or game:GetService("VoiceChatService")
+
+local ReplicaSignal
+local folder = ReplicatedStorage:FindFirstChild("ReplicaRemoteEvents")
+if folder then
+    ReplicaSignal = folder:FindFirstChild("Replica_ReplicaSignal")
+end
+
+local function CallReplicaSignal(...)
+    if not ReplicaSignal then
+        return false
+    end
+    if typeof(ReplicaSignal) == "Instance" then
+        if ReplicaSignal.FireServer and type(ReplicaSignal.FireServer) == "function" then
+            ReplicaSignal:FireServer(...)
+            return true
+        elseif ReplicaSignal.InvokeServer and type(ReplicaSignal.InvokeServer) == "function" then
+            ReplicaSignal:InvokeServer(...)
+            return true
+        end
+    elseif type(ReplicaSignal) == "function" then
+        ReplicaSignal(...)
+        return true
+    end
+    return false
+end
+
 -- Below is some Slap Battles stuff
 
 if game.PlaceId == 6403373529 then
@@ -2783,23 +2814,20 @@ OP:CreateSection("Misc")
 OP:CreateButton({
     Name = "Unsuspend Chat",
     Callback = function()
-        if ReplicaSignal then
-            ReplicaSignal(TextChatService.UpdateChatTimeout, game.Players.LocalPlayer.UserId, 0, 10)
-        end
+        CallReplicaSignal(TextChatService.UpdateChatTimeout, game.Players.LocalPlayer.UserId, 0, 10)
     end
 })
 
+local OnVoiceModerated
 OP:CreateButton({
     Name = "Unsuspend VC",
     Callback = function()
-        if ReplicaSignal then
-            ReplicaSignal(VoiceChatService.ClientRetryJoin)
-            if typeof(OnVoiceModerated) ~= "RBXScriptConnection" then
-                OnVoiceModerated = Services.VoiceChatInternal.LocalPlayerModerated:Connect(function()
-                    task.wait(1)
-                    ReplicaSignal(VoiceChatService.ClientRetryJoin)
-                end)
-            end
+        CallReplicaSignal(VoiceChatService.ClientRetryJoin)
+        if typeof(OnVoiceModerated) ~= "RBXScriptConnection" then
+            OnVoiceModerated = VoiceChatInternal.LocalPlayerModerated:Connect(function()
+                task.wait(1)
+                CallReplicaSignal(VoiceChatService.ClientRetryJoin)
+            end)
         end
     end
 })
