@@ -2526,7 +2526,7 @@ Rig:CreateButton({
 	end
 })
 
-Rig:CreateSection("Rig")
+Rig:CreateSection("Actual")
 
 Rig:CreateToggle({
 	Name = "Lay [R6] [R15]",
