@@ -991,26 +991,6 @@ task.spawn(function()
     end
 end)
 
-Movement:CreateButton({
-	Name = "TP Tool",
-	Callback = function()
-		local TpTool = Instance.new("Tool")
-		TpTool.Name = "Teleport Tool"
-		TpTool.RequiresHandle = false
-		TpTool.Parent = Player.Backpack
-
-		TpTool.Activated:Connect(function()
-			local Char = Player.Character
-			local HRP = Char and Char:FindFirstChild("HumanoidRootPart")
-			if not Char or not HRP then
-				return warn("Failed to find HumanoidRootPart")
-			end
-			local hitPos = Mouse.Hit.Position
-			HRP.CFrame = CFrame.new(hitPos.X, hitPos.Y + 3, hitPos.Z, select(4, HRP.CFrame:components()))
-		end)
-	end
-})
-
 Movement:CreateToggle({
     Name = "Swim",
     CurrentValue = false,
@@ -2502,152 +2482,88 @@ Visual:CreateToggle({
     end,
 })
 
-local Rig = Window:CreateTab("⚡ Rig")
+local Animations = Window:CreateTab("⚡ Animations")
 
-Rig:CreateSection("Humanoid")
-
-Rig:CreateButton({
-	Name = "Turn R6",
-	Callback = function()
-		StarterPlayer.CharacterRig = Enum.HumanoidRigType.R6
-		if Player.Character then
-			Player.Character:BreakJoints()
-		end
-	end
-})
-
-Rig:CreateButton({
-	Name = "Turn R15",
-	Callback = function()
-		StarterPlayer.CharacterRig = Enum.HumanoidRigType.R15
-		if Player.Character then
-			Player.Character:BreakJoints()
-		end
-	end
-})
-
-Rig:CreateSection("Actual")
-
-Rig:CreateToggle({
-	Name = "Lay [R6] [R15]",
-	CurrentValue = false,
-	Flag = "Laydown",
-	Callback = function(enabled)
-		local function lay(char)
-			char = char or Player.Character
-			if not char then return end
-			local humanoid = char:FindFirstChildWhichIsA("Humanoid")
-			if not humanoid then return end
-			humanoid.Sit = true
-			task.wait(0.1)
-			if humanoid.RootPart then
-				humanoid.RootPart.CFrame = humanoid.RootPart.CFrame * CFrame.Angles(math.pi * 0.5, 0, 0)
-			end
-			for _, v in ipairs(humanoid:GetPlayingAnimationTracks()) do
-				v:Stop()
-			end
-		end
-
-		local function restore(char)
-			char = char or Player.Character
-			if not char then return end
-			local humanoid = char:FindFirstChildWhichIsA("Humanoid")
-			if humanoid then humanoid.Sit = false end
-		end
-
-		if enabled then
-			lay()
-			if layState.Connection then layState.Connection:Disconnect() end
-			layState.Connection = Player.CharacterAdded:Connect(lay)
-		else
-			restore()
-			if layState.Connection then
-				layState.Connection:Disconnect()
-				layState.Connection = nil
-			end
-		end
-	end
-})
-
-Rig:CreateButton({
-	Name = "Sit [R6] [R15]",
-	Callback = function()
-		local char = Player.Character
-		if char then
-			local humanoid = char:FindFirstChildWhichIsA("Humanoid")
-			if humanoid then humanoid.Sit = true end
-		end
-	end
-})
-
-Rig:CreateSection("Animations")
-
-Rig:CreateToggle({
-	Name = "Jerk Off",
-	CurrentValue = false,
-	Flag = "Strokeit",
-	Callback = function(state)
-		local player = game.Players.LocalPlayer
-		local char = player.Character
-		local humanoid = char and char:FindFirstChildWhichIsA("Humanoid")
-		local backpack = player:FindFirstChildWhichIsA("Backpack")
-		if not humanoid or not backpack then return end
-
-		local jerkRunning = false
-		local jerkTrack
-		local jerkTool
-
-		local function isR15(plr)
-			local c = plr.Character
-			return c and c:FindFirstChild("Humanoid") and c.Humanoid.RigType == Enum.HumanoidRigType.R15
-		end
-
-		local function stopJerk()
-			jerkRunning = false
-			if jerkTrack then
-				jerkTrack:Stop()
-				jerkTrack = nil
-			end
-		end
-
-		if state then
-			jerkRunning = true
-			jerkTool = Instance.new("Tool")
-			jerkTool.Name = "my willy"
-			jerkTool.ToolTip = "stop playing with your sausage"
-			jerkTool.RequiresHandle = false
-			jerkTool.Parent = backpack
-
-			local function playAnimation()
-				while jerkRunning do
-					if not jerkTrack then
-						local anim = Instance.new("Animation")
-						anim.AnimationId = isR15(player) and "rbxassetid://698251653" or "rbxassetid://72042024"
-						jerkTrack = humanoid:LoadAnimation(anim)
-					end
-					jerkTrack:Play()
-					jerkTrack.AdjustSpeed = isR15(player) and 0.7 or 0.65
-					jerkTrack.TimePosition = 0.6
-					task.wait(0.1)
-					if jerkTrack then
-						jerkTrack:Stop()
-						jerkTrack = nil
-					end
-				end
-			end
-
-			jerkTool.Equipped:Connect(function() task.spawn(playAnimation) end)
-			jerkTool.Unequipped:Connect(stopJerk)
-			humanoid.Died:Connect(stopJerk)
-			jerkTool:Equip()
-		else
-			stopJerk()
-			if jerkTool then
-				jerkTool:Destroy()
-				jerkTool = nil
-			end
-		end
-	end
+Animations:CreateToggle( -- Credits to EdgeIY
+    {
+        Name = "Jerk Off",
+        CurrentValue = false,
+        Flag = "Strokeit",
+        Callback = function(state)
+            local player = game.Players.LocalPlayer
+            local char = player.Character
+            local humanoid = char and char:FindFirstChildWhichIsA("Humanoid")
+            local backpack = player:FindFirstChildWhichIsA("Backpack")
+            if not humanoid or not backpack then
+                return
+            end
+            local jerkRunning = false
+            local jerkTrack
+            local jerkTool
+            local function r15(plr)
+                local c = plr.Character
+                if not c then
+                    return false
+                end
+                local h = c:FindFirstChild("Humanoid")
+                if not h then
+                    return false
+                end
+                return h.RigType == Enum.HumanoidRigType.R15
+            end
+            local function stopJerk()
+                jerkRunning = false
+                if jerkTrack then
+                    jerkTrack:Stop()
+                    jerkTrack = nil
+                end
+            end
+            if state then
+                jerkRunning = true
+                jerkTool = Instance.new("Tool")
+                jerkTool.Name = "my willy"
+                jerkTool.ToolTip = "stop playing with your sausage"
+                jerkTool.RequiresHandle = false
+                jerkTool.Parent = backpack
+                jerkTool.Equipped:Connect(
+                    function()
+                        jerkRunning = true
+                        task.spawn(
+                            function()
+                                while jerkRunning do
+                                    if not jerkTrack then
+                                        local anim = Instance.new("Animation")
+                                        anim.AnimationId =
+                                            not r15(player) and "rbxassetid://72042024" or "rbxassetid://698251653"
+                                        jerkTrack = humanoid:LoadAnimation(anim)
+                                    end
+                                    jerkTrack:Play()
+                                    jerkTrack:AdjustSpeed(r15(player) and 0.7 or 0.65)
+                                    jerkTrack.TimePosition = 0.6
+                                    task.wait(0.1)
+                                    while jerkTrack and jerkTrack.TimePosition < (r15(player) and 0.7 or 0.65) do
+                                        task.wait(0.1)
+                                    end
+                                    if jerkTrack then
+                                        jerkTrack:Stop()
+                                        jerkTrack = nil
+                                    end
+                                end
+                            end
+                        )
+                    end
+                )
+                jerkTool.Unequipped:Connect(stopJerk)
+                humanoid.Died:Connect(stopJerk)
+                jerkTool:Equip()
+            else
+                stopJerk()
+                if jerkTool then
+                    jerkTool:Destroy()
+                    jerkTool = nil
+                end
+            end
+        end
 })
 
 local Client = Window:CreateTab("💻 Client")
