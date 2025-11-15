@@ -30,8 +30,6 @@ if ReplicatedStorage:FindFirstChild("ReplicaRemoteEvents") and ReplicatedStorage
     ReplicaSignal = ReplicatedStorage.ReplicaRemoteEvents.Replica_ReplicaSignal
 end
 
-replicatesignal = missing("function", replicatesignal)
-
 local PlaceBlock = (ReplicatedStorage:FindFirstChild("Remotes") and ReplicatedStorage.Remotes:FindFirstChild("PlaceBlock")) -- this is for Voxels
 local voxels = {}
 local ChatSpyEnabled = false
@@ -2785,8 +2783,8 @@ OP:CreateSection("Misc")
 OP:CreateButton({
     Name = "Unsuspend Chat",
     Callback = function()
-        if replicatesignal then
-            replicatesignal(TextChatService.UpdateChatTimeout, game.Players.LocalPlayer.UserId, 0, 10)
+        if ReplicaSignal then
+            ReplicaSignal(TextChatService.UpdateChatTimeout, game.Players.LocalPlayer.UserId, 0, 10)
         end
     end
 })
@@ -2794,13 +2792,12 @@ OP:CreateButton({
 OP:CreateButton({
     Name = "Unsuspend VC",
     Callback = function()
-        if replicatesignal then
-            replicatesignal(VoiceChatService.ClientRetryJoin)
-
-            if typeof(onVoiceModerated) ~= "RBXScriptConnection" then
-                onVoiceModerated = Services.VoiceChatInternal.LocalPlayerModerated:Connect(function()
+        if ReplicaSignal then
+            ReplicaSignal(VoiceChatService.ClientRetryJoin)
+            if typeof(OnVoiceModerated) ~= "RBXScriptConnection" then
+                OnVoiceModerated = Services.VoiceChatInternal.LocalPlayerModerated:Connect(function()
                     task.wait(1)
-                    replicatesignal(VoiceChatService.ClientRetryJoin)
+                    ReplicaSignal(VoiceChatService.ClientRetryJoin)
                 end)
             end
         end
