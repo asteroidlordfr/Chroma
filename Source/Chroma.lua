@@ -1242,8 +1242,7 @@ Animations:CreateToggle( -- Credits to EdgeIY
                 end
             end
         end
-    }
-)
+})
 
 local Cheats = Window:CreateTab("🎯 Cheats")
 
