@@ -90,6 +90,12 @@ Players.PlayerAdded:Connect(function(player)
 end)
 
 local ChatSpyEnabled = false
+local spasmState = {}
+local headthrowState = {}
+local carpetState = {}
+local layState = {}
+local animateState = {}
+local catAnimState = {}
 
 -- Below is some Slap Battles stuff
 
@@ -2499,6 +2505,152 @@ local spasmState = {}
 local headthrowState = {}
 local Rig = Window:CreateTab("⚡ Rig")
 
+local layState = {}
+Rig:CreateToggle({
+	Name = "Lay [R6] [R15]",
+	CurrentValue = false,
+	Flag = "Laydown",
+	Callback = function(enabled)
+		local function lay()
+			if not Player.Character then return end
+			local humanoid = Player.Character:FindFirstChildWhichIsA("Humanoid")
+			if not humanoid then return end
+			humanoid.Sit = true
+			task.wait(0.1)
+			if humanoid.RootPart then
+				humanoid.RootPart.CFrame = humanoid.RootPart.CFrame * CFrame.Angles(math.pi * 0.5, 0, 0)
+			end
+			for _, v in ipairs(humanoid:GetPlayingAnimationTracks()) do
+				v:Stop()
+			end
+		end
+
+		local function restore()
+			if not Player.Character then return end
+			local humanoid = Player.Character:FindFirstChildWhichIsA("Humanoid")
+			if not humanoid then return end
+			humanoid.Sit = false
+		end
+
+		if enabled then
+			lay()
+			layState.Connection = Player.CharacterAdded:Connect(lay)
+		else
+			restore()
+			if layState.Connection then
+				layState.Connection:Disconnect()
+				layState.Connection = nil
+			end
+		end
+	end
+})
+
+Rig:CreateButton({
+	Name = "Sit [R6] [R15]",
+	Callback = function()
+		local char = Player.Character
+		if char then
+			local humanoid = char:FindFirstChildOfClass("Humanoid")
+			if humanoid then
+				humanoid.Sit = true
+			end
+		end
+	end
+})
+
+Rig:CreateSection("Animations")
+
+Rig:CreateToggle({
+	Name = "Toggle Animations [R6] [R15]",
+	CurrentValue = false,
+	Flag = "PlayerAnims",
+	Callback = function(enabled)
+		local function disableAnimate(char)
+			local animate = char:FindFirstChild("Animate")
+			if animate then
+				animate.Disabled = true
+				animateState.Animate = animate
+			end
+		end
+
+		local function enableAnimate()
+			if animateState.Animate then
+				animateState.Animate.Disabled = false
+				animateState.Animate = nil
+			end
+		end
+
+		if enabled then
+			if Player.Character then
+				disableAnimate(Player.Character)
+			end
+			animateState.Connection = Player.CharacterAdded:Connect(function(char)
+				if enabled then
+					disableAnimate(char)
+				end
+			end)
+		else
+			enableAnimate()
+			if animateState.Connection then
+				animateState.Connection:Disconnect()
+				animateState.Connection = nil
+			end
+		end
+	end
+})
+
+Rig:CreateToggle({
+	Name = "Spaz [R6]",
+	CurrentValue = false,
+	Flag = "Spaz",
+	Callback = function(enabled)
+		if not spasmState.Animation then spasmState.Animation = {} end
+
+		local function playSpasm(char)
+			local humanoid = char:FindFirstChildOfClass("Humanoid")
+			if humanoid and not spasmState.Animation.Track then
+				local anim = Instance.new("Animation")
+				anim.AnimationId = "rbxassetid://33796059"
+				local track = humanoid:LoadAnimation(anim)
+				track:Play()
+				track:AdjustSpeed(99)
+				spasmState.Animation.Track = track
+				spasmState.Animation.Instance = anim
+			end
+		end
+
+		local function stopSpasm()
+			if spasmState.Animation.Track then
+				spasmState.Animation.Track:Stop()
+				spasmState.Animation.Instance:Destroy()
+				spasmState.Animation.Track = nil
+				spasmState.Animation.Instance = nil
+			end
+		end
+
+		if enabled then
+			if Player.Character then
+				if Player.Character:FindFirstChildOfClass("Humanoid") and Player.Character:FindFirstChildOfClass("Humanoid").RigType == Enum.HumanoidRigType.R6 then
+					playSpasm(Player.Character)
+				else
+					Rayfield:Notify({Title = "R6 Required", Content = "This command requires R6 rig type", Duration = 3, Callback = function() end})
+				end
+			end
+			spasmState.Connection = Player.CharacterAdded:Connect(function(char)
+				if enabled and char:FindFirstChildOfClass("Humanoid") and char:FindFirstChildOfClass("Humanoid").RigType == Enum.HumanoidRigType.R6 then
+					playSpasm(char)
+				end
+			end)
+		else
+			stopSpasm()
+			if spasmState.Connection then
+				spasmState.Connection:Disconnect()
+				spasmState.Connection = nil
+			end
+		end
+	end
+})
+
 Rig:CreateToggle({
 	Name = "Juggle Head [R6]",
 	CurrentValue = false,
@@ -2597,153 +2749,6 @@ Rig:CreateToggle({
 			if carpetState.Connection then
 				carpetState.Connection:Disconnect()
 				carpetState.Connection = nil
-			end
-		end
-	end
-})
-
-local layState = {}
-Rig:CreateToggle({
-	Name = "Lay [R6] [R15]",
-	CurrentValue = false,
-	Flag = "Laydown",
-	Callback = function(enabled)
-		local function lay()
-			if not Player.Character then return end
-			local humanoid = Player.Character:FindFirstChildWhichIsA("Humanoid")
-			if not humanoid then return end
-			humanoid.Sit = true
-			task.wait(0.1)
-			if humanoid.RootPart then
-				humanoid.RootPart.CFrame = humanoid.RootPart.CFrame * CFrame.Angles(math.pi * 0.5, 0, 0)
-			end
-			for _, v in ipairs(humanoid:GetPlayingAnimationTracks()) do
-				v:Stop()
-			end
-		end
-
-		local function restore()
-			if not Player.Character then return end
-			local humanoid = Player.Character:FindFirstChildWhichIsA("Humanoid")
-			if not humanoid then return end
-			humanoid.Sit = false
-		end
-
-		if enabled then
-			lay()
-			layState.Connection = Player.CharacterAdded:Connect(lay)
-		else
-			restore()
-			if layState.Connection then
-				layState.Connection:Disconnect()
-				layState.Connection = nil
-			end
-		end
-	end
-})
-
-Rig:CreateToggle({
-	Name = "Spasm [R6]",
-	CurrentValue = false,
-	Flag = "SpasmToggle",
-	Callback = function(enabled)
-		if not spasmState.Animation then spasmState.Animation = {} end
-
-		local function playSpasm(char)
-			local humanoid = char:FindFirstChildOfClass("Humanoid")
-			if humanoid and not spasmState.Animation.Track then
-				local anim = Instance.new("Animation")
-				anim.AnimationId = "rbxassetid://33796059"
-				local track = humanoid:LoadAnimation(anim)
-				track:Play()
-				track:AdjustSpeed(99)
-				spasmState.Animation.Track = track
-				spasmState.Animation.Instance = anim
-			end
-		end
-
-		local function stopSpasm()
-			if spasmState.Animation.Track then
-				spasmState.Animation.Track:Stop()
-				spasmState.Animation.Instance:Destroy()
-				spasmState.Animation.Track = nil
-				spasmState.Animation.Instance = nil
-			end
-		end
-
-		if enabled then
-			if Player.Character then
-				if Player.Character:FindFirstChildOfClass("Humanoid") and Player.Character:FindFirstChildOfClass("Humanoid").RigType == Enum.HumanoidRigType.R6 then
-					playSpasm(Player.Character)
-				else
-					Rayfield:Notify({Title = "R6 Required", Content = "This command requires R6 rig type", Duration = 3, Callback = function() end})
-				end
-			end
-			spasmState.Connection = Player.CharacterAdded:Connect(function(char)
-				if enabled and char:FindFirstChildOfClass("Humanoid") and char:FindFirstChildOfClass("Humanoid").RigType == Enum.HumanoidRigType.R6 then
-					playSpasm(char)
-				end
-			end)
-		else
-			stopSpasm()
-			if spasmState.Connection then
-				spasmState.Connection:Disconnect()
-				spasmState.Connection = nil
-			end
-		end
-	end
-})
-
-Rig:CreateButton({
-	Name = "Sit [R6] [R15]",
-	Callback = function()
-		local char = Player.Character
-		if char then
-			local humanoid = char:FindFirstChildOfClass("Humanoid")
-			if humanoid then
-				humanoid.Sit = true
-			end
-		end
-	end
-})
-
-Rig:CreateSection("Animations")
-
-local animateState = {}
-AnimationsTab:CreateToggle({
-	Name = "Toggle Animations [R6] [R15]",
-	CurrentValue = false,
-	Flag = "PlayerAnims",
-	Callback = function(enabled)
-		local function disableAnimate(char)
-			local animate = char:FindFirstChild("Animate")
-			if animate then
-				animate.Disabled = true
-				animateState.Animate = animate
-			end
-		end
-
-		local function enableAnimate()
-			if animateState.Animate then
-				animateState.Animate.Disabled = false
-				animateState.Animate = nil
-			end
-		end
-
-		if enabled then
-			if Player.Character then
-				disableAnimate(Player.Character)
-			end
-			animateState.Connection = Player.CharacterAdded:Connect(function(char)
-				if enabled then
-					disableAnimate(char)
-				end
-			end)
-		else
-			enableAnimate()
-			if animateState.Connection then
-				animateState.Connection:Disconnect()
-				animateState.Connection = nil
 			end
 		end
 	end
