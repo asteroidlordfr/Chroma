@@ -30,6 +30,8 @@ if ReplicatedStorage:FindFirstChild("ReplicaRemoteEvents") and ReplicatedStorage
     ReplicaSignal = ReplicatedStorage.ReplicaRemoteEvents.Replica_ReplicaSignal
 end
 
+replicatesignal = missing("function", replicatesignal)
+
 local PlaceBlock = (ReplicatedStorage:FindFirstChild("Remotes") and ReplicatedStorage.Remotes:FindFirstChild("PlaceBlock")) -- this is for Voxels
 local voxels = {}
 local ChatSpyEnabled = false
