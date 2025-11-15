@@ -91,37 +91,6 @@ end)
 
 local ChatSpyEnabled = false
 
--- Attempted fix for VC stuff on executors like Xeno
-
-local TextChatService = game:GetService("TextChatService")
-local VoiceChatService = game:GetService("VoiceChatService")
-local VoiceChatInternal = (rawget(_G, "Services") and rawget(_G, "Services").VoiceChatInternal) or game:GetService("VoiceChatService")
-
-local ReplicaSignal
-local folder = ReplicatedStorage:FindFirstChild("ReplicaRemoteEvents")
-if folder then
-    ReplicaSignal = folder:FindFirstChild("Replica_ReplicaSignal")
-end
-
-local function CallReplicaSignal(...)
-    if not ReplicaSignal then
-        return false
-    end
-    if typeof(ReplicaSignal) == "Instance" then
-        if ReplicaSignal.FireServer and type(ReplicaSignal.FireServer) == "function" then
-            ReplicaSignal:FireServer(...)
-            return true
-        elseif ReplicaSignal.InvokeServer and type(ReplicaSignal.InvokeServer) == "function" then
-            ReplicaSignal:InvokeServer(...)
-            return true
-        end
-    elseif type(ReplicaSignal) == "function" then
-        ReplicaSignal(...)
-        return true
-    end
-    return false
-end
-
 -- Below is some Slap Battles stuff
 
 if game.PlaceId == 6403373529 then
@@ -1014,6 +983,52 @@ task.spawn(function()
         end
     end
 end)
+
+local HumanModCons = {}
+
+Movement:CreateToggle({
+    Name = "AutoJump",
+    CurrentValue = false,
+    Flag = "AutoJump",
+    Callback = function(Value)
+        if Value then
+            local speaker = game.Players.LocalPlayer
+            local Char = speaker.Character
+            local Human = Char and Char:FindFirstChildWhichIsA("Humanoid")
+
+            local function autoJump()
+                if Char and Human and Human.RootPart then
+                    local check1 = workspace:FindPartOnRay(Ray.new(Human.RootPart.Position - Vector3.new(0,1.5,0), Human.RootPart.CFrame.LookVector * 3), Human.Parent)
+                    local check2 = workspace:FindPartOnRay(Ray.new(Human.RootPart.Position + Vector3.new(0,1.5,0), Human.RootPart.CFrame.LookVector * 3), Human.Parent)
+                    if check1 or check2 then
+                        Human.Jump = true
+                    end
+                end
+            end
+
+            autoJump()
+            HumanModCons.ajLoop = RunService.RenderStepped:Connect(autoJump)
+            HumanModCons.ajCA = speaker.CharacterAdded:Connect(function(nChar)
+                Char = nChar
+                Human = nChar:WaitForChild("Humanoid")
+                autoJump()
+                if HumanModCons.ajLoop then
+                    HumanModCons.ajLoop:Disconnect()
+                end
+                HumanModCons.ajLoop = RunService.RenderStepped:Connect(autoJump)
+            end)
+        else
+            if HumanModCons.ajLoop then
+                HumanModCons.ajLoop:Disconnect()
+            end
+            if HumanModCons.ajCA then
+                HumanModCons.ajCA:Disconnect()
+            end
+            HumanModCons.ajLoop = nil
+            HumanModCons.ajCA = nil
+        end
+    end
+})
 
 Movement:CreateToggle({
     Name = "Swim",
@@ -2508,6 +2523,92 @@ Visual:CreateToggle({
 
 local Animations = Window:CreateTab("⚡ Animations")
 
+Animations:CreateToggle({
+	Name = "Cat Animations",
+	CurrentValue = false,
+	Flag = "CatAnimations",
+	Callback = function(enabled)
+		local catAnim = {}
+		function catAnim:Cleanup()
+			if self.idleTrack then self.idleTrack:Stop() end
+			if self.walkTrack then self.walkTrack:Stop() end
+			if self.runTrack then self.runTrack:Stop() end
+			for _, con in ipairs(self.Connections or {}) do
+				con:Disconnect()
+			end
+			self.Connections = {}
+			if self.humanoid then self.humanoid.WalkSpeed = 16 end
+		end
+
+		function catAnim:SetupCharacter(char)
+			self:Cleanup()
+
+			self.humanoid = char:WaitForChild("Humanoid")
+			self.head = char:WaitForChild("Head")
+			self.root = char:WaitForChild("HumanoidRootPart")
+
+			local animate = char:FindFirstChild("Animate")
+			if animate then animate:Destroy() end
+
+			local idleAnim = Instance.new("Animation")
+			idleAnim.AnimationId = "rbxassetid://103939297784308"
+			local walkAnim = Instance.new("Animation")
+			walkAnim.AnimationId = "rbxassetid://136103532014102"
+			local runAnim = Instance.new("Animation")
+			runAnim.AnimationId = "rbxassetid://123416403401179"
+
+			self.idleTrack = self.humanoid:LoadAnimation(idleAnim)
+			self.walkTrack = self.humanoid:LoadAnimation(walkAnim)
+			self.runTrack = self.humanoid:LoadAnimation(runAnim)
+
+			self.idleTrack.Looped = true
+			self.walkTrack.Looped = true
+			self.runTrack.Looped = true
+
+			self.idleTrack:Play()
+			self.humanoid.WalkSpeed = 16
+
+			self.isRunning = false
+			self.Connections = {}
+
+			table.insert(self.Connections, self.humanoid.Running:Connect(function(speed)
+				if self.isRunning then return end
+				if speed > 1 then
+					if not self.walkTrack.IsPlaying then
+						self.idleTrack:Stop()
+						self.walkTrack:Play()
+					end
+				else
+					if not self.idleTrack.IsPlaying then
+						self.walkTrack:Stop()
+						self.idleTrack:Play()
+					end
+				end
+			end))
+
+			table.insert(self.Connections, RunService.RenderStepped:Connect(function()
+				if self.head and self.root then
+					local relative = self.root.CFrame:PointToObjectSpace(self.head.Position)
+					self.humanoid.CameraOffset = Vector3.new(0, relative.Y - 1.5, relative.Z)
+				end
+			end))
+		end
+
+		if enabled then
+			if Player.Character then
+				catAnim:SetupCharacter(Player.Character)
+			end
+			Player.CharacterAdded:Connect(function(char)
+				if enabled then
+					catAnim:SetupCharacter(char)
+				end
+			end)
+		else
+			catAnim:Cleanup()
+		end
+	end
+})
+
 Animations:CreateToggle( -- Credits to EdgeIY
     {
         Name = "Jerk Off",
@@ -2807,29 +2908,6 @@ OP:CreateToggle({
 			end
 		end
 	end
-})
-
-OP:CreateSection("Misc")
-
-OP:CreateButton({
-    Name = "Unsuspend Chat",
-    Callback = function()
-        CallReplicaSignal(TextChatService.UpdateChatTimeout, game.Players.LocalPlayer.UserId, 0, 10)
-    end
-})
-
-local OnVoiceModerated
-OP:CreateButton({
-    Name = "Unsuspend VC",
-    Callback = function()
-        CallReplicaSignal(VoiceChatService.ClientRetryJoin)
-        if typeof(OnVoiceModerated) ~= "RBXScriptConnection" then
-            OnVoiceModerated = VoiceChatInternal.LocalPlayerModerated:Connect(function()
-                task.wait(1)
-                CallReplicaSignal(VoiceChatService.ClientRetryJoin)
-            end)
-        end
-    end
 })
 
 local Scripts = Window:CreateTab("📎 Scripts")
