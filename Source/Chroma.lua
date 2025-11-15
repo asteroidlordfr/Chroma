@@ -34,12 +34,15 @@ local PlaceBlock = (ReplicatedStorage:FindFirstChild("Remotes") and ReplicatedSt
 local voxels = {}
 local ChatSpyEnabled = false
 
-local blockTypes = {"Oak Planks", "Bricks", "Dirt", "Cobblestone", "Oak Log", "Oak Leaves", "Glass", "Stone", "Yellow Wool"}
+local blockTypes = {"Oak Planks", "Bricks", "Dirt", "Cobblestone", "Oak Log", "Oak Leaves", "Glass", "Stone", "Yellow Wool", "White Wool", "TNT", "Sponge", "Sand", "Red Wool", "Pruple Wool", "Pink Wool", "Orange Wool", "Green Wool", "Blue Wool", "Bookshelf", "Clay", "Coal Ore", "Cyan Wool", "Diamond Block", "Diamond Ore", "Iron Ore", "Mossy Stone Bricks", "Magenta Wool", "Lime Wool", "iron Block", "Gold Block", "Gold Ore", "Magma", "Gray Wool", "Black Wool", "Glass" }
 local spawnedBlocks = {
 	PerfectCircle = {},
 	PlankSpammer = {},
 	PlankTower = {}
 }
+local vehiclenoclip = false
+local currentveh = nil
+local seatconn = nil
 local activeThreads = {}
 
 local function safeGet(name)
@@ -884,6 +887,104 @@ Movement:CreateToggle({
 })
 
 Movement:CreateToggle({
+    Name = "Noclip [Vehicle]",
+    CurrentValue = false,
+    Callback = function(v)
+        vehiclenoclip = v
+
+        if not v then
+            if seatconn then
+                seatconn:Disconnect()
+                seatconn = nil
+            end
+            local plr = game.Players.LocalPlayer
+            local char = plr.Character
+            if char then
+                for _,p in pairs(char:GetDescendants()) do
+                    if p:IsA("BasePart") then
+                        p.CanCollide = true
+                    end
+                end
+            end
+            if currentveh then
+                for _,p in pairs(currentveh:GetDescendants()) do
+                    if p:IsA("BasePart") then
+                        p.CanCollide = true
+                    end
+                end
+            end
+            currentveh = nil
+        end
+    end
+})
+
+task.spawn(function()
+    while true do
+        task.wait()
+
+        if not vehiclenoclip then
+            continue
+        end
+
+        local plr = game.Players.LocalPlayer
+        local char = plr.Character
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+
+        if hum and hum.SeatPart then
+            if not currentveh then
+                currentveh = hum.SeatPart:FindFirstAncestorWhichIsA("Model")
+
+                if seatconn then
+                    seatconn:Disconnect()
+                end
+
+                seatconn = hum:GetPropertyChangedSignal("SeatPart"):Connect(function()
+                    if hum.SeatPart == nil then
+                        vehiclenoclip = false
+                        Movement.Flags["vehicle noclip"] = false
+                        if char then
+                            for _,p in pairs(char:GetDescendants()) do
+                                if p:IsA("BasePart") then
+                                    p.CanCollide = true
+                                end
+                            end
+                        end
+                        if currentveh then
+                            for _,p in pairs(currentveh:GetDescendants()) do
+                                if p:IsA("BasePart") then
+                                    p.CanCollide = true
+                                end
+                            end
+                        end
+                        currentveh = nil
+                        if seatconn then
+                            seatconn:Disconnect()
+                            seatconn = nil
+                        end
+                    end
+                end)
+            end
+
+            if currentveh then
+                for _,p in pairs(currentveh:GetDescendants()) do
+                    if p:IsA("BasePart") then
+                        p.CanCollide = false
+                    end
+                end
+            end
+
+            if char then
+                for _,p in pairs(char:GetDescendants()) do
+                    if p:IsA("BasePart") then
+                        p.CanCollide = false
+                    end
+                end
+            end
+        end
+    end
+end)
+
+Movement:CreateToggle({
     Name = "Swim",
     CurrentValue = false,
     Callback = function(state)
@@ -967,124 +1068,6 @@ Movement:CreateToggle({
 })
 
 Movement:CreateToggle({
-    Name = "Vehicle Fly",
-    CurrentValue = false,
-    Callback = function(state)
-        local players = game:GetService("Players")
-        local uis = game:GetService("UserInputService")
-        local player = players.LocalPlayer
-        local camera = workspace.CurrentCamera
-        local char = player.Character or player.CharacterAdded:Wait()
-        local humanoid = char:FindFirstChildOfClass("Humanoid")
-        local root = char:WaitForChild("HumanoidRootPart")
-
-        if state then
-            vflyEnabled = true
-            local control = {F = 0, B = 0, L = 0, R = 0, Q = 0, E = 0}
-            local lcontrol = {F = 0, B = 0, L = 0, R = 0, Q = 0, E = 0}
-            local speed = 0
-            local flySpeed = 1
-
-            local gyro = Instance.new("BodyGyro")
-            local vel = Instance.new("BodyVelocity")
-            gyro.P = 9e4
-            gyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
-            gyro.CFrame = root.CFrame
-            gyro.Parent = root
-            vel.MaxForce = Vector3.new(9e9, 9e9, 9e9)
-            vel.Parent = root
-
-            vflyKeyDown = uis.InputBegan:Connect(function(input)
-                if input.KeyCode == Enum.KeyCode.W then control.F = flySpeed end
-                if input.KeyCode == Enum.KeyCode.S then control.B = -flySpeed end
-                if input.KeyCode == Enum.KeyCode.A then control.L = -flySpeed end
-                if input.KeyCode == Enum.KeyCode.D then control.R = flySpeed end
-                if input.KeyCode == Enum.KeyCode.E then control.Q = flySpeed * 2 end
-                if input.KeyCode == Enum.KeyCode.Q then control.E = -flySpeed * 2 end
-                pcall(function() camera.CameraType = Enum.CameraType.Track end)
-            end)
-
-            vflyKeyUp = uis.InputEnded:Connect(function(input)
-                if input.KeyCode == Enum.KeyCode.W then control.F = 0 end
-                if input.KeyCode == Enum.KeyCode.S then control.B = 0 end
-                if input.KeyCode == Enum.KeyCode.A then control.L = 0 end
-                if input.KeyCode == Enum.KeyCode.D then control.R = 0 end
-                if input.KeyCode == Enum.KeyCode.E then control.Q = 0 end
-                if input.KeyCode == Enum.KeyCode.Q then control.E = 0 end
-            end)
-
-            task.spawn(function()
-                repeat task.wait()
-                    if (control.L + control.R) ~= 0 or (control.F + control.B) ~= 0 or (control.Q + control.E) ~= 0 then
-                        speed = 50
-                    elseif not ((control.L + control.R) ~= 0 or (control.F + control.B) ~= 0 or (control.Q + control.E) ~= 0) and speed ~= 0 then
-                        speed = 0
-                    end
-                    if (control.L + control.R) ~= 0 or (control.F + control.B) ~= 0 or (control.Q + control.E) ~= 0 then
-                        vel.Velocity = ((camera.CFrame.LookVector * (control.F + control.B)) + ((camera.CFrame * CFrame.new(control.L + control.R, (control.F + control.B + control.Q + control.E) * 0.2, 0).p) - camera.CFrame.p)) * speed
-                        lcontrol = {F = control.F, B = control.B, L = control.L, R = control.R}
-                    elseif speed ~= 0 then
-                        vel.Velocity = ((camera.CFrame.LookVector * (lcontrol.F + lcontrol.B)) + ((camera.CFrame * CFrame.new(lcontrol.L + lcontrol.R, (lcontrol.F + lcontrol.B + control.Q + control.E) * 0.2, 0).p) - camera.CFrame.p)) * speed
-                    else
-                        vel.Velocity = Vector3.zero
-                    end
-                    gyro.CFrame = camera.CFrame
-                until not vflyEnabled
-                control = {F = 0, B = 0, L = 0, R = 0, Q = 0, E = 0}
-                lcontrol = {F = 0, B = 0, L = 0, R = 0, Q = 0, E = 0}
-                speed = 0
-                gyro:Destroy()
-                vel:Destroy()
-                if humanoid then humanoid.PlatformStand = false end
-            end)
-        else
-            vflyEnabled = false
-            if vflyKeyDown then vflyKeyDown:Disconnect() end
-            if vflyKeyUp then vflyKeyUp:Disconnect() end
-            pcall(function() camera.CameraType = Enum.CameraType.Custom end)
-            if humanoid then humanoid.PlatformStand = false end
-        end
-    end
-})
-
-Movement:CreateToggle({
-    Name = "Fly",
-    CurrentValue = false,
-    Callback = function(state)
-        local plr = game.Players.LocalPlayer
-        local char = plr.Character or plr.CharacterAdded:Wait()
-        local hrp = char:WaitForChild("HumanoidRootPart")
-        local hum = char:FindFirstChildOfClass("Humanoid")
-        local uis = game:GetService("UserInputService")
-        local cam = workspace.CurrentCamera
-
-        if state then
-            flying = true
-            hum.PlatformStand = true
-            flyConn = game:GetService("RunService").RenderStepped:Connect(function()
-                local moveDir = Vector3.zero
-                if uis:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + cam.CFrame.LookVector end
-                if uis:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - cam.CFrame.LookVector end
-                if uis:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - cam.CFrame.RightVector end
-                if uis:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + cam.CFrame.RightVector end
-                if uis:IsKeyDown(Enum.KeyCode.Space) then moveDir = moveDir + Vector3.new(0,1,0) end
-                if uis:IsKeyDown(Enum.KeyCode.LeftControl) then moveDir = moveDir - Vector3.new(0,1,0) end
-                if moveDir.Magnitude > 0 then
-                    hrp.Velocity = moveDir.Unit * speed
-                else
-                    hrp.Velocity = Vector3.zero
-                end
-            end)
-        else
-            flying = false
-            if flyConn then flyConn:Disconnect() end
-            hum.PlatformStand = false
-            hrp.Velocity = Vector3.zero
-        end
-    end
-})
-
-Movement:CreateToggle({
     Name = "Bunny Hop",
     CurrentValue = false,
     Callback = function(state)
@@ -1127,10 +1110,140 @@ Movement:CreateToggle({
     end
 })
 
-Movement:CreateSection("CFrame")
+Movement:CreateSection("Fly")
+
+local flySpeedValue = 50
+
+Movement:CreateSlider({
+    Name = "Fly Speed",
+    Range = {10,300},
+    Increment = 1,
+    CurrentValue = flySpeedValue,
+    Callback = function(v)
+        flySpeedValue = v
+    end
+})
 
 Movement:CreateToggle({
     Name = "Fly",
+    CurrentValue = false,
+    Callback = function(state)
+        local plr = game.Players.LocalPlayer
+        local char = plr.Character or plr.CharacterAdded:Wait()
+        local hrp = char:WaitForChild("HumanoidRootPart")
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        local uis = game:GetService("UserInputService")
+        local cam = workspace.CurrentCamera
+
+        if state then
+            flying = true
+            hum.PlatformStand = true
+            flyConn = game:GetService("RunService").RenderStepped:Connect(function()
+                local moveDir = Vector3.zero
+                if uis:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + cam.CFrame.LookVector end
+                if uis:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - cam.CFrame.LookVector end
+                if uis:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - cam.CFrame.RightVector end
+                if uis:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + cam.CFrame.RightVector end
+                if uis:IsKeyDown(Enum.KeyCode.Space) then moveDir = moveDir + Vector3.new(0,1,0) end
+                if uis:IsKeyDown(Enum.KeyCode.LeftControl) then moveDir = moveDir - Vector3.new(0,1,0) end
+                if moveDir.Magnitude > 0 then
+                    hrp.Velocity = moveDir.Unit * flySpeedValue
+                else
+                    hrp.Velocity = Vector3.zero
+                end
+            end)
+        else
+            flying = false
+            if flyConn then flyConn:Disconnect() end
+            hum.PlatformStand = false
+            hrp.Velocity = Vector3.zero
+        end
+    end
+})
+
+Movement:CreateToggle({
+    Name = "Fly [Vehicle]",
+    CurrentValue = false,
+    Callback = function(state)
+        local players = game:GetService("Players")
+        local uis = game:GetService("UserInputService")
+        local player = players.LocalPlayer
+        local camera = workspace.CurrentCamera
+        local char = player.Character or player.CharacterAdded:Wait()
+        local humanoid = char:FindFirstChildOfClass("Humanoid")
+        local root = char:WaitForChild("HumanoidRootPart")
+
+        if state then
+            vflyEnabled = true
+            local control = {F = 0, B = 0, L = 0, R = 0, Q = 0, E = 0}
+            local lcontrol = {F = 0, B = 0, L = 0, R = 0, Q = 0, E = 0}
+            local speed = 0
+            local flySpeed = flySpeedValue / 50
+
+            local gyro = Instance.new("BodyGyro")
+            local vel = Instance.new("BodyVelocity")
+            gyro.P = 9e4
+            gyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+            gyro.CFrame = root.CFrame
+            gyro.Parent = root
+            vel.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+            vel.Parent = root
+
+            vflyKeyDown = uis.InputBegan:Connect(function(input)
+                if input.KeyCode == Enum.KeyCode.W then control.F = flySpeed end
+                if input.KeyCode == Enum.KeyCode.S then control.B = -flySpeed end
+                if input.KeyCode == Enum.KeyCode.A then control.L = -flySpeed end
+                if input.KeyCode == Enum.KeyCode.D then control.R = flySpeed end
+                if input.KeyCode == Enum.KeyCode.E then control.Q = flySpeed * 2 end
+                if input.KeyCode == Enum.KeyCode.Q then control.E = -flySpeed * 2 end
+                pcall(function() camera.CameraType = Enum.CameraType.Track end)
+            end)
+
+            vflyKeyUp = uis.InputEnded:Connect(function(input)
+                if input.KeyCode == Enum.KeyCode.W then control.F = 0 end
+                if input.KeyCode == Enum.KeyCode.S then control.B = 0 end
+                if input.KeyCode == Enum.KeyCode.A then control.L = 0 end
+                if input.KeyCode == Enum.KeyCode.D then control.R = 0 end
+                if input.KeyCode == Enum.KeyCode.E then control.Q = 0 end
+                if input.KeyCode == Enum.KeyCode.Q then control.E = 0 end
+            end)
+
+            task.spawn(function()
+                repeat task.wait()
+                    if (control.L + control.R) ~= 0 or (control.F + control.B) ~= 0 or (control.Q + control.E) ~= 0 then
+                        speed = flySpeedValue
+                    elseif speed ~= 0 then
+                        speed = 0
+                    end
+                    if (control.L + control.R) ~= 0 or (control.F + control.B) ~= 0 or (control.Q + control.E) ~= 0 then
+                        vel.Velocity = ((camera.CFrame.LookVector * (control.F + control.B)) + ((camera.CFrame * CFrame.new(control.L + control.R, (control.F + control.B + control.Q + control.E) * 0.2, 0).p) - camera.CFrame.p)) * speed
+                        lcontrol = {F = control.F, B = control.B, L = control.L, R = control.R}
+                    elseif speed ~= 0 then
+                        vel.Velocity = ((camera.CFrame.LookVector * (lcontrol.F + lcontrol.B)) + ((camera.CFrame * CFrame.new(lcontrol.L + lcontrol.R, (lcontrol.F + lcontrol.B + control.Q + control.E) * 0.2, 0).p) - camera.CFrame.p)) * speed
+                    else
+                        vel.Velocity = Vector3.zero
+                    end
+                    gyro.CFrame = camera.CFrame
+                until not vflyEnabled
+                control = {F = 0, B = 0, L = 0, R = 0, Q = 0, E = 0}
+                lcontrol = {F = 0, B = 0, L = 0, R = 0, Q = 0, E = 0}
+                speed = 0
+                gyro:Destroy()
+                vel:Destroy()
+                if humanoid then humanoid.PlatformStand = false end
+            end)
+        else
+            vflyEnabled = false
+            if vflyKeyDown then vflyKeyDown:Disconnect() end
+            if vflyKeyUp then vflyKeyUp:Disconnect() end
+            pcall(function() camera.CameraType = Enum.CameraType.Custom end)
+            if humanoid then humanoid.PlatformStand = false end
+        end
+    end
+})
+
+Movement:CreateToggle({
+    Name = "Fly [CFrame]",
     CurrentValue = false,
     Callback = function(state)
         local player = game.Players.LocalPlayer
@@ -1139,6 +1252,7 @@ Movement:CreateToggle({
         local head = char:WaitForChild("Head")
 
         if state then
+            CFspeed = flySpeedValue
             humanoid.PlatformStand = true
             head.Anchored = true
             CFloop = game:GetService("RunService").Heartbeat:Connect(function(dt)
@@ -1158,90 +1272,6 @@ Movement:CreateToggle({
             head.Anchored = false
         end
     end
-})
-
-local Animations = Window:CreateTab("⚡ Animations")
-
-Animations:CreateToggle( -- Credits to EdgeIY
-    {
-        Name = "Jerk Off",
-        CurrentValue = false,
-        Flag = "Strokeit",
-        Callback = function(state)
-            local player = game.Players.LocalPlayer
-            local char = player.Character
-            local humanoid = char and char:FindFirstChildWhichIsA("Humanoid")
-            local backpack = player:FindFirstChildWhichIsA("Backpack")
-            if not humanoid or not backpack then
-                return
-            end
-            local jerkRunning = false
-            local jerkTrack
-            local jerkTool
-            local function r15(plr)
-                local c = plr.Character
-                if not c then
-                    return false
-                end
-                local h = c:FindFirstChild("Humanoid")
-                if not h then
-                    return false
-                end
-                return h.RigType == Enum.HumanoidRigType.R15
-            end
-            local function stopJerk()
-                jerkRunning = false
-                if jerkTrack then
-                    jerkTrack:Stop()
-                    jerkTrack = nil
-                end
-            end
-            if state then
-                jerkRunning = true
-                jerkTool = Instance.new("Tool")
-                jerkTool.Name = "my willy"
-                jerkTool.ToolTip = "stop playing with your sausage"
-                jerkTool.RequiresHandle = false
-                jerkTool.Parent = backpack
-                jerkTool.Equipped:Connect(
-                    function()
-                        jerkRunning = true
-                        task.spawn(
-                            function()
-                                while jerkRunning do
-                                    if not jerkTrack then
-                                        local anim = Instance.new("Animation")
-                                        anim.AnimationId =
-                                            not r15(player) and "rbxassetid://72042024" or "rbxassetid://698251653"
-                                        jerkTrack = humanoid:LoadAnimation(anim)
-                                    end
-                                    jerkTrack:Play()
-                                    jerkTrack:AdjustSpeed(r15(player) and 0.7 or 0.65)
-                                    jerkTrack.TimePosition = 0.6
-                                    task.wait(0.1)
-                                    while jerkTrack and jerkTrack.TimePosition < (r15(player) and 0.7 or 0.65) do
-                                        task.wait(0.1)
-                                    end
-                                    if jerkTrack then
-                                        jerkTrack:Stop()
-                                        jerkTrack = nil
-                                    end
-                                end
-                            end
-                        )
-                    end
-                )
-                jerkTool.Unequipped:Connect(stopJerk)
-                humanoid.Died:Connect(stopJerk)
-                jerkTool:Equip()
-            else
-                stopJerk()
-                if jerkTool then
-                    jerkTool:Destroy()
-                    jerkTool = nil
-                end
-            end
-        end
 })
 
 local Cheats = Window:CreateTab("🎯 Cheats")
@@ -2443,6 +2473,90 @@ Visual:CreateToggle({
             end
         end
     end,
+})
+
+local Animations = Window:CreateTab("⚡ Animations")
+
+Animations:CreateToggle( -- Credits to EdgeIY
+    {
+        Name = "Jerk Off",
+        CurrentValue = false,
+        Flag = "Strokeit",
+        Callback = function(state)
+            local player = game.Players.LocalPlayer
+            local char = player.Character
+            local humanoid = char and char:FindFirstChildWhichIsA("Humanoid")
+            local backpack = player:FindFirstChildWhichIsA("Backpack")
+            if not humanoid or not backpack then
+                return
+            end
+            local jerkRunning = false
+            local jerkTrack
+            local jerkTool
+            local function r15(plr)
+                local c = plr.Character
+                if not c then
+                    return false
+                end
+                local h = c:FindFirstChild("Humanoid")
+                if not h then
+                    return false
+                end
+                return h.RigType == Enum.HumanoidRigType.R15
+            end
+            local function stopJerk()
+                jerkRunning = false
+                if jerkTrack then
+                    jerkTrack:Stop()
+                    jerkTrack = nil
+                end
+            end
+            if state then
+                jerkRunning = true
+                jerkTool = Instance.new("Tool")
+                jerkTool.Name = "my willy"
+                jerkTool.ToolTip = "stop playing with your sausage"
+                jerkTool.RequiresHandle = false
+                jerkTool.Parent = backpack
+                jerkTool.Equipped:Connect(
+                    function()
+                        jerkRunning = true
+                        task.spawn(
+                            function()
+                                while jerkRunning do
+                                    if not jerkTrack then
+                                        local anim = Instance.new("Animation")
+                                        anim.AnimationId =
+                                            not r15(player) and "rbxassetid://72042024" or "rbxassetid://698251653"
+                                        jerkTrack = humanoid:LoadAnimation(anim)
+                                    end
+                                    jerkTrack:Play()
+                                    jerkTrack:AdjustSpeed(r15(player) and 0.7 or 0.65)
+                                    jerkTrack.TimePosition = 0.6
+                                    task.wait(0.1)
+                                    while jerkTrack and jerkTrack.TimePosition < (r15(player) and 0.7 or 0.65) do
+                                        task.wait(0.1)
+                                    end
+                                    if jerkTrack then
+                                        jerkTrack:Stop()
+                                        jerkTrack = nil
+                                    end
+                                end
+                            end
+                        )
+                    end
+                )
+                jerkTool.Unequipped:Connect(stopJerk)
+                humanoid.Died:Connect(stopJerk)
+                jerkTool:Equip()
+            else
+                stopJerk()
+                if jerkTool then
+                    jerkTool:Destroy()
+                    jerkTool = nil
+                end
+            end
+        end
 })
 
 local Client = Window:CreateTab("💻 Client")
