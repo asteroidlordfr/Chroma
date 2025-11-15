@@ -2779,7 +2779,31 @@ OP:CreateToggle({
 })
 
 OP:CreateSection("Misc")
-OP:CreateButton({Name = "Unsuspend VC", Info = "If VC banned, unsuspends your voice chat.", Callback = function() game:GetService("VoiceChatService"):joinVoice() end})
+
+OP:CreateButton({
+    Name = "Unsuspend Chat",
+    Callback = function()
+        if replicatesignal then
+            replicatesignal(TextChatService.UpdateChatTimeout, game.Players.LocalPlayer.UserId, 0, 10)
+        end
+    end
+})
+
+OP:CreateButton({
+    Name = "Unsuspend VC",
+    Callback = function()
+        if replicatesignal then
+            replicatesignal(VoiceChatService.ClientRetryJoin)
+
+            if typeof(onVoiceModerated) ~= "RBXScriptConnection" then
+                onVoiceModerated = Services.VoiceChatInternal.LocalPlayerModerated:Connect(function()
+                    task.wait(1)
+                    replicatesignal(VoiceChatService.ClientRetryJoin)
+                end)
+            end
+        end
+    end
+})
 
 local Scripts = Window:CreateTab("📎 Scripts")
 
