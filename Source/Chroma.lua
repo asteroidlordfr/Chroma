@@ -27,13 +27,32 @@ local Camera = workspace.CurrentCamera
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Networking = ReplicatedStorage
 local ReplicaSignal
+
 if ReplicatedStorage:FindFirstChild("ReplicaRemoteEvents") and ReplicatedStorage.ReplicaRemoteEvents:FindFirstChild("Replica_ReplicaSignal") then
     ReplicaSignal = ReplicatedStorage.ReplicaRemoteEvents.Replica_ReplicaSignal
 end
 
+local ok1, MarketplaceService = pcall(function()
+    return game:GetService("MarketplaceService")
+end)
+if not ok1 then return end
+
+local ok3, Remotes = pcall(function()
+    return ReplicatedStorage:WaitForChild("Remotes", 2)
+end)
+if not ok3 or not Remotes then return end
+
+local ok4, SubmitAnswer = pcall(function()
+    return Remotes:WaitForChild("SubmitAnswer", 2)
+end)
+if not ok4 or not SubmitAnswer then return end
+
 local PlaceBlock = (ReplicatedStorage:FindFirstChild("Remotes") and ReplicatedStorage.Remotes:FindFirstChild("PlaceBlock")) -- this is for Voxels
 local voxels = {}
 local ChatSpyEnabled = false
+
+local AutoAnswer = false
+local Realistic = false
 
 local blockTypes = {"Oak Planks", "Bricks", "Dirt", "Cobblestone", "Oak Log", "Oak Leaves", "Glass", "Stone", "Yellow Wool", "White Wool", "TNT", "Sponge", "Sand", "Red Wool", "Pruple Wool", "Pink Wool", "Orange Wool", "Green Wool", "Blue Wool", "Bookshelf", "Clay", "Coal Ore", "Cyan Wool", "Diamond Block", "Diamond Ore", "Iron Ore", "Mossy Stone Bricks", "Magenta Wool", "Lime Wool", "iron Block", "Gold Block", "Gold Ore", "Magma", "Gray Wool", "Black Wool", "Glass" }
 local spawnedBlocks = {
@@ -81,6 +100,46 @@ local function onChatted(player, message)
         Duration = 5
     })
 end
+
+local function send(name)
+    if Realistic then
+        local build = ""
+        for i = 1, #name do
+            build = name:sub(1, i)
+            SubmitAnswer:FireServer("Type", build)
+            task.wait(0.05)
+        end
+        SubmitAnswer:FireServer("Submit", name)
+    else
+        SubmitAnswer:FireServer("Type", name)
+        task.wait(0.1)
+        SubmitAnswer:FireServer("Submit", name)
+    end
+end
+
+game.DescendantAdded:Connect(function(obj)
+    if AutoAnswer and obj:IsA("Sound") then
+        task.defer(function()
+            for attempt = 1, 10 do
+                if not AutoAnswer then return end
+                local soundId = obj.SoundId
+                local assetId = soundId and soundId:match("%d+")
+                if assetId then
+                    local s, info = pcall(function()
+                        return MarketplaceService:GetProductInfo(tonumber(assetId))
+                    end)
+                    if s and info and info.Name then
+                        local name = info.Name
+                        name = name:match("^(.-)%s*%(%d+%)$") or name
+                        if not AutoAnswer then return end
+                        send(name)
+                    end
+                    break
+                end
+            end
+        end)
+    end
+end)
 
 for _, player in ipairs(Players:GetPlayers()) do
     player.Chatted:Connect(function(msg) onChatted(player, msg) end)
@@ -1533,6 +1592,24 @@ Chat:CreateToggle({
 })
 
 local Games = Window:CreateTab("🎲 Games")
+Games:CreateSection("Spelling Bee")
+
+Games:CreateToggle({
+    Name = "Auto Answer",
+    CurrentValue = false,
+    Callback = function(v)
+        AutoAnswer = v
+    end
+})
+
+Games:CreateToggle({
+    Name = "Realistic Answers",
+    CurrentValue = false,
+    Callback = function(v)
+        Realistic = v
+    end
+})
+
 Games:CreateSection("Longest Answer Wins")
 
 Games:CreateButton({Name = "Answer", Info = "Sends all answers", Callback = function() submitAnswers() end})
