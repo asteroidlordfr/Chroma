@@ -32,21 +32,6 @@ if ReplicatedStorage:FindFirstChild("ReplicaRemoteEvents") and ReplicatedStorage
     ReplicaSignal = ReplicatedStorage.ReplicaRemoteEvents.Replica_ReplicaSignal
 end
 
-local ok1, MarketplaceService = pcall(function()
-    return game:GetService("MarketplaceService")
-end)
-if not ok1 then return end
-
-local ok3, Remotes = pcall(function()
-    return ReplicatedStorage:WaitForChild("Remotes", 2)
-end)
-if not ok3 or not Remotes then return end
-
-local ok4, SubmitAnswer = pcall(function()
-    return Remotes:WaitForChild("SubmitAnswer", 2)
-end)
-if not ok4 or not SubmitAnswer then return end
-
 local PlaceBlock = (ReplicatedStorage:FindFirstChild("Remotes") and ReplicatedStorage.Remotes:FindFirstChild("PlaceBlock")) -- this is for Voxels
 local voxels = {}
 local ChatSpyEnabled = false
@@ -1592,24 +1577,6 @@ Chat:CreateToggle({
 })
 
 local Games = Window:CreateTab("🎲 Games")
-Games:CreateSection("Spelling Bee")
-
-Games:CreateToggle({
-    Name = "Auto Answer",
-    CurrentValue = false,
-    Callback = function(v)
-        AutoAnswer = v
-    end
-})
-
-Games:CreateToggle({
-    Name = "Realistic Answers",
-    CurrentValue = false,
-    Callback = function(v)
-        Realistic = v
-    end
-})
-
 Games:CreateSection("Longest Answer Wins")
 
 Games:CreateButton({Name = "Answer", Info = "Sends all answers", Callback = function() submitAnswers() end})
