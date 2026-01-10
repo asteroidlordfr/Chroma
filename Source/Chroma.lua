@@ -1628,19 +1628,31 @@ Games:CreateToggle({
 })
 
 Games:CreateButton({
-    Name = "Unlock All Zones",
+    Name = "Free Jeep",
     Callback = function()
-        local zones = workspace:FindFirstChild("Zones")
-        if zones then
-            local unlockzones = zones:FindFirstChild("UnlockZones")
-            if unlockzones then
-                unlockzones:Destroy()
-            end
-        end
+        local players = game:GetService("Players")
+        local replicatedstorage = game:GetService("ReplicatedStorage")
 
-        local zoneparts = workspace:FindFirstChild("ZoneParts")
-        if zoneparts then
-            zoneparts:Destroy()
+        local player = players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local hrp = character:WaitForChild("HumanoidRootPart")
+
+        local assets = replicatedstorage:WaitForChild("Assets")
+        local jeep = assets:WaitForChild("JeepM"):Clone()
+
+        jeep.Parent = workspace
+
+        local offset = hrp.CFrame.LookVector * 12
+        local spawnCFrame = hrp.CFrame + offset
+
+        if jeep:IsA("Model") then
+            if jeep.PrimaryPart then
+                jeep:SetPrimaryPartCFrame(spawnCFrame)
+            else
+                jeep:PivotTo(spawnCFrame)
+            end
+        elseif jeep:IsA("BasePart") then
+            jeep.CFrame = spawnCFrame
         end
     end
 })
