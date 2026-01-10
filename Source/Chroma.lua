@@ -1577,6 +1577,40 @@ Chat:CreateToggle({
 })
 
 local Games = Window:CreateTab("🎲 Games")
+
+Games:CreateSection("Ball Simulator")
+
+Games:CreateButton({
+    Name = "Collect All Balls",
+    Callback = function()
+        local Players = game:GetService("Players")
+        local player = Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local hrp = character:WaitForChild("HumanoidRootPart")
+
+        local spawnedBalls = workspace:WaitForChild("SpawnedBalls")
+
+        for _, obj in ipairs(spawnedBalls:GetChildren()) do
+            if not hrp or not hrp.Parent then break end
+
+            if obj:IsA("BasePart") then
+                obj.CFrame = hrp.CFrame
+            elseif obj:IsA("Model") then
+                if obj.PrimaryPart then
+                    obj:SetPrimaryPartCFrame(hrp.CFrame)
+                else
+                    local part = obj:FindFirstChildWhichIsA("BasePart", true)
+                    if part then
+                        obj:PivotTo(hrp.CFrame)
+                    end
+                end
+            end
+
+            task.wait(0.05)
+        end
+    end
+})
+
 Games:CreateSection("Longest Answer Wins")
 
 Games:CreateButton({Name = "Answer", Info = "Sends all answers", Callback = function() submitAnswers() end})
