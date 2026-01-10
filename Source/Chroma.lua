@@ -1654,26 +1654,11 @@ Games:CreateButton({
         local replicatedstorage = game:GetService("ReplicatedStorage")
 
         local player = players.LocalPlayer
-        local character = player.Character or player.CharacterAdded:Wait()
-        local hrp = character:WaitForChild("HumanoidRootPart")
-
         local assets = replicatedstorage:WaitForChild("Assets")
         local jeep = assets:WaitForChild("Jeep"):Clone()
 
-        jeep.Parent = workspace
-
-        local offset = hrp.CFrame.LookVector * 12
-        local spawnCFrame = hrp.CFrame + offset
-
-        if jeep:IsA("Model") then
-            if jeep.PrimaryPart then
-                jeep:SetPrimaryPartCFrame(spawnCFrame)
-            else
-                jeep:PivotTo(spawnCFrame)
-            end
-        elseif jeep:IsA("BasePart") then
-            jeep.CFrame = spawnCFrame
-        end
+        jeep.Parent = player:WaitForChild("Backpack")
+        jeep:Clone().Parent = player:WaitForChild("StarterGear")
     end
 })
 
