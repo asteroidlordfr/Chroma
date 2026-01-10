@@ -35,6 +35,8 @@ end
 local PlaceBlock = (ReplicatedStorage:FindFirstChild("Remotes") and ReplicatedStorage.Remotes:FindFirstChild("PlaceBlock")) -- this is for Voxels
 local voxels = {}
 local ChatSpyEnabled = false
+local ballesp = false
+local highlights = {}
 
 local AutoAnswer = false
 local collecting = false
@@ -1642,6 +1644,68 @@ Games:CreateButton({
         if zoneparts then
             zoneparts:Destroy()
         end
+    end
+})
+
+Games:CreateToggle({
+    Name = "Ball ESP",
+    CurrentValue = false,
+    Callback = function(value)
+        ballesp = value
+
+        if not ballesp then
+            for _, h in pairs(highlights) do
+                if h then
+                    h:Destroy()
+                end
+            end
+            table.clear(highlights)
+            return
+        end
+
+        local spawnedBalls = workspace:WaitForChild("SpawnedBalls")
+
+        local function addesp(obj)
+            if highlights[obj] then
+                return
+            end
+
+            local color
+
+            if obj:IsA("BasePart") then
+                color = obj.Color
+            elseif obj:IsA("Model") then
+                local part = obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart", true)
+                if not part then
+                    return
+                end
+                color = part.Color
+            else
+                return
+            end
+
+            local h = Instance.new("Highlight")
+            h.FillColor = color
+            h.OutlineColor = color
+            h.FillTransparency = 0.5
+            h.OutlineTransparency = 0
+            h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+            h.Adornee = obj
+            h.Parent = obj
+
+            highlights[obj] = h
+        end
+
+        for _, obj in ipairs(spawnedBalls:GetChildren()) do
+            addesp(obj)
+        end
+
+        spawnedBalls.ChildAdded:Connect(function(obj)
+            if ballesp then
+                task.wait()
+                addesp(obj)
+            end
+        end)
     end
 })
 
