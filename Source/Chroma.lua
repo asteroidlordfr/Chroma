@@ -1628,6 +1628,26 @@ Games:CreateToggle({
 })
 
 Games:CreateButton({
+    Name = "Unlock All Zones",
+    Callback = function()
+        local zones = workspace:FindFirstChild("Zones")
+        if zones then
+            local unlockzones = zones:FindFirstChild("UnlockZones")
+            if unlockzones then
+                unlockzones:Destroy()
+            end
+        end
+
+        local zoneparts = workspace:FindFirstChild("ZoneParts")
+        if zoneparts then
+            zoneparts:Destroy()
+        end
+    end
+})
+
+Games:CreateLabel("Free Gamepasses")
+
+Games:CreateButton({
     Name = "Free Jeep",
     Callback = function()
         local players = game:GetService("Players")
@@ -1657,20 +1677,21 @@ Games:CreateButton({
     end
 })
 
-Games:CreateLabel("Free Gamepasses")
-
 Games:CreateButton({
-    Name = "Free Jeep",
+    Name = "Unlock VIP Zone",
     Callback = function()
-        local players = game:GetService("Players")
-        local replicatedstorage = game:GetService("ReplicatedStorage")
+        local zones = workspace:FindFirstChild("Zones")
+        if zones then
+            local unlockzones = zones:FindFirstChild("UnlockZones")
+            if unlockzones then
+                unlockzones:Destroy()
+            end
+        end
 
-        local player = players.LocalPlayer
-        local assets = replicatedstorage:WaitForChild("Assets")
-        local jeep = assets:WaitForChild("Jeep"):Clone()
-
-        jeep.Parent = player:WaitForChild("Backpack")
-        jeep:Clone().Parent = player:WaitForChild("StarterGear")
+        local zoneparts = workspace:FindFirstChild("ZoneParts")
+        if zoneparts then
+            zoneparts:Destroy()
+        end
     end
 })
 
