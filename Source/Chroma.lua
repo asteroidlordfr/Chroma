@@ -36,6 +36,7 @@ local PlaceBlock = (ReplicatedStorage:FindFirstChild("Remotes") and ReplicatedSt
 local voxels = {}
 local ChatSpyEnabled = false
 local ballesp = false
+local autoupgrade = false
 local highlights = {}
 
 local AutoAnswer = false
@@ -49,7 +50,9 @@ local spawnedBlocks = {
 	PlankTower = {}
 }
 local vehiclenoclip = false
+local autorebirth = false
 local currentveh = nil
+local autofarmtoggle = false
 local seatconn = nil
 local activeThreads = {}
 
@@ -1583,6 +1586,23 @@ local Games = Window:CreateTab("🎲 Games")
 
 Games:CreateSection("Ball Simulator")
 
+Games:CreateButton({
+    Name = "Admin Panel",
+    Callback = function()
+        local players = game:GetService("Players")
+        local player = players.LocalPlayer
+
+        local gui = player:WaitForChild("PlayerGui")
+        local pcui = gui:WaitForChild("PCUI")
+        local main = pcui:WaitForChild("PCMainFrame")
+        local admin = main:WaitForChild("ADMIN")
+
+        admin.Visible = true
+        admin.Active = true
+        admin.AutoButtonColor = true
+    end
+})
+
 Games:CreateToggle({
     Name = "Collect All Balls",
     CurrentValue = false,
@@ -1709,41 +1729,98 @@ Games:CreateToggle({
     end
 })
 
-Games:CreateLabel("Upgrades")
+Games:CreateLabel("Auto")
 
-Games:CreateButton({
-    Name = "Rebirth",
-    Callback = function()
-        local replicatedstorage = game:GetService("ReplicatedStorage")
-        local events = replicatedstorage:WaitForChild("Events")
-        local rebirth = events:WaitForChild("Rebirth")
-        rebirth:FireServer()
+Games:CreateToggle({
+    Name = "Auto Rebirth",
+    CurrentValue = false,
+    Callback = function(value)
+        autorebirth = value
+
+        if not autorebirth then
+            return
+        end
+
+        task.spawn(function()
+            local replicatedstorage = game:GetService("ReplicatedStorage")
+            local rebirth = replicatedstorage:WaitForChild("Events"):WaitForChild("Rebirth")
+
+            while autorebirth do
+                rebirth:FireServer()
+                task.wait(0.5)
+            end
+        end)
     end
 })
 
-Games:CreateLabel("Exclusive")
+Games:CreateToggle({
+    Name = "Auto Upgrade",
+    CurrentValue = false,
+    Callback = function(value)
+        autoupgrade = value
 
-Games:CreateButton({
-    Name = "Admin Panel",
-    Callback = function()
+        if not autoupgrade then
+            return
+        end
+
+        task.spawn(function()
+            local replicatedstorage = game:GetService("ReplicatedStorage")
+            local events = replicatedstorage:WaitForChild("Events")
+            local upgrade = events:WaitForChild("Upgrade")
+
+            local player = game.Players.LocalPlayer
+            local gui = player:WaitForChild("PlayerGui")
+            local pcui = gui:WaitForChild("PCUI")
+            local main = pcui:WaitForChild("PCMainFrame")
+            local upgradesbg = main:WaitForChild("UpgradesBackground")
+
+            local upgradenames = {}
+
+            for _, v in ipairs(upgradesbg:GetChildren()) do
+                if v:IsA("TextButton") and v.Name ~= "Close" and v.Name ~= "MaxBuy" then
+                    table.insert(upgradenames, v.Name)
+                end
+            end
+
+            while autoupgrade do
+                for _, name in ipairs(upgradenames) do
+                    if not autoupgrade then
+                        break
+                    end
+                    upgrade:FireServer(name)
+                    task.wait(0.05)
+                end
+                task.wait(0.2)
+            end
+        end)
+    end
+})
+
+Games:CreateToggle({
+    Name = "Autofarm",
+    CurrentValue = false,
+    Callback = function(value)
+        autofarmtoggle = value
+
         local players = game:GetService("Players")
+        local marketplace = game:GetService("MarketplaceService")
+        local replicatedstorage = game:GetService("ReplicatedStorage")
         local player = players.LocalPlayer
+        local autofarm = replicatedstorage:WaitForChild("Events"):WaitForChild("Autofarm")
 
-        local gui = player:WaitForChild("PlayerGui")
-        local pcui = gui:WaitForChild("PCUI")
-        local main = pcui:WaitForChild("PCMainFrame")
-        local admin = main:WaitForChild("ADMIN")
-
-        admin.Visible = true
-        admin.Active = true
-        admin.AutoButtonColor = true
+        if marketplace:UserOwnsGamePassAsync(player.UserId, 1371011476) then
+            autofarm:FireServer(autofarmtoggle)
+        else
+            autofarmtoggle = false
+            marketplace:PromptGamePassPurchase(player, 1371011476)
+        end
     end
 })
 
-Games:CreateLabel("Free Gamepasses")
+Games:CreateLabel("Gamepasses")
 
 Games:CreateButton({
-    Name = "Free Jeep",
+    Name = "Jeep",
     Callback = function()
         local players = game:GetService("Players")
         local replicatedstorage = game:GetService("ReplicatedStorage")
@@ -1768,6 +1845,27 @@ Games:CreateButton({
             end
         elseif jeep:IsA("BasePart") then
             jeep.CFrame = spawnCFrame
+        end
+    end
+})
+
+Games:CreateToggle({
+    Name = "Autofarm",
+    CurrentValue = false,
+    Callback = function(value)
+        autofarmtoggle = value
+
+        local players = game:GetService("Players")
+        local marketplace = game:GetService("MarketplaceService")
+        local replicatedstorage = game:GetService("ReplicatedStorage")
+        local player = players.LocalPlayer
+        local autofarm = replicatedstorage:WaitForChild("Events"):WaitForChild("Autofarm")
+
+        if marketplace:UserOwnsGamePassAsync(player.UserId, 1371011476) then
+            autofarm:FireServer(autofarmtoggle)
+        else
+            autofarmtoggle = false
+            marketplace:PromptGamePassPurchase(player, 1371011476)
         end
     end
 })
