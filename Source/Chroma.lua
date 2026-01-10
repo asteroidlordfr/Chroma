@@ -37,6 +37,7 @@ local voxels = {}
 local ChatSpyEnabled = false
 
 local AutoAnswer = false
+local collecting = false
 local Realistic = false
 
 local blockTypes = {"Oak Planks", "Bricks", "Dirt", "Cobblestone", "Oak Log", "Oak Leaves", "Glass", "Stone", "Yellow Wool", "White Wool", "TNT", "Sponge", "Sand", "Red Wool", "Pruple Wool", "Pink Wool", "Orange Wool", "Green Wool", "Blue Wool", "Bookshelf", "Clay", "Coal Ore", "Cyan Wool", "Diamond Block", "Diamond Ore", "Iron Ore", "Mossy Stone Bricks", "Magenta Wool", "Lime Wool", "iron Block", "Gold Block", "Gold Ore", "Magma", "Gray Wool", "Black Wool", "Glass" }
@@ -1580,33 +1581,66 @@ local Games = Window:CreateTab("🎲 Games")
 
 Games:CreateSection("Ball Simulator")
 
-Games:CreateButton({
+Games:CreateToggle({
     Name = "Collect All Balls",
-    Callback = function()
-        local Players = game:GetService("Players")
-        local player = Players.LocalPlayer
-        local character = player.Character or player.CharacterAdded:Wait()
-        local hrp = character:WaitForChild("HumanoidRootPart")
+    CurrentValue = false,
+    Callback = function(value)
+        collecting = value
 
-        local spawnedBalls = workspace:WaitForChild("SpawnedBalls")
+        if not collecting then
+            return
+        end
 
-        for _, obj in ipairs(spawnedBalls:GetChildren()) do
-            if not hrp or not hrp.Parent then break end
+        task.spawn(function()
+            local players = game:GetService("Players")
+            local player = players.LocalPlayer
 
-            if obj:IsA("BasePart") then
-                obj.CFrame = hrp.CFrame
-            elseif obj:IsA("Model") then
-                if obj.PrimaryPart then
-                    obj:SetPrimaryPartCFrame(hrp.CFrame)
-                else
-                    local part = obj:FindFirstChildWhichIsA("BasePart", true)
-                    if part then
-                        obj:PivotTo(hrp.CFrame)
+            while collecting do
+                local character = player.Character or player.CharacterAdded:Wait()
+                local hrp = character:WaitForChild("HumanoidRootPart")
+                local spawnedBalls = workspace:WaitForChild("SpawnedBalls")
+
+                for _, obj in ipairs(spawnedBalls:GetChildren()) do
+                    if not collecting then
+                        break
                     end
-                end
-            end
 
-            task.wait(0.05)
+                    if obj:IsA("BasePart") then
+                        obj.CFrame = hrp.CFrame
+                    elseif obj:IsA("Model") then
+                        if obj.PrimaryPart then
+                            obj:SetPrimaryPartCFrame(hrp.CFrame)
+                        else
+                            local part = obj:FindFirstChildWhichIsA("BasePart", true)
+                            if part then
+                                obj:PivotTo(hrp.CFrame)
+                            end
+                        end
+                    end
+
+                    task.wait(0.05)
+                end
+
+                task.wait(0.2)
+            end
+        end)
+    end
+})
+
+Games:CreateButton({
+    Name = "Unlock All Zones",
+    Callback = function()
+        local zones = workspace:FindFirstChild("Zones")
+        if zones then
+            local unlockzones = zones:FindFirstChild("UnlockZones")
+            if unlockzones then
+                unlockzones:Destroy()
+            end
+        end
+
+        local zoneparts = workspace:FindFirstChild("ZoneParts")
+        if zoneparts then
+            zoneparts:Destroy()
         end
     end
 })
