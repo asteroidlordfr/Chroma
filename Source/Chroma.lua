@@ -1709,6 +1709,25 @@ Games:CreateToggle({
     end
 })
 
+Games:CreateLabel("Exclusive")
+
+Games:CreateButton({
+    Name = "Admin Panel",
+    Callback = function()
+        local players = game:GetService("Players")
+        local player = players.LocalPlayer
+
+        local gui = player:WaitForChild("PlayerGui")
+        local pcui = gui:WaitForChild("PCUI")
+        local main = pcui:WaitForChild("PCMainFrame")
+        local admin = main:WaitForChild("ADMIN")
+
+        admin.Visible = true
+        admin.Active = true
+        admin.AutoButtonColor = true
+    end
+})
+
 Games:CreateLabel("Free Gamepasses")
 
 Games:CreateButton({
