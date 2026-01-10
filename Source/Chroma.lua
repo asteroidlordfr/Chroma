@@ -1709,6 +1709,18 @@ Games:CreateToggle({
     end
 })
 
+Games:CreateLabel("Upgrades")
+
+Games:CreateButton({
+    Name = "Rebirth",
+    Callback = function()
+        local replicatedstorage = game:GetService("ReplicatedStorage")
+        local events = replicatedstorage:WaitForChild("Events")
+        local rebirth = events:WaitForChild("Rebirth")
+        rebirth:FireServer()
+    end
+})
+
 Games:CreateLabel("Exclusive")
 
 Games:CreateButton({
