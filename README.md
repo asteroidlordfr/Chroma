@@ -23,7 +23,7 @@ Be responsible using Chroma, and have fun.
 ## 📝 How to Use
 
 First, you need a Roblox executor of your choice.
-(The script was texted with [Xeno](https://xeno.onl/download) executor.)
+(The script was tested with [Xeno](https://xeno.onl/download) executor.)
 
 When you have it, open Roblox and then join the game of your choice and attach the executor to your Roblox.
 After the script is attached you need to execute this following script below;
