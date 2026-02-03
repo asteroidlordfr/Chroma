@@ -1633,55 +1633,58 @@ Games:CreateButton({
     end
 })
 
-Games:CreateButton({
-    Name = "Unlock All Emotes",
-    Callback = function()
-        PlayerGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
-        Emotes = PlayerGui:WaitForChild("MainGUI"):WaitForChild("Game"):FindFirstChild("Emotes")
+Games:CreateToggle({
+    Name = "Kill All [LMB]",
+    CurrentValue = false,
+    Callback = function(Value)
+        local Players = game:GetService("Players")
+        local LocalPlayer = Players.LocalPlayer
+        local UserInputService = game:GetService("UserInputService")
+        local RunService = game:GetService("RunService")
 
-        if Emotes then
-            require(game:GetService("ReplicatedStorage").Modules.EmoteModule)
-                .GeneratePage({"headless","zombie","zen","ninja","floss","dab","sit"}, Emotes, "Free Emotes")
+        local active = Value
+        local holding = false
+        local connection
 
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "Emotes",
-                Text = "Successfully added emotes!",
-                Duration = 6.5
-            })
-        end
-    end,
-})
-
-Games:CreateButton({
-    Name = "Unlock All Knives/Guns",
-    Callback = function()
-        WeaponOwnRange = {
-            min = 999999999,
-            max = 999999999
-        }
-
-        DataBase, PlayerData = getrenv()._G.Database, getrenv()._G.PlayerData
-
-        newOwned = {}
-
-        for i, v in next, DataBase.Item do
-            newOwned[i] = math.random(WeaponOwnRange.min, WeaponOwnRange.max)
+        if not active then
+            if connection then
+                connection:Disconnect()
+                connection = nil
+            end
+            return
         end
 
-        PlayerWeapons = PlayerData.Weapons
-
-        game:GetService("RunService"):BindToRenderStep("InventoryUpdate", 0, function()
-            PlayerWeapons.Owned = newOwned
+        UserInputService.InputBegan:Connect(function(input, gp)
+            if gp then return end
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                holding = true
+                task.spawn(function()
+                    local start = tick()
+                    while holding and tick() - start < 2 do
+                        local myChar = LocalPlayer.Character
+                        if myChar and myChar:FindFirstChild("HumanoidRootPart") then
+                            local myPos = myChar.HumanoidRootPart.CFrame
+                            for _,plr in pairs(Players:GetPlayers()) do
+                                if plr ~= LocalPlayer then
+                                    local char = plr.Character
+                                    if char and char:FindFirstChild("HumanoidRootPart") then
+                                        char.HumanoidRootPart.CFrame = myPos
+                                    end
+                                end
+                            end
+                        end
+                        RunService.RenderStepped:Wait()
+                    end
+                end)
+            end
         end)
 
-        game.Players.LocalPlayer.Character.Humanoid.Health = 0
-
-        game:GetService("StarterGui"):SetCore("SendNotification", {
-            Title = "Successful!",
-            Text = "Granted the client every weapon & gun.",
-            Duration = 3
-        })
-    end,
+        UserInputService.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                holding = false
+            end
+        end)
+    end
 })
 
 Games:CreateToggle({
