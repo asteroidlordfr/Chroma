@@ -1590,6 +1590,7 @@ Games:CreateButton({
     Name = "Expose Roles",
     Callback = function()
         local Players = game:GetService("Players")
+        local StarterGui = game:GetService("StarterGui")
         local LocalPlayer = Players.LocalPlayer
 
         for _,player in pairs(Players:GetPlayers()) do
@@ -1615,21 +1616,72 @@ Games:CreateButton({
                 end
 
                 if isMurderer then
-                    Rayfield:Notify({
+                    StarterGui:SetCore("SendNotification", {
                         Title = "roles",
-                        Content = player.Name .. " is murderer",
+                        Text = player.Name .. " is murderer",
                         Duration = 3
                     })
                 elseif isSheriff then
-                    Rayfield:Notify({
+                    StarterGui:SetCore("SendNotification", {
                         Title = "roles",
-                        Content = player.Name .. " is sheriff",
+                        Text = player.Name .. " is sheriff",
                         Duration = 3
                     })
                 end
             end
         end
     end
+})
+
+Games:CreateButton({
+    Name = "Unlock All Emotes",
+    Callback = function()
+        PlayerGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+        Emotes = PlayerGui:WaitForChild("MainGUI"):WaitForChild("Game"):FindFirstChild("Emotes")
+
+        if Emotes then
+            require(game:GetService("ReplicatedStorage").Modules.EmoteModule)
+                .GeneratePage({"headless","zombie","zen","ninja","floss","dab","sit"}, Emotes, "Free Emotes")
+
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Emotes",
+                Text = "Successfully added emotes!",
+                Duration = 6.5
+            })
+        end
+    end,
+})
+
+Games:CreateButton({
+    Name = "Unlock All Knives/Guns",
+    Callback = function()
+        WeaponOwnRange = {
+            min = 999999999,
+            max = 999999999
+        }
+
+        DataBase, PlayerData = getrenv()._G.Database, getrenv()._G.PlayerData
+
+        newOwned = {}
+
+        for i, v in next, DataBase.Item do
+            newOwned[i] = math.random(WeaponOwnRange.min, WeaponOwnRange.max)
+        end
+
+        PlayerWeapons = PlayerData.Weapons
+
+        game:GetService("RunService"):BindToRenderStep("InventoryUpdate", 0, function()
+            PlayerWeapons.Owned = newOwned
+        end)
+
+        game.Players.LocalPlayer.Character.Humanoid.Health = 0
+
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Successful!",
+            Text = "Granted the client every weapon & gun.",
+            Duration = 3
+        })
+    end,
 })
 
 Games:CreateToggle({
