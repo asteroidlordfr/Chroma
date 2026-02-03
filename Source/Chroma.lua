@@ -1584,6 +1584,83 @@ Chat:CreateToggle({
 
 local Games = Window:CreateTab("🎲 Games")
 
+Games:CreateSection("Murder Mystery 2")
+
+Games:CreateButton({
+    Name = "Expose Roles",
+    Callback = function()
+        local Players = game:GetService("Players")
+        local LocalPlayer = Players.LocalPlayer
+        local Highlights = {}
+
+        local function setHighlight(player,color)
+            if Highlights[player] then return end
+            if not player.Character then return end
+            local h = Instance.new("Highlight")
+            h.FillColor = color
+            h.OutlineColor = color
+            h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+            h.Adornee = player.Character
+            h.Parent = player.Character
+            Highlights[player] = h
+        end
+
+        local function removeHighlight(player)
+            if Highlights[player] then
+                Highlights[player]:Destroy()
+                Highlights[player] = nil
+            end
+        end
+
+        local function checkPlayer(player)
+            local function update()
+                local backpack = player:FindFirstChild("Backpack")
+                if not backpack then return end
+
+                if backpack:FindFirstChild("Knife") then
+                    setHighlight(player,Color3.fromRGB(255,0,0))
+                    Rayfield:Notify({
+                        Title = "roles",
+                        Content = player.Name .. " is murderer",
+                        Duration = 3
+                    })
+                elseif backpack:FindFirstChild("Gun") then
+                    setHighlight(player,Color3.fromRGB(0,0,255))
+                    Rayfield:Notify({
+                        Title = "roles",
+                        Content = player.Name .. " is sheriff",
+                        Duration = 3
+                    })
+                else
+                    removeHighlight(player)
+                end
+            end
+
+            if player:FindFirstChild("Backpack") then
+                player.Backpack.ChildAdded:Connect(update)
+                player.Backpack.ChildRemoved:Connect(update)
+            end
+
+            player.CharacterAdded:Connect(function()
+                task.wait(1)
+                update()
+            end)
+
+            update()
+        end
+
+        for _,player in pairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer then
+                checkPlayer(player)
+            end
+        end
+
+        Players.PlayerAdded:Connect(function(player)
+            checkPlayer(player)
+        end)
+    end
+})
+
 Games:CreateSection("Ball Simulator")
 
 Games:CreateButton({
@@ -2999,6 +3076,22 @@ Client:CreateToggle({
 
 local OP = Window:CreateTab("🤫 OP")
 OP:CreateSection("Player")
+
+OP:CreateButton({
+    Name = "Headless",
+    Callback = function()
+        local function x(k)
+            if k==nil then return end
+            local h = k:WaitForChild("Head",math.random(6,11))
+            h.Transparency = 1
+            local f = h:FindFirstChild("face")
+            if f then
+                f.Transparency = 1
+            end
+        end
+        x(Character)
+    end
+})
 
 OP:CreateToggle({
     Name = "Anti Knockback",
