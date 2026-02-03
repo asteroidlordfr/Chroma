@@ -1591,11 +1591,66 @@ Games:CreateButton({
     Callback = function()
         local Players = game:GetService("Players")
         local LocalPlayer = Players.LocalPlayer
+
+        for _,player in pairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer then
+                local backpack = player:FindFirstChild("Backpack")
+                local character = player.Character
+
+                local isMurderer = false
+                local isSheriff = false
+
+                if backpack and backpack:FindFirstChild("Knife") then
+                    isMurderer = true
+                end
+                if character and character:FindFirstChild("Knife") then
+                    isMurderer = true
+                end
+
+                if backpack and backpack:FindFirstChild("Gun") then
+                    isSheriff = true
+                end
+                if character and character:FindFirstChild("Gun") then
+                    isSheriff = true
+                end
+
+                if isMurderer then
+                    Rayfield:Notify({
+                        Title = "roles",
+                        Content = player.Name .. " is murderer",
+                        Duration = 3
+                    })
+                elseif isSheriff then
+                    Rayfield:Notify({
+                        Title = "roles",
+                        Content = player.Name .. " is sheriff",
+                        Duration = 3
+                    })
+                end
+            end
+        end
+    end
+})
+
+Games:CreateToggle({
+    Name = "Role ESP",
+    CurrentValue = false,
+    Callback = function(Value)
+        local Players = game:GetService("Players")
+        local LocalPlayer = Players.LocalPlayer
         local Highlights = {}
+        local Running = Value
+
+        local function clearHighlight(player)
+            if Highlights[player] then
+                Highlights[player]:Destroy()
+                Highlights[player] = nil
+            end
+        end
 
         local function setHighlight(player,color)
-            if Highlights[player] then return end
             if not player.Character then return end
+            clearHighlight(player)
             local h = Instance.new("Highlight")
             h.FillColor = color
             h.OutlineColor = color
@@ -1605,58 +1660,46 @@ Games:CreateButton({
             Highlights[player] = h
         end
 
-        local function removeHighlight(player)
-            if Highlights[player] then
-                Highlights[player]:Destroy()
-                Highlights[player] = nil
-            end
-        end
+        task.spawn(function()
+            while Running do
+                for _,player in pairs(Players:GetPlayers()) do
+                    if player ~= LocalPlayer then
+                        local backpack = player:FindFirstChild("Backpack")
+                        local character = player.Character
 
-        local function checkPlayer(player)
-            local function update()
-                local backpack = player:FindFirstChild("Backpack")
-                if not backpack then return end
+                        local isMurderer = false
+                        local isSheriff = false
 
-                if backpack:FindFirstChild("Knife") then
-                    setHighlight(player,Color3.fromRGB(255,0,0))
-                    Rayfield:Notify({
-                        Title = "roles",
-                        Content = player.Name .. " is murderer",
-                        Duration = 3
-                    })
-                elseif backpack:FindFirstChild("Gun") then
-                    setHighlight(player,Color3.fromRGB(0,0,255))
-                    Rayfield:Notify({
-                        Title = "roles",
-                        Content = player.Name .. " is sheriff",
-                        Duration = 3
-                    })
-                else
-                    removeHighlight(player)
+                        if backpack and backpack:FindFirstChild("Knife") then
+                            isMurderer = true
+                        end
+                        if character and character:FindFirstChild("Knife") then
+                            isMurderer = true
+                        end
+
+                        if backpack and backpack:FindFirstChild("Gun") then
+                            isSheriff = true
+                        end
+                        if character and character:FindFirstChild("Gun") then
+                            isSheriff = true
+                        end
+
+                        if isMurderer then
+                            setHighlight(player,Color3.fromRGB(255,0,0))
+                        elseif isSheriff then
+                            setHighlight(player,Color3.fromRGB(0,0,255))
+                        else
+                            clearHighlight(player)
+                        end
+                    end
                 end
+                task.wait(0.5)
             end
 
-            if player:FindFirstChild("Backpack") then
-                player.Backpack.ChildAdded:Connect(update)
-                player.Backpack.ChildRemoved:Connect(update)
+            for _,h in pairs(Highlights) do
+                h:Destroy()
             end
-
-            player.CharacterAdded:Connect(function()
-                task.wait(1)
-                update()
-            end)
-
-            update()
-        end
-
-        for _,player in pairs(Players:GetPlayers()) do
-            if player ~= LocalPlayer then
-                checkPlayer(player)
-            end
-        end
-
-        Players.PlayerAdded:Connect(function(player)
-            checkPlayer(player)
+            Highlights = {}
         end)
     end
 })
@@ -3080,15 +3123,19 @@ OP:CreateSection("Player")
 OP:CreateButton({
     Name = "Headless",
     Callback = function()
+        local LocalPlayer = game.Players.LocalPlayer
+        local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+
         local function x(k)
-            if k==nil then return end
-            local h = k:WaitForChild("Head",math.random(6,11))
+            if k == nil then return end
+            local h = k:WaitForChild("Head", math.random(6,11))
             h.Transparency = 1
             local f = h:FindFirstChild("face")
             if f then
                 f.Transparency = 1
             end
         end
+
         x(Character)
     end
 })
