@@ -5,7 +5,7 @@ Chroma is **NOT** responsible for any punishments using our script. You are resp
 This script is licensed under the GNU General Public License, version 3.0.
 
 Need help with Chroma or wanna join our community?
-Meet us on [Discord](https://discord.gg/fNsu3PK487)
+Meet us on [Discord](https://discord.gg/fNsu3PK487), we also mod other games too!
 
 --
 
