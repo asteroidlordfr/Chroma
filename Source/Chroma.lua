@@ -56,15 +56,25 @@ Core.Character = Core.LocalPlayer.Character or Core.LocalPlayer.CharacterAdded:W
 Core.Humanoid = Core.Character:WaitForChild("Humanoid")
 
 local Modules = {
-    Utils = loadModule("Utils"),
     Movement = loadModule("Movement"),
     Visuals = loadModule("Visuals"),
-    Combat = loadModule("Combat"),
-    Games = loadModule("Games"),
-    Animations = loadModule("Animations"),
     Client = loadModule("Client"),
+    Animations = loadModule("Animations"),
+    Combat = loadModule("Combat"),
+    Game = loadModule("Games"),
     OP = loadModule("OP"),
     Scripts = loadModule("Scripts"),
+}
+
+local ModuleOrder = {
+    "Movement",
+    "Visuals",
+    "Client",
+    "Animations",
+    "Combat",
+    "Game",
+    "OP",
+    "Scripts"
 }
 
 local Window = Library:CreateWindow({
@@ -76,7 +86,8 @@ local Window = Library:CreateWindow({
    KeySystem = false,
 })
 
-for name, module in pairs(Modules) do
+for _, name in ipairs(ModuleOrder) do
+    local module = Modules[name]
     if module and type(module) == "table" and module.Initialize then
         module.Initialize(Core, Window)
     end
