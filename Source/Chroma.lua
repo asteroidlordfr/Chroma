@@ -55,7 +55,7 @@ local Modules = {
     Games = loadModule("Games"),
     Animations = loadModule("Animations"),
     Client = loadModule("Client"),
-    AntiCheat = loadModule("OP"),
+    OP = loadModule("OP"),
     Scripts = loadModule("Scripts"),
 }
 
