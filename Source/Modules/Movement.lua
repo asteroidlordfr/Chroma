@@ -15,6 +15,7 @@ Comments are placed as **DEV COMMENTS**, it is meant to explain parts of the cod
 return {
     Initialize = function(Core, Window)
         local function getChar()
+            if not Core or not Core.Utils or not Core.Utils.getCharacter then return nil end
             local char = Core.Utils.getCharacter()
             if not char then return nil end
             return char
@@ -27,9 +28,10 @@ return {
 
         local function getRoot(char)
             if not char then return nil end
+            if not Core or not Core.Utils or not Core.Utils.getRootPart then return nil end
             return Core.Utils.getRootPart(char)
         end
-
+    
         local MovementTab = Window:CreateTab("🎮 Movement")
         local state = {
             flying = false, swimming = false, vflyEnabled = false, noclip = nil, bhop = false, infJumpConn = nil,
