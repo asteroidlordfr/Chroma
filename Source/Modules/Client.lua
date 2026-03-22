@@ -40,7 +40,48 @@ return {
         })
         
         ClientTab:CreateSection("Other")
+
+        local storedPrompts = {}
         
+        ClientTab:CreateToggle({
+            Name = "Fast Interaction",
+            CurrentValue = false,
+            Callback = function(enabled)
+                if enabled then
+                    for _, obj in ipairs(Core.workspace:GetDescendants()) do
+                        if obj:IsA("ProximityPrompt") then
+                            if storedPrompts[obj] == nil then
+                                storedPrompts[obj] = obj.HoldDuration
+                            end
+                            obj.HoldDuration = 0
+                        end
+                    end
+        
+                    state.fastInteractConn = Core.workspace.DescendantAdded:Connect(function(obj)
+                        if obj:IsA("ProximityPrompt") then
+                            if storedPrompts[obj] == nil then
+                                storedPrompts[obj] = obj.HoldDuration
+                            end
+                            obj.HoldDuration = 0
+                        end
+                    end)
+                else
+                    if state.fastInteractConn then
+                        state.fastInteractConn:Disconnect()
+                        state.fastInteractConn = nil
+                    end
+        
+                    for prompt, time in pairs(storedPrompts) do
+                        if prompt and prompt.Parent then
+                            prompt.HoldDuration = time
+                        end
+                    end
+        
+                    table.clear(storedPrompts)
+                end
+            end
+        })
+    
         ClientTab:CreateToggle({
             Name = "Player Collision", CurrentValue = false,
             Callback = function(stateVal)
