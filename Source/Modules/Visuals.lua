@@ -378,7 +378,7 @@ return {
         
         tracerColorPicker = VisualTab:CreateColorPicker({
             Name = "Custom Tracer Color",
-            CurrentValue = Color3.fromRGB(255, 255, 255),
+            Color = Color3.fromRGB(255,255,255),
             Callback = function(color)
                 if state.tracerEnabled and tracerColorState == "Custom" then
                     for _, line in pairs(state.tracerLines) do
