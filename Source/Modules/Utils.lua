@@ -16,8 +16,7 @@ return {
     Initialize = function(Core, Window)
         Core.Utils = {}
         
-        -- This HTTP request is **ONLY** sorely used for fetching the answer list so we can update it at anytime, we will never use Chroma to harm our users.
-        function Core.Utils.safeHttpGet(url)
+        function Core.Utils.safeHttpGet(url) -- This HTTP request is **ONLY** used for fetching the answer list so we can update it at anytime, we will never use Chroma to harm our users.
             local success, result = pcall(function()
                 return game:HttpGet(url)
             end)
@@ -26,9 +25,7 @@ return {
         
         function Core.Utils.getRootPart(character)
             if not character then return nil end
-            return character:FindFirstChild("HumanoidRootPart") or 
-                   character:FindFirstChild("Torso") or 
-                   character:FindFirstChild("UpperTorso")
+            return character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("Torso") or character:FindFirstChild("UpperTorso")
         end
         
         function Core.Utils.getCharacter()
@@ -61,5 +58,32 @@ return {
             end
             return {}
         end
+        
+        function Core.Utils.glitter()
+            local char = Core.Utils.getCharacter()
+            if char:FindFirstChild("HumanoidRootPart") then
+                return char.HumanoidRootPart
+            elseif char:FindFirstChild("Torso") then
+                return char.Torso
+            elseif char:FindFirstChild("UpperTorso") then
+                return char.UpperTorso
+            end
+        end
+        
+        Core.Utils.ignoreList = {
+            ":part/1/1/1", ":part/10/10/10", ":colorshifttop 10000 0 0", ":colorshiftbottom 10000 0 0",
+            ":colorshifttop 0 10000 0", ":colorshiftbottom 0 10000 0", ":colorshifttop 0 0 10000", ":colorshiftbottom 0 0 10000"
+        }
+        
+        function Core.Utils.checkIgnored(msg)
+            for i = 1, #Core.Utils.ignoreList do
+                if msg == Core.Utils.ignoreList[i] then
+                    return true
+                end
+            end
+            return false
+        end
+        
+        Core.Utils.blockTypes = {"Oak Planks", "Bricks", "Dirt", "Cobblestone", "Oak Log", "Oak Leaves", "Glass", "Stone", "Yellow Wool", "White Wool", "TNT", "Sponge", "Sand", "Red Wool", "Pruple Wool", "Pink Wool", "Orange Wool", "Green Wool", "Blue Wool", "Bookshelf", "Clay", "Coal Ore", "Cyan Wool", "Diamond Block", "Diamond Ore", "Iron Ore", "Mossy Stone Bricks", "Magenta Wool", "Lime Wool", "iron Block", "Gold Block", "Gold Ore", "Magma", "Gray Wool", "Black Wool", "Glass"}
     end
 }
