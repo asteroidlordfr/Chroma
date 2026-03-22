@@ -16,15 +16,23 @@ repeat task.wait() until game:IsLoaded()
 task.wait(0.3)
 
 local Library = loadstring(game:HttpGet('https://raw.githubusercontent.com/asteroidlordfr/Chroma/main/Source/Library.lua'))()
-local MODULE_BASE = "https://raw.github.com/asteroidlordfr/Chroma/main/Source/Modules/"
+local MODULE_BASE = "https://raw.githubusercontent.com/asteroidlordfr/Chroma/main/Source/Modules/"
 
 local function loadModule(moduleName)
     local url = MODULE_BASE .. moduleName .. ".lua"
     local success, result = pcall(function()
         return game:HttpGet(url)
     end)
-    if success then
-        return loadstring(result)()
+    if not success or not result then
+        return nil
+    end
+    local func = loadstring(result)
+    if not func then
+        return nil
+    end
+    local ok, module = pcall(func)
+    if ok then
+        return module
     end
     return nil
 end
@@ -69,7 +77,7 @@ local Window = Library:CreateWindow({
 })
 
 for name, module in pairs(Modules) do
-    if module and module.Initialize then
+    if module and type(module) == "table" and module.Initialize then
         module.Initialize(Core, Window)
     end
 end
