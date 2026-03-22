@@ -63,7 +63,7 @@ local Modules = {
     Combat = loadModule("Combat"),
     Game = loadModule("Games"),
     OP = loadModule("OP"),
-    Scripts = loadModule("Scripts"),
+    Script = loadModule("Script"),
 }
 
 local ModuleOrder = {
@@ -74,7 +74,7 @@ local ModuleOrder = {
     "Combat",
     "Game",
     "OP",
-    "Scripts"
+    "Script"
 }
 
 local Window = Library:CreateWindow({
