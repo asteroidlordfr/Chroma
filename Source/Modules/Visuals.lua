@@ -267,4 +267,50 @@ return {
                                 for _, line in pairs(data.lines) do line:Remove() end
                                 state.boneEspLines[player] = nil
                             end
-                       
+                        end
+                        for _, player in pairs(Core.Players:GetPlayers()) do
+                            if player ~= Core.LocalPlayer and player.Character and Core.Utils.getRootPart(player.Character) then
+                                local char = player.Character
+                                local joints = {
+                                    {"Head", "UpperTorso"}, {"UpperTorso", "LowerTorso"}, {"LowerTorso", "LeftUpperLeg"},
+                                    {"LeftUpperLeg", "LeftLowerLeg"}, {"LeftLowerLeg", "LeftFoot"}, {"LowerTorso", "RightUpperLeg"},
+                                    {"RightUpperLeg", "RightLowerLeg"}, {"RightLowerLeg", "RightFoot"}, {"UpperTorso", "LeftUpperArm"},
+                                    {"LeftUpperArm", "LeftLowerArm"}, {"LeftLowerArm", "LeftHand"}, {"UpperTorso", "RightUpperArm"},
+                                    {"RightUpperArm", "RightLowerArm"}, {"RightLowerArm", "RightHand"},
+                                }
+                                if not state.boneEspLines[player] then
+                                    state.boneEspLines[player] = {lines = {}}
+                                    for _ in pairs(joints) do table.insert(state.boneEspLines[player].lines, createLine()) end
+                                end
+                                for i, joint in pairs(joints) do
+                                    local part0 = char:FindFirstChild(joint[1])
+                                    local part1 = char:FindFirstChild(joint[2])
+                                    local line = state.boneEspLines[player].lines[i]
+                                    if part0 and part1 then
+                                        local pos0, onScreen0 = get2DPos(part0.Position, Core.Camera)
+                                        local pos1, onScreen1 = get2DPos(part1.Position, Core.Camera)
+                                        if onScreen0 and onScreen1 then
+                                            line.From = pos0
+                                            line.To = pos1
+                                            line.Visible = true
+                                        else line.Visible = false end
+                                    else line.Visible = false end
+                                end
+                            elseif state.boneEspLines[player] then
+                                for _, line in pairs(state.boneEspLines[player].lines) do line:Remove() end
+                                state.boneEspLines[player] = nil
+                            end
+                        end
+                    end
+                    state.boneEspConnection = Core.RunService.RenderStepped:Connect(update)
+                else
+                    if state.boneEspConnection then state.boneEspConnection:Disconnect() state.boneEspConnection = nil end
+                    if state.boneEspLines then
+                        for _, data in pairs(state.boneEspLines) do for _, line in pairs(data.lines) do line:Remove() end end
+                        state.boneEspLines = nil
+                    end
+                end
+            end,
+        })
+    end
+}
