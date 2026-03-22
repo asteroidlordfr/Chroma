@@ -142,15 +142,18 @@ return {
             end
         })
 
-        -- Tracers Feature
         VisualTab:CreateToggle({
-            Name = "Tracers", 
+            Name = "Tracers",
             CurrentValue = false,
             Callback = function(enabled)
                 state.tracerEnabled = enabled
                 
+                if state.tracerConnection then
+                    state.tracerConnection:Disconnect()
+                    state.tracerConnection = nil
+                end
+                
                 if enabled then
-                    if state.tracerConnection then state.tracerConnection:Disconnect() end
                     state.tracerConnection = Core.RunService.RenderStepped:Connect(function()
                         if not state.tracerEnabled then return end
                         
@@ -162,27 +165,39 @@ return {
                         
                         local startPos = rootPart.Position
                         
-                        -- Clear old tracers
                         for _, line in pairs(state.tracerLines) do
-                            if line and line.Remove then
-                                line:Remove()
-                            end
+                            if line then pcall(function() line:Remove() end) end
                         end
                         state.tracerLines = {}
-                    
+                        
                         for _, player in ipairs(Core.Players:GetPlayers()) do
                             if player ~= Core.LocalPlayer and player.Character then
                                 local targetRoot = Core.Utils.getRootPart(player.Character)
                                 if targetRoot then
                                     local endPos = targetRoot.Position
                                     
-                                    local startScreen = Core.Camera:WorldToViewportPoint(startPos)
-                                    local endScreen = Core.Camera:WorldToViewportPoint(endPos)
+                                    local color
+                                    if tracerColorState == "Team" then
+                                        color = player.Team and player.Team.TeamColor.Color or Color3.fromRGB(255,255,255)
+                                    elseif tracerColorState == "Red" then
+                                        color = Color3.fromRGB(255,0,0)
+                                    elseif tracerColorState == "Green" then
+                                        color = Color3.fromRGB(0,255,0)
+                                    elseif tracerColorState == "Blue" then
+                                        color = Color3.fromRGB(0,0,255)
+                                    elseif tracerColorState == "White" then
+                                        color = Color3.fromRGB(255,255,255)
+                                    elseif tracerColorState == "Custom" then
+                                        color = tracerColorPicker.CurrentValue
+                                    end
+                                    
+                                    local s = Core.Camera:WorldToViewportPoint(startPos)
+                                    local e = Core.Camera:WorldToViewportPoint(endPos)
                                     
                                     local line = Drawing.new("Line")
-                                    line.From = Vector2.new(startScreen.X, startScreen.Y)
-                                    line.To = Vector2.new(endScreen.X, endScreen.Y)
-                                    line.Color = player.Team and player.Team.TeamColor.Color or Color3.fromRGB(255, 255, 255)
+                                    line.From = Vector2.new(s.X, s.Y)
+                                    line.To = Vector2.new(e.X, e.Y)
+                                    line.Color = color
                                     line.Thickness = 2
                                     line.Visible = true
                                     line.Transparency = 0.5
@@ -193,22 +208,14 @@ return {
                         end
                     end)
                 else
-                    if state.tracerConnection then
-                        state.tracerConnection:Disconnect()
-                        state.tracerConnection = nil
-                    end
-                    
                     for _, line in pairs(state.tracerLines) do
-                        if line and line.Remove then
-                            line:Remove()
-                        end
+                        if line then pcall(function() line:Remove() end) end
                     end
                     state.tracerLines = {}
                 end
             end
         })
-        
-        -- Bone ESP Feature
+    
         local function getBonePositions(character)
             local bones = {}
             local humanoid = character:FindFirstChildWhichIsA("Humanoid")
@@ -217,7 +224,6 @@ return {
             local isR15 = humanoid.RigType == Enum.HumanoidRigType.R15
             
             if isR15 then
-                -- R15 Bone positions
                 local parts = {
                     Head = character:FindFirstChild("Head"),
                     UpperTorso = character:FindFirstChild("UpperTorso"),
@@ -236,24 +242,22 @@ return {
                     RightFoot = character:FindFirstChild("RightFoot")
                 }
 
-                -- Define bone connections for R15
                 local connections = {
-                    -- Spine
                     {"Head", "UpperTorso"},
                     {"UpperTorso", "LowerTorso"},
-                    -- Left arm
+
                     {"UpperTorso", "LeftUpperArm"},
                     {"LeftUpperArm", "LeftLowerArm"},
                     {"LeftLowerArm", "LeftHand"},
-                    -- Right arm
+
                     {"UpperTorso", "RightUpperArm"},
                     {"RightUpperArm", "RightLowerArm"},
                     {"RightLowerArm", "RightHand"},
-                    -- Left leg
+
                     {"LowerTorso", "LeftUpperLeg"},
                     {"LeftUpperLeg", "LeftLowerLeg"},
                     {"LeftLowerLeg", "LeftFoot"},
-                    -- Right leg
+
                     {"LowerTorso", "RightUpperLeg"},
                     {"RightUpperLeg", "RightLowerLeg"},
                     {"RightLowerLeg", "RightFoot"}
@@ -267,7 +271,6 @@ return {
                     end
                 end
             else
-                -- R6 Bone positions
                 local parts = {
                     Head = character:FindFirstChild("Head"),
                     Torso = character:FindFirstChild("Torso"),
@@ -277,7 +280,6 @@ return {
                     RightLeg = character:FindFirstChild("Right Leg")
                 }
 
-                -- Define bone connections for R6
                 local connections = {
                     {"Head", "Torso"},
                     {"Torso", "LeftArm"},
@@ -304,36 +306,36 @@ return {
             Callback = function(enabled)
                 state.boneEnabled = enabled
                 
+                if state.boneConnection then
+                    state.boneConnection:Disconnect()
+                    state.boneConnection = nil
+                end
+                
                 if enabled then
-                    if state.boneConnection then state.boneConnection:Disconnect() end
                     state.boneConnection = Core.RunService.RenderStepped:Connect(function()
                         if not state.boneEnabled then return end
                         
-                        -- Clear old bone lines
                         for _, line in pairs(state.boneLines) do
-                            if line and line.Remove then
-                                line:Remove()
-                            end
+                            if line then pcall(function() line:Remove() end) end
                         end
                         state.boneLines = {}
                         
                         for _, player in ipairs(Core.Players:GetPlayers()) do
                             if player ~= Core.LocalPlayer and player.Character then
-                                local character = player.Character
-                                local bones = getBonePositions(character)
-                                local playerColor = player.Team and player.Team.TeamColor.Color or Color3.fromRGB(0, 255, 0)
+                                local bones = getBonePositions(player.Character)
+                                local color = player.Team and player.Team.TeamColor.Color or Color3.fromRGB(0,255,0)
                                 
                                 for _, bone in ipairs(bones) do
-                                    local part1, part2 = bone[1], bone[2]
-                                    if part1 and part2 and part1.Position and part2.Position then
-                                        local screenPos1, onScreen1 = Core.Camera:WorldToScreenPoint(part1.Position)
-                                        local screenPos2, onScreen2 = Core.Camera:WorldToScreenPoint(part2.Position)
+                                    local p1, p2 = bone[1], bone[2]
+                                    if p1 and p2 then
+                                        local s1, on1 = Core.Camera:WorldToViewportPoint(p1.Position)
+                                        local s2, on2 = Core.Camera:WorldToViewportPoint(p2.Position)
                                         
-                                        if onScreen1 and onScreen2 then
+                                        if on1 and on2 then
                                             local line = Drawing.new("Line")
-                                            line.From = Vector2.new(screenPos1.X, screenPos1.Y)
-                                            line.To = Vector2.new(screenPos2.X, screenPos2.Y)
-                                            line.Color = playerColor
+                                            line.From = Vector2.new(s1.X, s1.Y)
+                                            line.To = Vector2.new(s2.X, s2.Y)
+                                            line.Color = color
                                             line.Thickness = 2
                                             line.Visible = true
                                             line.Transparency = 0.7
@@ -346,22 +348,14 @@ return {
                         end
                     end)
                 else
-                    if state.boneConnection then
-                        state.boneConnection:Disconnect()
-                        state.boneConnection = nil
-                    end
-                    
                     for _, line in pairs(state.boneLines) do
-                        if line and line.Remove then
-                            line:Remove()
-                        end
+                        if line then pcall(function() line:Remove() end) end
                     end
                     state.boneLines = {}
                 end
             end
         })
         
-        -- Tracer Settings Section
         VisualTab:CreateSection("Tracer Settings")
         
         local tracerColorState = "Team"
@@ -374,7 +368,6 @@ return {
             Callback = function(option)
                 tracerColorState = option
                 if state.tracerEnabled then
-                    -- Refresh tracers to apply new color
                     local wasEnabled = state.tracerEnabled
                     state.tracerEnabled = false
                     task.wait()
@@ -397,11 +390,8 @@ return {
             end
         })
         
-        -- Override tracer connection to use color settings
-        -- Store the original color picker reference
         local originalTracerConnection = state.tracerConnection
         
-        -- Function to update tracer colors
         local function updateTracerColors()
             if not state.tracerEnabled then return end
             
@@ -429,7 +419,6 @@ return {
             end
         end
         
-        -- Override the tracer connection to use colors properly
         if state.tracerConnection then
             state.tracerConnection:Disconnect()
         end
@@ -445,7 +434,6 @@ return {
             
             local startPos = rootPart.Position
             
-            -- Clear old tracers
             for _, line in pairs(state.tracerLines) do
                 if line and line.Remove then
                     line:Remove()
