@@ -1,49 +1,92 @@
+<div align="center">
+
 # 💜 Chroma
-An open-sourced universal script for Roblox.
 
-Chroma is **NOT** responsible for any punishments using our script. You are responsible for using our script in a fair matter.
-This script is licensed under the GNU General Public License, version 3.0.
+### *An open-sourced universal script for Roblox*
 
-Need help with Chroma or wanna join our community?
-Meet us on [Discord](https://discord.gg/fNsu3PK487), we also mod other games too!
+[![Discord](https://img.shields.io/discord/1431166490022776834?color=5865F2&label=Discord&logo=discord&logoColor=white)](https://discord.gg/fNsu3PK487)
+[![Documentation](https://img.shields.io/badge/docs-wiki-blue)](https://github.com/asteroidlordfr/Chroma/wiki)
+[![Issues](https://img.shields.io/github/issues/asteroidlordfr/Chroma)](https://github.com/asteroidlordfr/Chroma/issues)
+![License](https://img.shields.io/github/license/asteroidlordfr/Chroma) ![Version](https://img.shields.io/badge/version-1.0.0-blue) [![PRs](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/asteroidlordfr/Chroma/pulls) ![stars](https://img.shields.io/github/stars/asteroidlordfr/Sakura)
 
---
+</div>
 
-## 🎮 Usage
+---
 
-You can execute the script in a executor of your choice with the following code below;
+## ⚠️ Disclaimer
+
+**Chroma is NOT responsible for any punishments incurred while using this script.**  
+You are responsible for using our script in a fair and responsible manner.
+
+Chroma is licensed under the **GNU General Public License v3.0** - you are free to modify, distribute, and use this code, provided you follow the license terms.
+
+---
+
+## 📋 Table of Contents
+
+- [Installation](#-installation)
+- [Troubleshooting](#-troubleshooting)
+- [Credits](#-credits)
+- [Show your support](#-show-your-support)
+
+---
+
+## 🚀 Installation
+
+### Prerequisites
+- A Roblox executor (reccomended Level 7+)
+- Roblox installed from [roblox.com/download](https://www.roblox.com/download) (NOT Microsoft Store version)
+
+### Start
+
+1. **Download Roblox** from the official website
+2. **Install your executor** of choice
+3. **Join any Roblox game**
+4. **Attach your executor** to Roblox
+5. **Execute the following code:**
 
 ```lua
 loadstring(game:HttpGet('https://raw.githubusercontent.com/asteroidlordfr/Chroma/refs/heads/main/Source/Chroma.lua'))()
 ```
 
-You can find the source code located in ``Source/Chroma.lua`` where you can also find our modified [Rayfield](https://github.com/SiriusSoftwareLtd/Rayfield) library in ``Source/Rayfield.lua``
+6. **Press `K`** to toggle the UI off/on
 
---
+---
 
-Be responsible using Chroma, and have fun.
+## 🔧 Troubleshooting
 
-## 📝 How to Use
+### Common Issues & Solutions
 
-First, you need a Roblox executor of your choice.
-(The script was tested with [Xeno](https://xeno.onl/download) executor, but beware cause there is allegations of it being malware.)
+| Issue | Solution |
+|-------|----------|
+| **Can't attach executor to Roblox** | Use the direct download version from roblox.com/download, NOT the Microsoft Store version |
+| **Getting teleported back when using speed** | Lower your walkspeed value, this is caused by anticheat detections. |
+| **Aimbot not working** | Enable or disable wall/team checks if needed. (The game your playing may have a custom camera system, open an issue for help) |
 
-When you have it, open Roblox and then join the game of your choice and attach the executor to your Roblox.
-After the script is attached you need to execute this following script below;
+### Getting Help
 
-```lua
-loadstring(game:HttpGet('https://raw.githubusercontent.com/asteroidlordfr/Chroma/refs/heads/main/Source/Chroma.lua'))()
-```
+- **Discord Server**: [Join our community](https://discord.gg/fNsu3PK487)
+- **GitHub Issues**: [Report bugs](https://github.com/asteroidlordfr/Chroma/issues)
+- **Wiki**: [Documentation](https://github.com/asteroidlordfr/Chroma/wiki)
 
-Afterwards, you will have Chroma!
-You can toggle the UI with ``K``
+---
 
-## 🔎 Troubleshooting
+## 👏 Credits
 
-- Can't attach my executor to Roblox
-   - Try reopening your executor, and also make sure you are using the [direct download version of Roblox](https://roblox.com/download) instead of the Microsoft Store version.
- 
-- Keep getting teleported back after using a speed module
-   - Try lowering your speed amount as this is likely ping or an anticheat interfering.
+### Development
+- **AsteroidLord** - Main developer
 
-If you need more help with the Xeno executor, please move to the official [Discord server.](https://discord.com/invite/xe-no)
+### Libraries Used
+- **Rayfield** - UI framework (modified slightly)
+
+---
+
+<div align="center">
+
+### ⭐ Show your support
+If you find Chroma useful, please consider starring the repository!
+
+[![GitHub stars](https://img.shields.io/github/stars/asteroidlordfr/Chroma?style=social)](https://github.com/asteroidlordfr/Chroma/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/asteroidlordfr/Chroma?style=social)](https://github.com/asteroidlordfr/Chroma/network/members)
+
+</div
