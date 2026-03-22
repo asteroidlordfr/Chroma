@@ -15,7 +15,8 @@ Comments are placed as **DEV COMMENTS**, it is meant to explain parts of the cod
 repeat task.wait() until game:IsLoaded()
 task.wait(0.3)
 
-local MODULE_BASE = "https://github.com/asteroidlordfr/Chroma/raw/main/Source/Modules/"
+local Library = loadstring(game:HttpGet('https://raw.githubusercontent.com/asteroidlordfr/Chroma/main/Source/Library.lua'))()
+local MODULE_BASE = "https://raw.github.com/asteroidlordfr/Chroma/main/Source/Modules/"
 
 local function loadModule(moduleName)
     local url = MODULE_BASE .. moduleName .. ".lua"
@@ -24,15 +25,8 @@ local function loadModule(moduleName)
     end)
     if success then
         return loadstring(result)()
-    else
-        warn("[X] Chroma: Failed to load module " .. moduleName)
-        return nil
     end
-end
-
-local Library = loadstring(game:HttpGet('https://raw.githubusercontent.com/asteroidlordfr/Chroma/main/Source/Library.lua'))()
-if not Library then
-    error("[X] Chroma: Failed to load Rayfield, for some reason?")
+    return nil
 end
 
 local Core = {
@@ -45,6 +39,9 @@ local Core = {
     ReplicatedStorage = game:GetService("ReplicatedStorage"),
     MarketplaceService = game:GetService("MarketplaceService"),
     TextChatService = game:GetService("TextChatService"),
+    Camera = workspace.CurrentCamera,
+    workspace = workspace,
+    game = game,
 }
 
 Core.Character = Core.LocalPlayer.Character or Core.LocalPlayer.CharacterAdded:Wait()
@@ -59,15 +56,16 @@ local Modules = {
     Animations = loadModule("Animations"),
     Client = loadModule("Client"),
     AntiCheat = loadModule("AntiCheat"),
+    Scripts = loadModule("Scripts"),
 }
 
 local Window = Library:CreateWindow({
-    Name = "🟢 Chroma",
-    LoadingTitle = "An open-sourced Roblox universal cheat.",
-    LoadingSubtitle = "Licensed under GPLv3",
-    Theme = "Ocean",
-    ConfigurationSaving = {Enabled = true, FolderName = "ChromaConfigs", FileName = "Chroma"},
-    KeySystem = false,
+   Name = "🟢 Chroma",
+   LoadingTitle = "An open-sourced Roblox universal cheat.",
+   LoadingSubtitle = "Licensed under GPLv3",
+   Theme = "Ocean",
+   ConfigurationSaving = {Enabled = true, FolderName = "ChromaConfigs", FileName = "Chroma"},
+   KeySystem = false,
 })
 
 for name, module in pairs(Modules) do
@@ -75,5 +73,3 @@ for name, module in pairs(Modules) do
         module.Initialize(Core, Window)
     end
 end
-
-print("[V] Chroma: Chroma has loaded successfully!")
