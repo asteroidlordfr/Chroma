@@ -15,21 +15,26 @@ Comments are placed as **DEV COMMENTS**, it is meant to explain parts of the cod
 return {
     Initialize = function(Core, Window)
         local function getChar()
-            if not Core or not Core.Utils or not Core.Utils.getCharacter then return nil end
-            local char = Core.Utils.getCharacter()
-            if not char then return nil end
-            return char
+            if not Core then return nil end
+            local char = Core.LocalPlayer.Character
+            if char then return char end
+            local ok, result = pcall(function()
+                return Core.LocalPlayer.CharacterAdded:Wait()
+            end)
+            if ok then return result end
+            return nil
         end
-
+    
         local function getHum(char)
             if not char then return nil end
             return char:FindFirstChildOfClass("Humanoid")
         end
-
+        
         local function getRoot(char)
             if not char then return nil end
-            if not Core or not Core.Utils or not Core.Utils.getRootPart then return nil end
-            return Core.Utils.getRootPart(char)
+            local root = char:FindFirstChild("HumanoidRootPart")
+            if root then return root end
+            return char:WaitForChild("HumanoidRootPart", 2)
         end
     
         local MovementTab = Window:CreateTab("🎮 Movement")
