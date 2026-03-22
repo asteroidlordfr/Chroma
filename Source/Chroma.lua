@@ -2,7 +2,7 @@
 -- Chroma
 --
 -- A open-source Roblox Universal tool to tweak your gameplay to the max.
--- This code is licensed under the GNU General Public License (V3):sad_moofin: 
+-- This code is licensed under the GNU General Public License (V3)
 --
 -- Have fun!
 -- (Yes yes, some of this code is GPT but only i'd say only 15/100 is GPT as I don't know much Lua.)
