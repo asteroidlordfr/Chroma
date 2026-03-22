@@ -19,6 +19,7 @@
 You are responsible for using our script in a fair and responsible manner.
 
 Chroma is licensed under the **GNU General Public License v3.0** - you are free to modify, distribute, and use this code, provided you follow the license terms.
+Any HTTP requests is sorely used for module loading and anything else, please actually read the code before saying something stupid.
 
 ---
 
