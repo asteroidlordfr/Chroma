@@ -16,8 +16,8 @@ return {
     Initialize = function(Core, Window)
         local ScriptsTab = Window:CreateTab("📎 Scripts")
         
-        ScriptsTab:CreateButton({Name = "Update Chroma", Callback = function() loadstring(Core.Utils.safeHttpGet("https://raw.githubusercontent.com/asteroidlordfr/Chroma/main/Source/Chroma.lua"))() end})
-        ScriptsTab:CreateButton({Name = "Infinite Yield", Callback = function() loadstring(Core.Utils.safeHttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))() end})
-        ScriptsTab:CreateButton({Name = "Dex Explorer", Callback = function() loadstring(Core.Utils.safeHttpGet("https://raw.githubusercontent.com/LorekeeperZinnia/Dex/master/main.lua"))() end})
+        ScriptsTab:CreateButton({Name = "Update Chroma", Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/asteroidlordfr/Chroma/main/Source/Chroma.lua"))() end})
+        ScriptsTab:CreateButton({Name = "Infinite Yield", Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))() end})
+        ScriptsTab:CreateButton({Name = "Dex Explorer", Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/LorekeeperZinnia/Dex/master/main.lua"))() end})
     end
 }
