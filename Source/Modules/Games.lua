@@ -29,10 +29,17 @@ return {
             ReplicaSignal = Core.ReplicatedStorage.ReplicaRemoteEvents.Replica_ReplicaSignal
         end
         
-        local Answers = Core.Utils.loadAnswers("https://raw.githubusercontent.com/asteroidlordfr/Chroma/main/Resources/LAW/Answers.txt")
+        local Answers = {}
+        local s, r = pcall(function()
+            return Core.Utils.loadAnswers("https://raw.githubusercontent.com/asteroidlordfr/Chroma/main/Resources/LAW/Answers.txt")
+        end)
+        if s and type(r) == "table" then
+            Answers = r
+        end
         
         local function submitAnswers()
             if not ReplicaSignal then return end
+            if not Answers or type(Answers) ~= "table" then return end
             for _, answer in ipairs(Answers) do
                 ReplicaSignal:FireServer(2, "Answer", answer)
             end
