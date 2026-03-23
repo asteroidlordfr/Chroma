@@ -38,20 +38,14 @@ return {
         end
     
         local MovementTab = Window:CreateTab("🎮 Movement")
+        
         local state = {
             flying = false, swimming = false, vflyEnabled = false, noclip = nil, bhop = false, infJumpConn = nil,
             defaultWalkSpeed = 16, defaultJumpPower = 50, defaultGravity = Core.workspace.Gravity or 196.2,
             flySpeedValue = 50, vehiclenoclip = false, currentveh = nil, seatconn = nil, oldgrav = Core.workspace.Gravity,
-            swimbeat = nil, gravReset = nil, vflyKeyDown = nil, vflyKeyUp = nil, CFspeed = 50, CFloop = nil, flyConn = nil
+            swimbeat = nil, gravReset = nil, vflyKeyDown = nil, vflyKeyUp = nil, CFspeed = 50, CFloop = nil, flyConn = nil,
+            spiderConn = nil, spiderEnabled = false, swimConn = nil, swimEnabled = false, bhopConn = nil, clickTpConn = nil
         }
-        
-        MovementTab:CreateSection("Sliders")
-        MovementTab:CreateSlider({Name = "Walkspeed", Range = {0,500}, Increment = 5, CurrentValue = Core.Humanoid.WalkSpeed, Callback = function(value) if Core.Humanoid then Core.Humanoid.WalkSpeed = value end end})
-        MovementTab:CreateSlider({Name = "Jump Power", Range = {0,500}, Increment = 5, CurrentValue = Core.Humanoid.JumpPower, Callback = function(value) if Core.Humanoid then Core.Humanoid.JumpPower = value end end})
-        MovementTab:CreateSlider({Name = "Gravity", Range = {0,500}, Increment = 1, CurrentValue = state.defaultGravity, Callback = function(value) Core.workspace.Gravity = value end})
-        MovementTab:CreateButton({Name = "Reset Walkspeed", Callback = function() if Core.Humanoid then Core.Humanoid.WalkSpeed = state.defaultWalkSpeed end end})
-        MovementTab:CreateButton({Name = "Reset Jump Power", Callback = function() if Core.Humanoid then Core.Humanoid.JumpPower = state.defaultJumpPower end end})
-        MovementTab:CreateButton({Name = "Reset Gravity", Callback = function() Core.workspace.Gravity = state.defaultGravity end})
         
         MovementTab:CreateSection("Player")
         
@@ -118,7 +112,7 @@ return {
         end)
         
         MovementTab:CreateToggle({
-            Name = "Swim", CurrentValue = false,
+            Name = "Low Gravity", CurrentValue = false,
             Callback = function(stateVal)
                 local char = getChar()
                 local humanoid = getHum(char)
@@ -126,7 +120,24 @@ return {
                     if humanoid then
                         state.oldgrav = Core.workspace.Gravity
                         Core.workspace.Gravity = 0
-                        humanoid:ChangeState(Enum.HumanoidStateType.Swimming)
+                    end
+                else
+                    if humanoid then
+                        Core.workspace.Gravity = state.oldgrav
+                    end
+                end
+            end
+        })
+
+        MovementTab:CreateToggle({
+            Name = "Weird Gravity", CurrentValue = false,
+            Callback = function(stateVal)
+                local char = getChar()
+                local humanoid = getHum(char)
+                if stateVal then
+                    if humanoid then
+                        state.oldgrav = Core.workspace.Gravity
+                        Core.workspace.Gravity = 10
                     end
                 else
                     if humanoid then
@@ -148,38 +159,249 @@ return {
                 elseif state.infJumpConn then state.infJumpConn:Disconnect() state.infJumpConn = nil end
             end
         })
-        
-        MovementTab:CreateSection("Fly")
-        
-        MovementTab:CreateSlider({Name = "Fly Speed", Range = {10,300}, Increment = 1, CurrentValue = state.flySpeedValue, Callback = function(v) state.flySpeedValue = v end})
-        
+
         MovementTab:CreateToggle({
             Name = "Fly", CurrentValue = false,
-            Callback = function(stateVal)
-                local char = getChar()
-                local hrp = getRoot(char)
-                local hum = getHum(char)
-                if stateVal then
-                    if not (hrp and hum) then return end
-                    state.flying = true
+            Callback = function(enabled)
+                if enabled then
+                    if state.flyConn then state.flyConn:Disconnect() end
+                    local char = getChar()
+                    local root = getRoot(char)
+                    local hum = getHum(char)
+                    if not root or not hum then return end
+                    
                     hum.PlatformStand = true
                     state.flyConn = Core.RunService.RenderStepped:Connect(function()
-                        local moveDir = Vector3.zero
-                        if Core.UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + Core.Camera.CFrame.LookVector end
-                        if Core.UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - Core.Camera.CFrame.LookVector end
-                        if Core.UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - Core.Camera.CFrame.RightVector end
-                        if Core.UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + Core.Camera.CFrame.RightVector end
-                        if Core.UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDir = moveDir + Vector3.new(0,1,0) end
-                        if Core.UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then moveDir = moveDir - Vector3.new(0,1,0) end
-                        if moveDir.Magnitude > 0 then hrp.Velocity = moveDir.Unit * state.flySpeedValue else hrp.Velocity = Vector3.zero end
+                        local root = getRoot(char)
+                        if not root then return end
+                        local moveDirection = Vector3.new()
+                        if Core.UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDirection = moveDirection + Vector3.new(0, 0, -1) end
+                        if Core.UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDirection = moveDirection + Vector3.new(0, 0, 1) end
+                        if Core.UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDirection = moveDirection + Vector3.new(-1, 0, 0) end
+                        if Core.UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDirection = moveDirection + Vector3.new(1, 0, 0) end
+                        if Core.UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDirection = moveDirection + Vector3.new(0, 1, 0) end
+                        if Core.UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then moveDirection = moveDirection + Vector3.new(0, -1, 0) end
+                        
+                        if moveDirection.Magnitude > 0 then
+                            moveDirection = moveDirection.Unit
+                        end
+                        
+                        local camera = Core.workspace.CurrentCamera
+                        local forward = camera.CFrame.LookVector
+                        local right = camera.CFrame.RightVector
+                        local up = camera.CFrame.UpVector
+                        
+                        local velocity = (forward * moveDirection.Z + right * moveDirection.X + up * moveDirection.Y) * state.flySpeedValue
+                        root.Velocity = velocity
                     end)
                 else
-                    state.flying = false
-                    if state.flyConn then state.flyConn:Disconnect() end
-                    if hum then hum.PlatformStand = false end
-                    if hrp then hrp.Velocity = Vector3.zero end
+                    if state.flyConn then
+                        state.flyConn:Disconnect()
+                        state.flyConn = nil
+                    end
+                    local char = getChar()
+                    local hum = getHum(char)
+                    if hum then
+                        hum.PlatformStand = false
+                    end
                 end
             end
         })
+
+        MovementTab:CreateToggle({
+            Name = "Spider", CurrentValue = false,
+            Callback = function(enabled)
+                if enabled then
+                    if state.spiderConn then state.spiderConn:Disconnect() end
+                    state.spiderEnabled = true
+                    state.spiderConn = Core.RunService.RenderStepped:Connect(function()
+                        if not state.spiderEnabled then return end
+                        local char = getChar()
+                        local root = getRoot(char)
+                        local hum = getHum(char)
+                        if not root or not hum then return end
+                        
+                        local rayOrigin = root.Position
+                        local rayDirection = root.CFrame.UpVector * -1
+                        local rayParams = RaycastParams.new()
+                        rayParams.FilterType = Enum.RaycastFilterType.Blacklist
+                        rayParams.FilterDescendantsInstances = {char}
+                        
+                        local rayResult = Core.workspace:Raycast(rayOrigin, rayDirection * 3, rayParams)
+                        
+                        if rayResult then
+                            local wallNormal = rayResult.Normal
+                            local wallTangent = Vector3.new(1, 0, 0)
+                            if math.abs(wallNormal.Y) > 0.9 then
+                                hum.PlatformStand = false
+                                return
+                            end
+                            
+                            hum.PlatformStand = true
+                            local moveDirection = Vector3.new()
+                            if Core.UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDirection = moveDirection + Vector3.new(0, 0, -1) end
+                            if Core.UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDirection = moveDirection + Vector3.new(0, 0, 1) end
+                            if Core.UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDirection = moveDirection + Vector3.new(-1, 0, 0) end
+                            if Core.UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDirection = moveDirection + Vector3.new(1, 0, 0) end
+                            if Core.UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDirection = moveDirection + Vector3.new(0, 1, 0) end
+                            
+                            if moveDirection.Magnitude > 0 then
+                                moveDirection = moveDirection.Unit
+                            end
+                            
+                            local camera = Core.workspace.CurrentCamera
+                            local right = camera.CFrame.RightVector
+                            local up = camera.CFrame.UpVector
+                            local forward = Vector3.new(camera.CFrame.LookVector.X, 0, camera.CFrame.LookVector.Z).Unit
+                            
+                            local horizontalMove = (right * moveDirection.X + forward * moveDirection.Z) * 50
+                            local verticalMove = up * moveDirection.Y * 30
+                            local moveVelocity = horizontalMove + verticalMove
+                            
+                            local wallParallel = moveVelocity - (moveVelocity:Dot(wallNormal)) * wallNormal
+                            root.Velocity = wallParallel + Vector3.new(0, root.Velocity.Y, 0) * 0.5
+                        else
+                            hum.PlatformStand = false
+                        end
+                    end)
+                else
+                    state.spiderEnabled = false
+                    if state.spiderConn then
+                        state.spiderConn:Disconnect()
+                        state.spiderConn = nil
+                    end
+                    local char = getChar()
+                    local hum = getHum(char)
+                    if hum then
+                        hum.PlatformStand = false
+                    end
+                end
+            end
+        })
+
+        MovementTab:CreateToggle({
+            Name = "Swim", CurrentValue = false,
+            Callback = function(enabled)
+                if enabled then
+                    if state.swimConn then state.swimConn:Disconnect() end
+                    state.swimEnabled = true
+                    state.swimConn = Core.RunService.RenderStepped:Connect(function()
+                        if not state.swimEnabled then return end
+                        local char = getChar()
+                        local hum = getHum(char)
+                        local root = getRoot(char)
+                        if not hum or not root then return end
+                        
+                        hum:SetStateEnabled(Enum.HumanoidStateType.Swimming, true)
+                        hum:ChangeState(Enum.HumanoidStateType.Swimming)
+                        
+                        local moveDirection = Vector3.new()
+                        if Core.UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDirection = moveDirection + Vector3.new(0, 0, -1) end
+                        if Core.UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDirection = moveDirection + Vector3.new(0, 0, 1) end
+                        if Core.UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDirection = moveDirection + Vector3.new(-1, 0, 0) end
+                        if Core.UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDirection = moveDirection + Vector3.new(1, 0, 0) end
+                        if Core.UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDirection = moveDirection + Vector3.new(0, 1, 0) end
+                        if Core.UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then moveDirection = moveDirection + Vector3.new(0, -1, 0) end
+                        
+                        if moveDirection.Magnitude > 0 then
+                            moveDirection = moveDirection.Unit
+                        end
+                        
+                        local camera = Core.workspace.CurrentCamera
+                        local forward = camera.CFrame.LookVector
+                        local right = camera.CFrame.RightVector
+                        local up = camera.CFrame.UpVector
+                        
+                        local velocity = (forward * moveDirection.Z + right * moveDirection.X + up * moveDirection.Y) * 40
+                        root.Velocity = velocity
+                    end)
+                else
+                    state.swimEnabled = false
+                    if state.swimConn then
+                        state.swimConn:Disconnect()
+                        state.swimConn = nil
+                    end
+                    local char = getChar()
+                    local hum = getHum(char)
+                    if hum then
+                        hum:SetStateEnabled(Enum.HumanoidStateType.Swimming, false)
+                        if hum:GetState() == Enum.HumanoidStateType.Swimming then
+                            hum:ChangeState(Enum.HumanoidStateType.Landed)
+                        end
+                    end
+                end
+            end
+        })
+
+        MovementTab:CreateToggle({
+            Name = "BHop", CurrentValue = false,
+            Callback = function(enabled)
+                if enabled then
+                    if state.bhopConn then state.bhopConn:Disconnect() end
+                    state.bhop = true
+                    state.bhopConn = Core.RunService.RenderStepped:Connect(function()
+                        if not state.bhop then return end
+                        local char = getChar()
+                        local hum = getHum(char)
+                        if not hum then return end
+                        
+                        if hum:GetState() == Enum.HumanoidStateType.Landed then
+                            hum.Jump = true
+                        end
+                    end)
+                else
+                    state.bhop = false
+                    if state.bhopConn then
+                        state.bhopConn:Disconnect()
+                        state.bhopConn = nil
+                    end
+                end
+            end
+        })
+
+        MovementTab:CreateToggle({
+            Name = "Click TP", CurrentValue = false,
+            Callback = function(enabled)
+                if enabled then
+                    if state.clickTpConn then state.clickTpConn:Disconnect() end
+                    state.clickTpConn = Core.UserInputService.InputBegan:Connect(function(input, gpe)
+                        if gpe then return end
+                        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                            local char = getChar()
+                            local root = getRoot(char)
+                            if not root then return end
+                            
+                            local mouse = Core.UserInputService:GetMouseLocation()
+                            local camera = Core.workspace.CurrentCamera
+                            local ray = camera:ScreenPointToRay(mouse.X, mouse.Y)
+                            local rayParams = RaycastParams.new()
+                            rayParams.FilterType = Enum.RaycastFilterType.Blacklist
+                            rayParams.FilterDescendantsInstances = {char}
+                            
+                            local rayResult = Core.workspace:Raycast(ray.Origin, ray.Direction * 1000, rayParams)
+                            if rayResult then
+                                local targetPos = rayResult.Position
+                                root.CFrame = CFrame.new(targetPos + Vector3.new(0, 3, 0))
+                            end
+                        end
+                    end)
+                else
+                    if state.clickTpConn then
+                        state.clickTpConn:Disconnect()
+                        state.clickTpConn = nil
+                    end
+                end
+            end
+        })
+
+        MovementTab:CreateSection("Sliders")
+        MovementTab:CreateSlider({Name = "Walkspeed", Range = {0,500}, Increment = 5, CurrentValue = Core.Humanoid.WalkSpeed, Callback = function(value) if Core.Humanoid then Core.Humanoid.WalkSpeed = value end end})
+        MovementTab:CreateSlider({Name = "Jump Power", Range = {0,500}, Increment = 5, CurrentValue = Core.Humanoid.JumpPower, Callback = function(value) if Core.Humanoid then Core.Humanoid.JumpPower = value end end})
+        MovementTab:CreateSlider({Name = "Gravity", Range = {0,500}, Increment = 1, CurrentValue = state.defaultGravity, Callback = function(value) Core.workspace.Gravity = value end})
+        MovementTab:CreateButton({Name = "Reset Walkspeed", Callback = function() if Core.Humanoid then Core.Humanoid.WalkSpeed = state.defaultWalkSpeed end end})
+        MovementTab:CreateButton({Name = "Reset Jump Power", Callback = function() if Core.Humanoid then Core.Humanoid.JumpPower = state.defaultJumpPower end end})
+        MovementTab:CreateButton({Name = "Reset Gravity", Callback = function() Core.workspace.Gravity = state.defaultGravity end})
+        MovementTab:CreateSlider({Name = "Fly Speed", Range = {10,300}, Increment = 1, CurrentValue = state.flySpeedValue, Callback = function(v) state.flySpeedValue = v end})
+    
     end
 }
