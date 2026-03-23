@@ -32,31 +32,8 @@ return {
             end
         })
         
-        OpTab:CreateToggle({
-            Name = "Anti Knockback", CurrentValue = false,
-            Callback = function(enabled)
-                if enabled then
-                    state.antiKnockbackConn = Core.RunService.Heartbeat:Connect(function()
-                        local char = Core.Utils.getCharacter()
-                        if not char then return end
-                        local root = Core.Utils.getRootPart(char)
-                        local hum = char:FindFirstChildWhichIsA("Humanoid")
-                        if root and hum and hum.MoveDirection.Magnitude > 0 then
-                            local moveDir = hum.MoveDirection.Unit
-                            local speed = 40
-                            local currentVel = root.AssemblyLinearVelocity
-                            root.AssemblyLinearVelocity = Vector3.new(moveDir.X * speed, currentVel.Y, moveDir.Z * speed)
-                        elseif root then
-                            local currentVel = root.AssemblyLinearVelocity
-                            root.AssemblyLinearVelocity = Vector3.new(0, currentVel.Y, 0)
-                        end
-                    end)
-                elseif state.antiKnockbackConn then state.antiKnockbackConn:Disconnect() state.antiKnockbackConn = nil end
-            end
-        })
-        
         OpTab:CreateSlider({
-            Name = "Undetected Speed", Range = {0, 100}, Increment = 1, Suffix = " studs", CurrentValue = 0,
+            Name = "Undetected Speed", Range = {0, 1000}, Increment = 1, Suffix = " studs", CurrentValue = 0,
             Callback = function(speed)
                 if state.antiKnockbackConn then state.antiKnockbackConn:Disconnect() state.antiKnockbackConn = nil end
                 if speed > 0 then
@@ -88,17 +65,28 @@ return {
                 elseif godModeConn then godModeConn:Disconnect() godModeConn = nil end
             end
         })
-        
-        local autoHealConn
-        OpTab:CreateToggle({
-            Name = "Auto Heal", CurrentValue = false,
-            Callback = function(stateVal)
-                if stateVal then
-                    if autoHealConn then autoHealConn:Disconnect() end
-                    autoHealConn = Core.Humanoid.HealthChanged:Connect(function()
-                        if Core.Humanoid and Core.Humanoid.Health < 30 then Core.Humanoid.Health = 100 end
+
+        local antiKnockbackConn
+        GamesTab:CreateToggle({
+            Name = "Anti Knockback", CurrentValue = false,
+            Callback = function(enabled)
+                if enabled then
+                    antiKnockbackConn = Core.RunService.Heartbeat:Connect(function()
+                        local char = Core.Utils.getCharacter()
+                        if not char then return end
+                        local root = Core.Utils.getRootPart(char)
+                        local hum = char:FindFirstChildWhichIsA("Humanoid")
+                        if root and hum and hum.MoveDirection.Magnitude > 0 then
+                            local moveDir = hum.MoveDirection.Unit
+                            local speed = 40
+                            local currentVel = root.AssemblyLinearVelocity
+                            root.AssemblyLinearVelocity = Vector3.new(moveDir.X * speed, currentVel.Y, moveDir.Z * speed)
+                        elseif root then
+                            local currentVel = root.AssemblyLinearVelocity
+                            root.AssemblyLinearVelocity = Vector3.new(0, currentVel.Y, 0)
+                        end
                     end)
-                elseif autoHealConn then autoHealConn:Disconnect() autoHealConn = nil end
+                elseif antiKnockbackConn then antiKnockbackConn:Disconnect() antiKnockbackConn = nil end
             end
         })
         
