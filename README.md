@@ -16,6 +16,7 @@
 ## ⚠️ Disclaimer
 
 **Chroma is NOT responsible for any punishments incurred while using this script.**  
+**This script is made open-source as a way to educate others on how these are made.**
 You are responsible for using our script in a fair and responsible manner.
 
 Chroma is licensed under the **GNU General Public License v3.0** - you are free to modify, distribute, and use this code, provided you follow the license terms.
@@ -23,16 +24,7 @@ Any HTTP requests is sorely used for module loading and anything else, please ac
 
 ---
 
-## 📋 Table of Contents
-
-- [Installation](#-installation)
-- [Troubleshooting](#-troubleshooting)
-- [Credits](#-credits)
-- [Show your support](#-show-your-support)
-
----
-
-## 🚀 Installation
+## 💿 Installation
 
 ### Prerequisites
 - A Roblox executor (reccomended Level 7+)
