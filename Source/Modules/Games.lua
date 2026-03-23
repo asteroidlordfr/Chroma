@@ -98,58 +98,6 @@ return {
         
         GamesTab:CreateSection("Murder Mystery 2")
         
-        GamesTab:CreateButton({
-            Name = "Expose Roles",
-            Callback = function()
-                for _,player in pairs(Core.Players:GetPlayers()) do
-                    if player ~= Core.LocalPlayer then
-                        local backpack = player:FindFirstChild("Backpack")
-                        local character = player.Character
-                        local isMurderer = (backpack and backpack:FindFirstChild("Knife")) or (character and character:FindFirstChild("Knife"))
-                        local isSheriff = (backpack and backpack:FindFirstChild("Gun")) or (character and character:FindFirstChild("Gun"))
-                        if isMurderer then Core.Utils.notify("roles", player.Name .. " is murderer", 3)
-                        elseif isSheriff then Core.Utils.notify("roles", player.Name .. " is sheriff", 3) end
-                    end
-                end
-            end
-        })
-        
-        GamesTab:CreateToggle({
-            Name = "Kill All [LMB]", CurrentValue = false,
-            Callback = function(Value)
-                local active = Value
-                local holding = false
-                if not active then return end
-                Core.UserInputService.InputBegan:Connect(function(input, gp)
-                    if gp then return end
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        holding = true
-                        task.spawn(function()
-                            local start = tick()
-                            while holding and tick() - start < 2 do
-                                local myChar = Core.Utils.getCharacter()
-                                if myChar and Core.Utils.getRootPart(myChar) then
-                                    local myPos = Core.Utils.getRootPart(myChar).CFrame
-                                    for _,plr in pairs(Core.Players:GetPlayers()) do
-                                        if plr ~= Core.LocalPlayer then
-                                            local char = plr.Character
-                                            if char and Core.Utils.getRootPart(char) then
-                                                Core.Utils.getRootPart(char).CFrame = myPos
-                                            end
-                                        end
-                                    end
-                                end
-                                Core.RunService.RenderStepped:Wait()
-                            end
-                        end)
-                    end
-                end)
-                Core.UserInputService.InputEnded:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then holding = false end
-                end)
-            end
-        })
-        
         GamesTab:CreateToggle({
             Name = "Role ESP", CurrentValue = false,
             Callback = function(Value)
@@ -280,8 +228,6 @@ return {
             end
         })
         
-        GamesTab:CreateLabel("Auto")
-        
         GamesTab:CreateToggle({
             Name = "Auto Rebirth", CurrentValue = false,
             Callback = function(value)
@@ -335,25 +281,6 @@ return {
             end
         })
         
-        GamesTab:CreateLabel("Gamepasses")
-        
-        GamesTab:CreateButton({
-            Name = "Jeep",
-            Callback = function()
-                local char = Core.Utils.getCharacter()
-                local hrp = Core.Utils.getRootPart(char)
-                local assets = Core.ReplicatedStorage:WaitForChild("Assets")
-                local jeep = assets:WaitForChild("JeepM"):Clone()
-                jeep.Parent = Core.workspace
-                local offset = hrp.CFrame.LookVector * 12
-                local spawnCFrame = hrp.CFrame + offset
-                if jeep:IsA("Model") then
-                    if jeep.PrimaryPart then jeep:SetPrimaryPartCFrame(spawnCFrame)
-                    else jeep:PivotTo(spawnCFrame) end
-                elseif jeep:IsA("BasePart") then jeep.CFrame = spawnCFrame end
-            end
-        })
-        
         GamesTab:CreateButton({
             Name = "Unlock VIP Zone",
             Callback = function()
@@ -376,53 +303,6 @@ return {
             Callback = function(stateVal)
                 state.AnswersSent = stateVal
                 task.spawn(function() while state.AnswersSent do submitAnswers() task.wait(0.5) end end)
-            end
-        })
-        
-        GamesTab:CreateSection("Steal a Brainrot")
-        
-        local antiKnockbackConn
-        GamesTab:CreateToggle({
-            Name = "Anti Knockback", CurrentValue = false,
-            Callback = function(enabled)
-                if enabled then
-                    antiKnockbackConn = Core.RunService.Heartbeat:Connect(function()
-                        local char = Core.Utils.getCharacter()
-                        if not char then return end
-                        local root = Core.Utils.getRootPart(char)
-                        local hum = char:FindFirstChildWhichIsA("Humanoid")
-                        if root and hum and hum.MoveDirection.Magnitude > 0 then
-                            local moveDir = hum.MoveDirection.Unit
-                            local speed = 40
-                            local currentVel = root.AssemblyLinearVelocity
-                            root.AssemblyLinearVelocity = Vector3.new(moveDir.X * speed, currentVel.Y, moveDir.Z * speed)
-                        elseif root then
-                            local currentVel = root.AssemblyLinearVelocity
-                            root.AssemblyLinearVelocity = Vector3.new(0, currentVel.Y, 0)
-                        end
-                    end)
-                elseif antiKnockbackConn then antiKnockbackConn:Disconnect() antiKnockbackConn = nil end
-            end
-        })
-        
-        GamesTab:CreateSlider({
-            Name = "Undetected Speed", Range = {0, 100}, Increment = 1, Suffix = " studs", CurrentValue = 0,
-            Callback = function(speed)
-                if antiKnockbackConn then antiKnockbackConn:Disconnect() antiKnockbackConn = nil end
-                if speed > 0 then
-                    antiKnockbackConn = Core.RunService.Heartbeat:Connect(function()
-                        local char = Core.Utils.getCharacter()
-                        if not char then return end
-                        local root = Core.Utils.getRootPart(char)
-                        local hum = char:FindFirstChildWhichIsA("Humanoid")
-                        if root and hum and hum.MoveDirection.Magnitude > 0 then
-                            local moveDir = hum.MoveDirection.Unit
-                            root.Velocity = Vector3.new(moveDir.X * speed, root.Velocity.Y, moveDir.Z * speed)
-                        elseif root then
-                            root.Velocity = Vector3.new(0, root.Velocity.Y, 0)
-                        end
-                    end)
-                end
             end
         })
         
