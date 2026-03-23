@@ -81,6 +81,21 @@ return {
                 end
             end
         })
+
+        ClientTab:CreateToggle({
+            Name = "No Zoom Limit",
+            CurrentValue = false,
+            Callback = function(enabled)
+                local player = Core.Players.LocalPlayer
+                if player then
+                    if enabled then
+                        player.CameraMaxZoomDistance = 1000000
+                    else
+                        player.CameraMaxZoomDistance = 128
+                    end
+                end
+            end
+        })
     
         ClientTab:CreateToggle({
             Name = "Player Collision", CurrentValue = false,
