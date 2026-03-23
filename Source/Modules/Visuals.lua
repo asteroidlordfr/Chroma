@@ -20,7 +20,8 @@ return {
             chamsHighlights = nil, espBoxes = {}, espTexts = {}, boneEspLines = {}, boneEspConnection = nil,
             chamsConnection = nil, hitboxVisualizer = nil,
             tracerEnabled = false, tracerLines = {}, tracerConnection = nil,
-            boneEnabled = false, boneLines = {}, boneConnection = nil
+            boneEnabled = false, boneLines = {}, boneConnection = nil,
+            originalFog = nil, noFogEnabled = false, fullbrightEnabled = false, originalBrightness = nil
         }
         
         VisualTab:CreateToggle({
@@ -62,7 +63,57 @@ return {
                 end
             end
         })
-        
+
+        VisualTab:CreateToggle({
+            Name = "No Fog",
+            CurrentValue = false,
+            Callback = function(enabled)
+                local lighting = Core.game:GetService("Lighting")
+                if enabled then
+                    state.originalFog = {
+                        FogStart = lighting.FogStart,
+                        FogEnd = lighting.FogEnd,
+                        FogColor = lighting.FogColor,
+                        FogEnabled = lighting.FogEnabled
+                    }
+                    lighting.FogStart = 100000
+                    lighting.FogEnd = 100000
+                    lighting.FogEnabled = true
+                    state.noFogEnabled = true
+                else
+                    if state.originalFog then
+                        lighting.FogStart = state.originalFog.FogStart
+                        lighting.FogEnd = state.originalFog.FogEnd
+                        lighting.FogColor = state.originalFog.FogColor
+                        lighting.FogEnabled = state.originalFog.FogEnabled
+                    end
+                    state.noFogEnabled = false
+                end
+            end
+        })
+
+        VisualTab:CreateToggle({
+            Name = "Fullbright",
+            CurrentValue = false,
+            Callback = function(enabled)
+                local lighting = Core.game:GetService("Lighting")
+                if enabled then
+                    state.originalBrightness = lighting.Brightness
+                    lighting.Brightness = 2
+                    lighting.OutdoorAmbient = Color3.new(1, 1, 1)
+                    lighting.Ambient = Color3.new(1, 1, 1)
+                    state.fullbrightEnabled = true
+                else
+                    if state.originalBrightness then
+                        lighting.Brightness = state.originalBrightness
+                        lighting.OutdoorAmbient = Color3.new(0.5, 0.5, 0.5)
+                        lighting.Ambient = Color3.new(0.5, 0.5, 0.5)
+                    end
+                    state.fullbrightEnabled = false
+                end
+            end
+        })
+    
         VisualTab:CreateToggle({
             Name = "ESP", CurrentValue = false,
             Callback = function(enabled)
