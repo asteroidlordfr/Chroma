@@ -120,31 +120,6 @@ function Library:CreateWindow(config)
     local Layout = Instance.new("UIListLayout", TabsHolder)
     Layout.Padding = UDim.new(0,6)
 
-    local dragging, dragStart, startPos
-
-    Top.InputBegan:Connect(function(i)
-        if i.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            dragStart = i.Position
-            startPos = Main.Position
-        end
-    end)
-
-    Top.InputEnded:Connect(function(i)
-        if i.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
-    end)
-
-    UserInputService.InputChanged:Connect(function(i)
-        if dragging and i.UserInputType == Enum.UserInputType.MouseMovement then
-            local delta = i.Position - dragStart
-            TweenService:Create(Main, TweenInfo.new(0.1), {
-                Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-            }):Play()
-        end
-    end)
-
     TweenService:Create(Main, TweenInfo.new(0.4), {BackgroundTransparency = 0}):Play()
 
     local hidden = false
@@ -159,35 +134,6 @@ function Library:CreateWindow(config)
             hidden = not hidden
             Main.Visible = not hidden
         end
-    end)
-
-    local minimized = false
-    local bubble
-
-    Min.MouseButton1Click:Connect(function()
-        minimized = true
-        Main.Visible = false
-
-        bubble = Instance.new("TextButton", ScreenGui)
-        bubble.Size = UDim2.new(0,40,0,40)
-        bubble.Position = UDim2.new(0,20,0.5,-20)
-        bubble.Text = config.Name or "UI"
-        bubble.TextScaled = true
-        bubble.BackgroundColor3 = Color3.fromRGB(20,20,20)
-        Instance.new("UICorner", bubble).CornerRadius = UDim.new(1,0)
-
-        bubble.MouseButton1Click:Connect(function()
-            Main.Visible = true
-            bubble:Destroy()
-        end)
-    end)
-
-    local dropped = false
-    Drop.MouseButton1Click:Connect(function()
-        dropped = not dropped
-        TweenService:Create(Main, TweenInfo.new(0.3), {
-            Size = dropped and UDim2.new(0,650,0,40) or UDim2.new(0,650,0,420)
-        }):Play()
     end)
 
     local Window = {}
@@ -228,124 +174,74 @@ function Library:CreateWindow(config)
             label.Font = Enum.Font.GothamBold
             label.TextSize = 13
             label.TextXAlignment = Enum.TextXAlignment.Left
+            return label
         end
 
-        function Tab:CreateButton(data)
-            local b = Instance.new("TextButton", Frame)
-            b.Size = UDim2.new(1,-10,0,35)
-            b.Text = data.Name
-            b.Font = Enum.Font.GothamBold
-            b.TextSize = 14
-            b.TextColor3 = Color3.new(1,1,1)
-            b.BackgroundColor3 = Color3.fromRGB(30,30,30)
-            Instance.new("UICorner", b).CornerRadius = UDim.new(0,6)
+        function Tab:CreateLabel(text, icon, color)
+            local holder = Instance.new("Frame", Frame)
+            holder.Size = UDim2.new(1,-10,0,30)
+            holder.BackgroundTransparency = 1
 
-            b.MouseButton1Click:Connect(function()
-                if data.Callback then data.Callback() end
-            end)
+            local img = Instance.new("ImageLabel", holder)
+            img.Size = UDim2.new(0,20,0,20)
+            img.Position = UDim2.new(0,0,0.5,-10)
+            img.BackgroundTransparency = 1
+
+            if typeof(icon) == "number" then
+                img.Image = "rbxassetid://"..icon
+            else
+                img.Image = ""
+            end
+
+            local txt = Instance.new("TextLabel", holder)
+            txt.Size = UDim2.new(1,-25,1,0)
+            txt.Position = UDim2.new(0,25,0,0)
+            txt.BackgroundTransparency = 1
+            txt.Text = text or ""
+            txt.TextColor3 = color or Color3.new(1,1,1)
+            txt.Font = Enum.Font.GothamBold
+            txt.TextSize = 14
+            txt.TextXAlignment = Enum.TextXAlignment.Left
 
             return {
-                Set = function(_,txt) b.Text = txt end
+                Set = function(_,t,i,c)
+                    txt.Text = t or txt.Text
+                    if typeof(i) == "number" then img.Image = "rbxassetid://"..i end
+                    txt.TextColor3 = c or txt.TextColor3
+                end
             }
         end
 
-        function Tab:CreateToggle(data)
-            local t = Instance.new("TextButton", Frame)
-            t.Size = UDim2.new(1,-10,0,35)
-            t.Text = data.Name
-            t.Font = Enum.Font.GothamBold
-            t.TextSize = 14
-            t.TextColor3 = Color3.new(1,1,1)
-            t.BackgroundColor3 = Color3.fromRGB(30,30,30)
-            Instance.new("UICorner", t).CornerRadius = UDim.new(0,6)
+        function Tab:CreateParagraph(data)
+            local holder = Instance.new("Frame", Frame)
+            holder.Size = UDim2.new(1,-10,0,60)
+            holder.BackgroundTransparency = 1
 
-            local state = data.CurrentValue or false
+            local title = Instance.new("TextLabel", holder)
+            title.Size = UDim2.new(1,0,0,20)
+            title.BackgroundTransparency = 1
+            title.Text = data.Title or ""
+            title.Font = Enum.Font.GothamBold
+            title.TextSize = 14
+            title.TextColor3 = Color3.new(1,1,1)
+            title.TextXAlignment = Enum.TextXAlignment.Left
 
-            local function set(v)
-                state = v
-                Library.Flags[data.Flag or data.Name] = state
-                TweenService:Create(t, TweenInfo.new(0.2), {
-                    BackgroundColor3 = state and Color3.fromRGB(0,170,127) or Color3.fromRGB(30,30,30)
-                }):Play()
-                if data.Callback then data.Callback(state) end
-            end
-
-            t.MouseButton1Click:Connect(function() set(not state) end)
-            set(state)
-
-            return {Set = function(_,v) set(v) end, CurrentValue = state}
-        end
-
-        function Tab:CreateInput(data)
-            local box = Instance.new("TextBox", Frame)
-            box.Size = UDim2.new(1,-10,0,35)
-            box.Text = data.CurrentValue or ""
-            box.PlaceholderText = data.PlaceholderText or ""
-            box.Font = Enum.Font.Gotham
-            box.TextSize = 14
-            box.TextColor3 = Color3.new(1,1,1)
-            box.BackgroundColor3 = Color3.fromRGB(30,30,30)
-            Instance.new("UICorner", box).CornerRadius = UDim.new(0,6)
-
-            box.FocusLost:Connect(function()
-                if data.Callback then data.Callback(box.Text) end
-                if data.RemoveTextAfterFocusLost then box.Text = "" end
-            end)
-
-            return {Set = function(_,v) box.Text = v end}
-        end
-
-        function Tab:CreateSlider(data)
-            local frame = Instance.new("Frame", Frame)
-            frame.Size = UDim2.new(1,-10,0,40)
-            frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
-            Instance.new("UICorner", frame).CornerRadius = UDim.new(0,6)
-
-            local value = data.CurrentValue or data.Range[1]
-
-            frame.InputBegan:Connect(function(i)
-                if i.UserInputType == Enum.UserInputType.MouseButton1 then
-                    local move, up
-                    move = UserInputService.InputChanged:Connect(function(m)
-                        if m.UserInputType == Enum.UserInputType.MouseMovement then
-                            local percent = math.clamp((m.Position.X - frame.AbsolutePosition.X)/frame.AbsoluteSize.X,0,1)
-                            value = math.floor((data.Range[1] + (data.Range[2]-data.Range[1])*percent)/data.Increment)*data.Increment
-                            if data.Callback then data.Callback(value) end
-                        end
-                    end)
-                    up = UserInputService.InputEnded:Connect(function(e)
-                        if e.UserInputType == Enum.UserInputType.MouseButton1 then
-                            move:Disconnect()
-                            up:Disconnect()
-                        end
-                    end)
-                end
-            end)
-
-            return {Set = function(_,v) value = v end}
-        end
-
-        function Tab:CreateDropdown(data)
-            local d = Instance.new("TextButton", Frame)
-            d.Size = UDim2.new(1,-10,0,35)
-            d.Text = data.Name
-            d.Font = Enum.Font.GothamBold
-            d.TextSize = 14
-            d.TextColor3 = Color3.new(1,1,1)
-            d.BackgroundColor3 = Color3.fromRGB(30,30,30)
-            Instance.new("UICorner", d).CornerRadius = UDim.new(0,6)
-
-            local current = data.CurrentOption or {}
-
-            d.MouseButton1Click:Connect(function()
-                current = {data.Options[1]}
-                if data.Callback then data.Callback(current) end
-            end)
+            local content = Instance.new("TextLabel", holder)
+            content.Size = UDim2.new(1,0,1,-20)
+            content.Position = UDim2.new(0,0,0,20)
+            content.BackgroundTransparency = 1
+            content.Text = data.Content or ""
+            content.Font = Enum.Font.Gotham
+            content.TextSize = 13
+            content.TextColor3 = Color3.fromRGB(200,200,200)
+            content.TextWrapped = true
+            content.TextXAlignment = Enum.TextXAlignment.Left
 
             return {
-                Set = function(_,v) current = v if data.Callback then data.Callback(v) end end,
-                Refresh = function(_,opts) data.Options = opts end,
-                CurrentOption = current
+                Set = function(_,d)
+                    title.Text = d.Title or title.Text
+                    content.Text = d.Content or content.Text
+                end
             }
         end
 
