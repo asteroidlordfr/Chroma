@@ -95,6 +95,23 @@ return {
                 end)
             end
         end)
+
+        GamesTab:CreateSection("Break a Friend")
+
+        -- Credits to KMAN on ScriptBlox for finding this below:
+
+        GamesTab:CreateButton({
+            Name = "Infinite Money",
+            Callback = function()
+                local RS = game:GetService("ReplicatedStorage")
+                local ROLLSKIN = RS:WaitForChild("Remotes"):WaitForChild("RollSkin")
+                ROLLSKIN:FireServer(0, -90000000000000000000000000000000000000000000000000000000000000)
+                ROLLSKIN:FireServer(0, -90000000000000000000000000000000000000000000000000000000000000)
+                ROLLSKIN:FireServer(0, -90000000000000000000000000000000000000000000000000000000000000)
+                ROLLSKIN:FireServer(0, -90000000000000000000000000000000000000000000000000000000000000)
+                ROLLSKIN:FireServer(0, -90000000000000000000000000000000000000000000000000000000000000)
+            end
+        })
         
         GamesTab:CreateSection("Murder Mystery 2")
         
