@@ -112,6 +112,18 @@ return {
                 ROLLSKIN:FireServer(0, -90000000000000000000000000000000000000000000000000000000000000)
             end
         })
+
+        GamesTab:CreateToggle({
+            Name = "Spam Money", CurrentValue = false,
+            Callback = function()
+                local RS = game:GetService("ReplicatedStorage")
+                local ROLLSKIN = RS:WaitForChild("Remotes"):WaitForChild("RollSkin")
+                while true do
+                     ROLLSKIN:FireServer(0, -90000000000000000000000000000000000000000000000000000000000000)
+                     task.wait(0.2)
+                end
+            end
+        })
         
         GamesTab:CreateSection("Murder Mystery 2")
         
